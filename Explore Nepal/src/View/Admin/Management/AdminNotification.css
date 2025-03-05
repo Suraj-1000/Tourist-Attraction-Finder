@@ -1,0 +1,232 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Mitr';
+}
+
+body {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+.main-container30 {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+.heading30 {
+    display: flex;
+    flex-direction: column;
+    align-items: center;  
+    justify-content: center;
+    padding: 40px 40px;
+    width: 100%;
+    text-align: center;
+}
+
+.title-heading30 {
+    margin-top: 100px;
+    font-size: 16px;
+    font-weight: bold;
+    color: #e63946;
+}
+
+.title-para30 {
+    font-size: 30px;
+    font-weight: 500;
+    color: #000;
+    margin: 0;
+}
+
+.h2-30{
+    margin-top: -30px;
+    text-align: center;
+}
+
+/* Notification Container */
+.notification-container30 {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 20px;
+    gap: 15px;
+}
+
+/* Add hover effect to zoom in the card */
+.notification-card30 {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 1100px;
+    padding: 15px;
+    border-radius: 10px;
+    background: #fff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    gap: 15px;
+    position: relative;
+    transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+}
+
+/* Apply zoom effect on hover */
+.notification-card30:hover {
+    transform: scale(1.05);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3); 
+}
+
+/* Different Notification Types */
+.notification-card30.reminder {
+    border-left: 5px solid #ff9800;
+}
+
+.notification-card30.flash-sale {
+    border-left: 5px solid #4caf50;
+}
+
+/* Notification Content */
+.notification-content30 {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.notification-title30 {
+    font-size: 16px;
+    font-weight: bold;
+    color: #333;
+}
+
+.notification-time30 {
+    font-size: 12px;
+    color: #666;
+}
+
+/* Action Buttons */
+.notification-actions30 {
+    display: flex;
+    gap: 10px;
+}
+
+.notification-actions .btn {
+    padding: 10px 15px; /* Adjusted padding */
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background 0.3s, transform 0.2s;
+    font-weight: 600; /* Added font weight for better visibility */
+}
+
+/* Specific Button Styles */
+.btn.view-offer {
+    background: #007bff;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: 0.2s;
+    border-radius: 5px;
+}
+
+.btn.view-offer:hover {
+    background: #0056b3;
+    transform: translateY(-2px);
+}
+
+
+.btn.accept {
+    border: none;
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: 0.2s;
+    border-radius: 5px;
+    background: #008000;
+    color: white;
+}
+
+.btn.accept:hover {
+    background: #005700;
+    transform: translateY(-2px); 
+}
+
+.btn.reject {
+    background: #ae0808;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: 0.2s;
+    border-radius: 5px;
+}
+
+.btn.reject:hover {
+    background: #8b0000; 
+    transform: translateY(-2px); 
+}
+
+
+.menu-icon30 {
+    cursor: pointer;
+    font-size: 20px;
+    color: #666;
+}
+
+
+.dropdown-menu30 {
+    position: absolute;
+    top: 0px;
+    right: -150px;
+    background: #fff;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2);
+    padding: 5px;
+    display: flex;
+    flex-direction: column;
+    z-index: 10;
+}
+
+.dropdown-item30 {
+    background: none;
+    border: none;
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 14px;
+    text-align: left;
+    width: 100%;
+    transition: 0.2s;
+    border-radius: 5px;
+}
+
+.dropdown-item30:hover {
+    background: #fbc02d;
+}
+
+.remove-btn30 {
+    background: none;
+    color: black;
+    border: none;
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: 0.2s;
+    border-radius: 5px;
+}
+
+.remove-btn30:hover {
+    background: #ae0808;
+}
+
+.dropdown-divider30 {
+    border: none;
+    border-top: 1px solid #ccc;
+    margin: 5px 0; 
+    width: 100%;
+}
+

@@ -1,0 +1,158 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Mitr', sans-serif;
+}
+
+body {
+  background: #f5f5f5;
+}
+
+.logoLP {
+  width: 100px;
+  height: 100px;
+  background: url("/images/Logo.png") no-repeat center;
+  background-size: cover;
+  position: absolute;
+  top: 60px;
+  left: 100px;
+  border-radius: 50%;
+  background-color: #f9f9f9;
+}
+
+.landingLP-container {
+  text-align: center;
+  padding: 20px;
+}
+
+.landingLP-header {
+  background: linear-gradient(90deg, #007bff 0%, #00bfff 100%);
+  color: white;
+  padding: 50px 20px;
+  border-radius: 10px;
+  box-shadow: 0px 4px 20px rgba(0, 123, 255, 0.2);
+}
+
+.landingLP-title {
+  font-size: 2.8rem;
+  margin-bottom: 10px;
+}
+
+.landingLP-subtitle {
+  font-size: 1.4rem;
+  margin-bottom: 20px;
+}
+
+.landingLP-button {
+  background: #ff6600;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  font-size: 1.1rem;
+  cursor: pointer;
+  border-radius: 5px;
+  transition: background 0.3s;
+}
+
+.landingLP-button:hover {
+  background: #ff4500;
+}
+
+.landingLP-main-section {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 30px;
+  padding: 20px;
+  gap: 20px;
+}
+
+.landingLP-media {
+  flex: 1;
+}
+
+.landingLP-slideshow {
+  position: relative;
+  width: 100%;
+  height: 400px; 
+  overflow: hidden;
+}
+
+.landingLP-slide {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  transition: opacity 0.5s ease-in-out;
+}
+
+.landingLP-slide.active {
+  opacity: 1;
+}
+
+.landingLP-slide-image,
+.landingLP-slide-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+
+.landingLP-info {
+  flex: 1;
+  background: white;
+  padding: 30px;
+  border-radius: 10px;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.landingLP-info-icon {
+  font-size: 2rem; 
+  color: #007bff;
+  margin-bottom: 10px;
+}
+
+
+.landingLP-info-title {
+  font-size: 2rem;
+  color: #007bff;
+  margin-bottom: 15px;
+}
+
+.landingLP-info-cards {
+  display: flex;
+  justify-content: space-around;
+  margin-top: 20px;
+}
+
+.landingLP-info-card {
+  background: #f9f9f9;
+  border-radius: 10px;
+  padding: 20px;
+  width: 30%;
+  text-align: center;
+  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s;
+}
+
+.landingLP-info-card:hover {
+  transform: translateY(-5px);
+}
+
+.landingLP-info-icon {
+  width: 50px;
+  height: 50px;
+  margin-bottom: 10px;
+}
+
+.landingLP-info-card-title {
+  font-size: 1.5rem;
+  color: #333;
+  margin: 10px 0;
+}
+
+.landingLP-info-text {
+  font-size: 1rem;
+  color: #555;
+}

@@ -1,0 +1,299 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Mitr';
+  }
+  
+  body {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+  }
+
+  
+.main-container18 {
+  max-width: 1200px;
+  margin: auto;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  .heading18 {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    width: 100%;
+    text-align: center;
+    position: relative;
+  }
+
+  .plan-trip-btn18 {
+    display: flex;
+    align-items: center;
+    background-color: #008000; 
+    color: white; 
+    border: none; 
+    padding: 8px 12px; 
+    font-size: 16px; 
+    cursor: pointer; 
+    border-radius: 5px; 
+    margin-top: 100px; 
+    gap: 10px;
+    transition: background-color 0.3s ease; 
+  }
+  
+  
+  .arrow-down18 {
+    transform: rotate(-90deg);
+    width: 20px;
+    height: 20px;
+  }
+
+  .main-heading18 {
+    font-size: 36px;
+    color: #AE0808;
+    text-align: center;
+    margin-top: -20px;
+  }
+  
+
+  .image-section18 {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    margin-top: 30px;
+  }
+  
+  .image18 {
+    width: 1170px;
+    height: 400px;
+    object-fit: cover; 
+    border-radius: 10px; 
+  }
+
+  .highlight18 {
+    font-size: 16px;
+    width: 1120px;
+    height: auto;
+    text-align: center;
+    margin: 30px auto;
+  }
+
+    .additional-heading18{
+        width: 1120px;
+        margin: 30px auto;
+        text-align: justify;
+        color: #e63946;
+        border-bottom: 2px solid #e63946;
+    }
+
+  .description18 {
+    font-size: 16px;
+    width: 1120px;
+    height: auto;
+    text-align: justify;
+    margin: 30px auto;
+  }
+
+  .Quick-info18 {
+    width: 1120px;
+    margin: 30px auto;
+    text-align: justify;
+    color: #e63946;
+        border-bottom: 2px solid #e63946;
+
+  }
+
+  .quick-infoDetail18{
+    font-size: 16px;
+    width: 1120px;
+    height: auto;
+    text-align: justify;
+    margin: 30px auto;
+    list-style-type: none;
+    padding: 0;
+  }
+
+
+    .quick-infoDetail18 li {
+        margin-bottom: 15px; 
+    }
+
+    .quick-infoDetail18 p {
+        margin: 0;
+    }
+
+
+    .day-by-day18 {
+        width: 1120px;
+        margin: 30px auto;
+        text-align: justify;
+        color: #e63946;
+        border-bottom: 2px solid #e63946;
+    }
+    .day-by-day-itinerary18 {
+        width: 1120px; 
+        margin: 0 auto; 
+        display: flex; 
+        flex-wrap: wrap;
+        justify-content: space-between; 
+        gap: 20px;
+    }
+    
+    .itinerary-card18 {
+        background-color: #f9f9f9; 
+        border: 1px solid #ccc;
+        border-radius: 8px; 
+        padding: 15px;
+        margin-bottom: 20px; 
+        width: calc(50% - 10px); 
+        height: auto; 
+        overflow: auto; 
+    }
+    
+    .itinerary-card18 h3 {
+        margin-top: 0;
+    }
+    
+    .itinerary-card18 p {
+        margin: 5px 0; 
+    }
+    
+    .itinerary-card18 ul {
+        padding: 0; 
+        margin-left: 20px; 
+    }
+
+    .whats-include18 {
+        width: 1120px; 
+        margin: 30px auto;
+        text-align: justify; 
+    }
+    
+    .include18 {
+        margin-bottom: 15px; 
+        color: #e63946;
+        border-bottom: 2px solid #e63946;
+    }
+    
+    .whats-include18 ol {
+        padding-left: 20px; 
+        margin: 0; 
+    }
+    
+    .whats-include18 li {
+        margin: 5px 0; 
+    }
+    
+
+    .add-info18 {
+        width: 1120px; 
+        margin: 30px auto; 
+        text-align: justify;
+    }
+    
+    .info18 {
+        margin-bottom: 15px;
+        color: #e63946;
+        border-bottom: 2px solid #e63946;
+    }
+    
+    .add-info18 ol {
+        padding-left: 20px; 
+        margin: 0; 
+    }
+    
+    .add-info18 li {
+        margin: 5px 0; 
+    }
+
+    .last18{
+        font-weight: bold;
+        color: black;
+        text-align: center;
+        border-bottom: 2px solid #e63946;
+    }
+
+   
+
+    .button-container18 {
+      display: flex;
+      justify-content: center;
+      margin-top: 20px;
+      gap: 30px;
+    }
+    
+    .back-btn18, .book-now-btn18 {
+      padding: 12px 18px;
+      font-size: 16px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      width: 200px; 
+      text-align: center;
+    }
+    
+    .back-btn18 {
+      background-color: #AE0808;
+      color: white;
+    }
+    
+    .book-now-btn18 {
+      background-color: #008000;
+      color: white;
+    }
+    
+    .book-now-btn18:hover {
+      background-color: #006400;
+    }
+
+    .info-item18 {
+      width: 1120px;
+      margin: 5px auto;
+      text-align: justify;
+    }
+
+
+    .additional-details18 {
+      width: 1120px;
+      margin: 30px auto;
+      text-align: justify;
+      color: #e63946;
+          border-bottom: 2px solid #e63946;
+  
+    }
+  
+    .additional-details-list18{
+      font-size: 16px;
+      width: 1120px;
+      height: auto;
+      text-align: justify;
+      margin: 30px auto;
+      list-style-type: none;
+      padding: 0;
+    }
+  
+  
+      .additional-details-list18 li {
+          margin-bottom: 15px; 
+      }
+  
+      .additional-details-list18 p {
+          margin: 0;
+      }
+    
+    
+      
+    
+    
+
+
+
+
+
+

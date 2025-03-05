@@ -1,0 +1,255 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Mitr';
+}
+
+body {
+    background-color: #ffffff;
+}
+
+.main-container32 {
+    max-width: 1300px;
+    margin: 0 auto; 
+    padding: 40px;
+    border-radius: 12px;
+    
+}
+
+.heading32 {
+    text-align: center;  
+    margin-bottom: 30px;
+}
+
+.title-heading32 {
+    font-size: 18px;
+    font-weight: bold;
+    color: #e63946;
+    margin-top: 85px;
+}
+
+.title-para32 {
+    font-size: 24px;
+    font-weight: bold;
+    color: #333;
+}
+
+.flex-container32 {
+    display: flex;
+    justify-content: space-between; /* Space between columns */
+    margin-top: 20px;
+}
+
+.currency-table-container32,
+.right-container32 {
+    flex: 1; /* Allow sections to grow */
+    margin: 0 10px; /* Spacing between sections */
+    background: #f8f9fa; /* Light background for sections */
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.table-heading32 {
+    margin-bottom: 20px;
+    font-size: 20px;
+    color: #333;
+    text-align: center;
+}
+
+.currency-table32 {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.currency-table32 th {
+    background-color: #e9ecef;
+    padding: 12px;
+    text-align: left;
+    font-size: 16px;
+    color: #333;
+    border-bottom: 2px solid #ddd;
+}
+
+.currency-table32 td {
+    padding: 10px;
+    border-bottom: 1px solid #ddd;
+    font-size: 14px;
+    color: #444;
+}
+
+.currency-table32 tbody tr:hover {
+    background-color: #f1f1f1;
+}
+
+.currency-converter32 {
+    margin-top: 50px;
+}
+
+.converter-inputs32 {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.currency-row32 {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+}
+
+.selection-heading32{
+    text-align: center;
+    padding: 12px;
+}
+
+.currency-row32 select {
+    padding: 12px;
+    font-size: 1rem;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    flex: 0.3; 
+    min-width: 100px; 
+}
+
+.currency-row32 input {
+    padding: 12px;
+    font-size: 1rem;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    flex: 1; /* Keep full width for the input */
+}
+
+.currency-row32 input[readOnly] {
+    background-color: #f8f9fa;
+}
+
+.buttons-container32 {
+    display: flex;
+    justify-content: center; 
+    gap: 15px; 
+}
+
+.buttons-container32 button {
+    padding: 12px 20px;
+    font-size: 1rem;
+    width: 130px;
+    color: #fff;
+    background-color: #007bff; /* Bootstrap blue */
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.buttons-container32 button:hover {
+    background-color: #0056b3; /* Darker blue on hover */
+}
+
+.conversion-result32 {
+    margin-top: 20px;
+    font-size: 1.5rem; 
+    color: #333;
+    text-align: center;
+    background-color: #f8f9fa; 
+    padding: 15px;
+    border-radius: 6px;
+}
+
+.converter-heading32 {
+    font-size: 24px; /* Heading size */
+    color: #333; /* Heading color */
+    margin-bottom: 15px; /* Space below the heading */
+    text-align: center; /* Center the heading */
+}
+
+.currency-selection-card32 {
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    padding: 15px;
+    margin: 20px 0;
+    background-color: #f9f9f9; /* Light background color */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.currency-selection-card32 select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.additional-info32 {
+    margin-top: 20px;
+    padding: 15px;
+    background-color: #f0f0f0;
+    border-radius: 8px;
+  }
+  
+  .additional-heading32 {
+    font-size: 1.2em;
+    margin-bottom: 10px;
+  }
+  
+  .additional-text32 {
+    margin-bottom: 15px;
+  }
+  
+  .historical-data-heading32 {
+    font-size: 1.2em;
+    margin-bottom: 5px;
+  }
+  
+  .historical-data-text32 {
+    margin-bottom: 10px;
+  }
+
+  .conversion-history32 {
+    margin-top: -10px;
+    padding: 15px;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+  }
+  
+  .history-heading32 {
+    font-size: 1.2em;
+    margin-bottom: 10px;
+  }
+  
+  .history-list32 {
+    list-style-type: none;
+    padding: 0;
+  }
+  
+  .history-list32 li {
+    margin: 5px 0;
+  }
+  
+
+  .clear-history-button32 {
+    background-color: transparent;
+    border: none;
+    color: #ff0000; /* Red color for the clear button */
+    cursor: pointer;
+    font-size: 16px;
+    margin-bottom: 10px;
+  }
+  
+  .clear-history-button32:hover {
+    text-decoration: underline;
+  }
+
+  .selected-currency32 {
+    margin-top: 10px; 
+    color: #333; 
+    text-align: center;
+  }
+  
+  .currency-value32 {
+    color: green;
+    font-weight: bold; 
+  }
+  
+  

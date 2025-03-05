@@ -1,0 +1,289 @@
+*{
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Mitr';
+}
+
+body {
+width: 100%;
+margin: 0;
+background: #fff;
+padding: 0;
+}
+
+.main-container6 {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+
+.heading6 {
+  display: flex;
+  flex-direction: column;
+  align-items: center;  
+  justify-content: center;
+  padding: 60px 40px;
+  background: #fff;
+  width: 100%;
+  text-align: center;
+}
+
+.title-heading6 {
+  margin-top: 85px;
+  font-size: 16px;
+  font-weight: bold;
+  color: #e63946;
+  margin-bottom: 10px;
+}
+
+.title-para6 {
+  font-size: 28px;
+  font-weight: 500;
+  color: #000;
+  margin: 0;
+}
+
+
+.recent-search-container6 {
+margin-top: -30px;
+display: flex;
+flex-direction: column;
+gap: 30px;
+padding: 10px;
+margin-left: 180px;
+}
+
+.recent-search-box {
+display: flex;
+gap: 30px;
+align-items: center;
+
+}
+
+.title-recent6 {
+font-size: 16px;
+font-weight: 500;
+color: #333;
+margin-bottom: 0;
+}
+
+.reset-button-container-6 {
+display: flex;
+align-items: center;  
+padding: 10px 40px 10px 10px;
+border: 1px solid #121111;
+border-radius: 20px;
+font-size: 16px;
+height: 40px; 
+cursor: pointer;
+background-color: #AE0808; 
+color: white; 
+gap: 20px;
+}
+
+.recent-icon6 {
+width: 20px;
+height: 20px;
+background-size: cover;
+background-repeat: no-repeat;
+background-position: center;
+background-image: url('/images/di.png');  
+margin-right: -30px; 
+}
+
+
+.recent-search-card-container6 {
+display: flex;
+gap: 20px; 
+}
+
+.recent-search-card6 {
+display: flex;
+align-items: center;
+justify-content: space-between; 
+background-color: #f4f4f4;
+border-radius: 20px; 
+height: 50px;
+padding: 0 15px;
+width: auto;
+cursor: pointer;
+}
+
+.recent-card-icon6 {
+width: 25px;
+height: 25px;
+background-size: cover;
+background-repeat: no-repeat;
+background-position: center;
+}
+
+.nearby-icon {
+background-image: url('/images/navi.png'); 
+}
+
+.similar-icon {
+background-image: url('/images/location.png'); 
+background-size: 20px 20px; 
+}
+
+.recent-card-text6 {
+font-size: 16px;
+font-weight: bold;
+color: #333;
+margin-left: 20px; 
+}
+
+
+
+.aed-container-6 {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  background-color: #f4f4f4; 
+  padding: 10px 20px; 
+  border-radius: 20px; 
+  width: fit-content; 
+  box-shadow: 0px 2px 5px rgba(59, 51, 51, 0.1);
+  margin-top: 10px;
+  margin-left: 1170px;
+  transition: background-color 0.3s ease-in-out;
+}
+
+.aed-icon {
+  display: flex;
+  align-items: center;
+  text-decoration: none; /* Removes underline from link */
+}
+
+.add-icon-img6 {
+  width: 30px;
+  height: 30px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  cursor: pointer;
+  transition: transform 0.2s ease-in-out;
+  margin-right: 8px; 
+}
+
+/* Scale effect on hover for the image only */
+.add-icon-img6:hover {
+  transform: scale(1.2); 
+}
+
+.add-media-text6 {
+  display: flex;
+  align-items: center;
+  font-size: 16px; 
+  color: black;
+}
+
+
+
+
+.picture-container6 {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 20px;
+  gap: 20px; /* Add spacing between rows */
+}
+
+.row6 {
+  display: flex;
+  align-items: center; /* Ensures everything is aligned */
+  justify-content: center;
+  width: 100%;
+  gap: 20px;
+}
+
+/* Video container */
+.video-container6 {
+  flex-shrink: 0;
+  width: 456px;
+  height: 479px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-radius: 10px;
+}
+
+/* Video styling */
+.video6 {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease-in-out;
+}
+
+/* Image container */
+.images-container6 {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  cursor: pointer;
+}
+
+/* Row of images */
+.image-row6 {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+/* Image styling */
+.image6 {
+  width: 338px;
+  height: 229px;
+  object-fit: cover;
+  border-radius: 10px;
+  transition: transform 0.3s ease-in-out;
+}
+
+/* Apply zoom-out effect on hover */
+.image6:hover,
+.video6:hover {
+  transform: scale(0.95); /* Shrink the media */
+}
+
+
+.image-wrapper6,
+.video-container6 {
+  position: relative;
+  display: inline-block;
+}
+
+.overlay6 {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  gap: 8px;
+  opacity: 0;  /* Initially hidden */
+  transition: opacity 0.2s ease-in-out;
+}
+
+/* Show icons when hovering over image or video */
+.image-wrapper6:hover .overlay6,
+.video-container6:hover .overlay6 {
+  opacity: 1;
+}
+
+.edit-icon6,
+.delete-icon6 {
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+  transition: transform 0.2s ease-in-out;
+  background-color: #f4f4f4;
+  padding: 6px; 
+  border-radius: 10px;
+}
+
+.edit-icon6:hover,
+.delete-icon6:hover {
+  transform: scale(1.1);
+}
