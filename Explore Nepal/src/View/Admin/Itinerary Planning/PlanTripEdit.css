@@ -367,3 +367,76 @@ body {
 .create-btn23:hover {
   background-color: #006600;
 }
+
+/* Toast Styles */
+.toast-message23 {
+  font-family: 'Mitr' !important;
+  font-size: 14px !important;
+  border-radius: 6px !important;
+}
+
+.Toastify__toast--success {
+  background-color: #008000 !important;
+  color: white !important;
+}
+
+.Toastify__toast--error {
+  background-color: #AE0808 !important;
+  color: white !important;
+}
+
+/* Update button states */
+.create-btn23:disabled {
+  background-color: #cccccc !important;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.cancel-btn23:disabled {
+  background-color: #cccccc !important;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+/* Loading state animation */
+@keyframes updating {
+  0% { opacity: 1; }
+  50% { opacity: 0.7; }
+  100% { opacity: 1; }
+}
+
+.create-btn23:disabled {
+  animation: updating 1.5s infinite;
+}
+
+/* Toast custom styles */
+.Toastify__toast--success {
+  background-color: #008000 !important;
+  color: white !important;
+}
+
+.Toastify__toast--error {
+  background-color: #AE0808 !important;
+  color: white !important;
+}
+
+.Toastify__toast-body {
+  font-family: 'Mitr' !important;
+  font-size: 14px !important;
+}
+
+.Toastify__progress-bar {
+  background: rgba(255, 255, 255, 0.7) !important;
+}
+
+/* Toast container positioning */
+.Toastify__toast-container {
+  z-index: 9999;
+}
+
+.toast-message23 {
+  font-family: 'Mitr' !important;
+  font-size: 14px !important;
+  border-radius: 6px !important;
+  padding: 15px !important;
+}

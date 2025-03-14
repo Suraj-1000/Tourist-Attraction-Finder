@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import "./AdminLanguage.css";
-import Header from "../../../Components/Header";
+import Header from "../../../Components/Admin Header/Admin-Header";
 import Footer from "../../../Components/Footer";
 import axios from "axios"; // Import axios for API requests
 

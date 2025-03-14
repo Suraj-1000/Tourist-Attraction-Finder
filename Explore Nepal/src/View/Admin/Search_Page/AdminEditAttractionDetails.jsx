@@ -2,8 +2,10 @@ import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import "./AdminEditAttractionDetails.css";
-import Header from "../../../Components/Header";
+import Header from "../../../Components/Admin Header/Admin-Header";
 import Footer from "../../../Components/Footer";
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 export default function AdminEditAttractionDetailsPage() {
   const { attractionName } = useParams(); 
@@ -61,13 +63,23 @@ export default function AdminEditAttractionDetailsPage() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    
-    if (name === "subcategories" || name === "subtype") {
-      setAttraction({ ...attraction, [name]: value.split(",").map(item => item.trim()) }); // Convert string to array
+
+    if (name === "rating") {
+        let newValue = parseInt(value, 10); // Convert to integer
+
+        // Ensure value stays between 0 and 5
+        if (isNaN(newValue) || newValue < 0) newValue = 0;
+        if (newValue > 5) newValue = 5;
+
+        setAttraction({ ...attraction, [name]: newValue });
+    } else if (name === "subcategories" || name === "subtype") {
+        setAttraction({ ...attraction, [name]: value.split(",").map(item => item.trim()) });
     } else {
-      setAttraction({ ...attraction, [name]: value });
+        setAttraction({ ...attraction, [name]: value });
     }
-  };
+};
+
+  
   
   
 
@@ -85,10 +97,10 @@ export default function AdminEditAttractionDetailsPage() {
       const formData = new FormData();
   
       Object.keys(attraction).forEach((key) => {
-        if (key === "photos") return; // 🚨 Skip sending `photos` unless updated
+        if (key === "photos") return;
   
         if (Array.isArray(attraction[key])) {
-          formData.append(key, JSON.stringify(attraction[key])); // Convert arrays to JSON string
+          formData.append(key, JSON.stringify(attraction[key]));
         } else {
           formData.append(key, attraction[key]);
         }
@@ -98,21 +110,37 @@ export default function AdminEditAttractionDetailsPage() {
         formData.append("image", fileInputRef.current.files[0]);
       }
   
-      const response = await axios.put("http://localhost:4000/adminSearch/updateAttraction", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+      const response = await axios.put(
+        "http://localhost:4000/adminSearch/updateAttraction",
+        formData,
+        { headers: { "Content-Type": "multipart/form-data" } }
+      );
   
       if (response.status === 200) {
-        alert("✅ Attraction updated successfully!");
-        navigate(-1);
-      } else {
-        alert("❌ Failed to update attraction.");
+        toast.success('Attraction updated successfully!', {
+          className: 'toast-message15',
+        });
+  
+        // Update localStorage
+        let storedResults = JSON.parse(sessionStorage.getItem("searchResults")) || [];
+        storedResults = storedResults.map((item) =>
+          item.name === attraction.name ? { ...item, ...attraction } : item
+        );
+        sessionStorage.setItem("searchResults", JSON.stringify(storedResults));
+  
+        // Navigate after a short delay to show the toast
+        setTimeout(() => {
+          navigate(-1);
+        }, 1000);
       }
     } catch (error) {
-      console.error("❌ Error updating attraction:", error);
-      alert(`Update failed: ${error.response?.data?.message || "Unknown error"}`);
+      console.error("Error updating attraction:", error);
+      toast.error(error.response?.data?.message || "Failed to update attraction", {
+        className: 'toast-message15',
+      });
     }
   };
+  
   
   
   if (loading) return <div className="loading16">Loading attraction details...</div>;
@@ -121,6 +149,14 @@ export default function AdminEditAttractionDetailsPage() {
   return (
     <>
       <Header />
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        closeOnClick
+        pauseOnHover
+        draggable
+      />
       <div className="main-container15">
         <div className="heading15">
           <h1 className="title-heading15">Edit Attraction Details</h1>
@@ -174,7 +210,7 @@ export default function AdminEditAttractionDetailsPage() {
               />
 
               <label className="form-label15">Rating:</label>
-              <input type="number" name="rating" value={attraction.rating} onChange={handleChange} className="input-field15" min="0" max="5" />
+              <input type="text" name="rating" value={attraction.rating} onChange={handleChange} className="input-field15" min="0" max="5" step="1" onKeyDown={(e) => ["e", "E", "+", "-", "."].includes(e.key) && e.preventDefault()}  />
 
               <label className="form-label15">Category:</label>
               <input type="text" name="category" value={attraction.category} onChange={handleChange} className="input-field15" />

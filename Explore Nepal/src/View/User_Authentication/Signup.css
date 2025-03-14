@@ -179,3 +179,29 @@ body {
   color: #008000;
 }
 
+/* Centering the input group */
+.input-group01 {
+  display: flex;
+  flex-direction: column; /* Stack the label and input vertically */
+  justify-content: center;
+  align-items: center;
+  margin: 20px 0; /* Optional: adds spacing between form fields */
+}
+
+.input-group01 label {
+  margin-bottom: 10px; /* Adds space between the label and the input field */
+  font-size: 16px; /* Optional: makes the label text a bit larger */
+}
+
+.input-field01 {
+  width: 250px;
+  padding: 12px;
+  font-size: 14px;
+  border-radius: 5px;
+  border: 1px solid #cccccc;
+  background-color: #f9f9f9;
+  transition: border-color 0.3s;
+  text-align: center; /* Centers the text inside the input field */
+}
+
+

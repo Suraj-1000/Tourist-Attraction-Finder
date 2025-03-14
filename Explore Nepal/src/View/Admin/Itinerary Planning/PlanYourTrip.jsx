@@ -1,8 +1,10 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import "./PlanYourTrip.css";
-import Header from "../../../Components/Header";
+import Header from "../../../Components/Admin Header/Admin-Header";
 import Footer from "../../../Components/Footer";
 
 export default function PlanYourTripPage() {
@@ -14,13 +16,13 @@ export default function PlanYourTripPage() {
     tripType: "", 
     duration: "",
     destinations: "",
-    adventureActivities: "",
-    culturalExperiences: "",
-    relaxation: "",
-    foodCulinary: "",
-    nightlifeEntertainment: "",
+    adventureActivities: [],
+    culturalExperiences: [],
+    relaxation: [],
+    foodCulinary: [],
+    nightlifeEntertainment: [],
     customActivities: "", 
-    travelStyle: "", //
+    travelStyle: "Solo",
     accommodationType: "", 
     mealsPreferences: "", 
     dietaryPreferences: "", 
@@ -169,6 +171,11 @@ const calculateCostBreakdown = (data) => {
 const handleChange = (e) => {
     const { name, value } = e.target;
     
+    // For radio buttons, ensure we're setting a valid value
+    if (name === "travelStyle" && value === "") {
+        return; // Don't set empty values for travelStyle
+    }
+    
     setFormData((prev) => {
         const updatedData = { ...prev, [name]: value };
 
@@ -177,7 +184,8 @@ const handleChange = (e) => {
         }
 
         if (["duration", "accommodationType", "transportationType", "mealsPreferences",
-            "adventureActivities", "culturalExperiences", "relaxation", "foodCulinary", "nightlifeEntertainment", "travelInsurance", "includeEvents"].includes(name)) {
+            "adventureActivities", "culturalExperiences", "relaxation", "foodCulinary", 
+            "nightlifeEntertainment", "travelInsurance", "includeEvents"].includes(name)) {
 
             return calculateCostBreakdown(updatedData);
         }
@@ -257,30 +265,49 @@ const handleChange = (e) => {
     const formDataToSubmit = { ...formData };
 
     // Convert arrays to strings
-    formDataToSubmit.accommodationType = Array.isArray(formData.accommodationType) ? formData.accommodationType.join(", ") : formData.accommodationType;
-    formDataToSubmit.mealsPreferences = Array.isArray(formData.mealsPreferences) ? formData.mealsPreferences.join(", ") : formData.mealsPreferences;
-    formDataToSubmit.dietaryPreferences = Array.isArray(formData.dietaryPreferences) ? formData.dietaryPreferences.join(", ") : formData.dietaryPreferences;
+    formDataToSubmit.accommodationType = Array.isArray(formData.accommodationType) 
+      ? formData.accommodationType.join(", ") 
+      : formData.accommodationType;
+    formDataToSubmit.mealsPreferences = Array.isArray(formData.mealsPreferences) 
+      ? formData.mealsPreferences.join(", ") 
+      : formData.mealsPreferences;
+    formDataToSubmit.dietaryPreferences = Array.isArray(formData.dietaryPreferences) 
+      ? formData.dietaryPreferences.join(", ") 
+      : formData.dietaryPreferences;
 
     if (formDataToSubmit.itinerary) {
-        formDataToSubmit.itinerary = JSON.stringify(formDataToSubmit.itinerary);
+      formDataToSubmit.itinerary = JSON.stringify(formDataToSubmit.itinerary);
     }
 
     try {
-        const response = await axios.post(
-            "http://localhost:4000/adminAddTrip",
-            formDataToSubmit,
-            {
-                headers: { "Content-Type": "application/json" },
-            }
-        );
+      const response = await axios.post(
+        "http://localhost:4000/adminAddTrip",
+        formDataToSubmit,
+        {
+          headers: { "Content-Type": "application/json" },
+        }
+      );
 
-        alert("✅ Success! " + response.data.message);
+      toast.success("Trip added successfully!", {
+        position: "top-right",
+        autoClose: 3000,
+        className: 'toast-message21'
+      });
+
+      // Navigate after a short delay to allow the toast to be visible
+      setTimeout(() => {
         navigate(-1);
+      }, 2000);
+
     } catch (error) {
-        console.error("Error submitting form", error);
-        alert("❌ Error adding trip. Please try again.");
+      console.error("Error submitting form", error);
+      toast.error("Error adding trip. Please try again.", {
+        position: "top-right",
+        autoClose: 3000,
+        className: 'toast-message21'
+      });
     }
-};
+  };
 
   
 
@@ -289,6 +316,7 @@ const handleChange = (e) => {
   return (
     <>
       <Header />
+      <ToastContainer />
       <div className="main-container21">
         <div className="heading21">
           <h1 className="title-heading21">Plan Your Trip with Us</h1>
@@ -384,19 +412,47 @@ const handleChange = (e) => {
           <h3 className="h3-21">Travel Style:</h3>
           <div className="travel-style-options21">
               <label className="travel-style-label21">
-                  <input className="travel-style-input21" type="radio" name="travelStyle" value="Solo" onChange={handleChange} />
+                  <input 
+                      className="travel-style-input21" 
+                      type="radio" 
+                      name="travelStyle" 
+                      value="Solo" 
+                      checked={formData.travelStyle === "Solo"}
+                      onChange={handleChange} 
+                  />
                   <span className="icon">👤</span> Solo
               </label>
               <label className="travel-style-label21">
-                  <input className="travel-style-input21" type="radio" name="travelStyle" value="Couples" onChange={handleChange} />
+                  <input 
+                      className="travel-style-input21" 
+                      type="radio" 
+                      name="travelStyle" 
+                      value="Couples" 
+                      checked={formData.travelStyle === "Couples"}
+                      onChange={handleChange} 
+                  />
                   <span className="icon">❤️</span> Couples
               </label>
               <label className="travel-style-label21">
-                  <input className="travel-style-input21" type="radio" name="travelStyle" value="Groups" onChange={handleChange} />
+                  <input 
+                      className="travel-style-input21" 
+                      type="radio" 
+                      name="travelStyle" 
+                      value="Groups" 
+                      checked={formData.travelStyle === "Groups"}
+                      onChange={handleChange} 
+                  />
                   <span className="icon">👥</span> Groups
               </label>
               <label className="travel-style-label21">
-                  <input className="travel-style-input21" type="radio" name="travelStyle" value="Family" onChange={handleChange} />
+                  <input 
+                      className="travel-style-input21" 
+                      type="radio" 
+                      name="travelStyle" 
+                      value="Family" 
+                      checked={formData.travelStyle === "Family"}
+                      onChange={handleChange} 
+                  />
                   <span className="icon">👨‍👩‍👧‍👦</span> Family
               </label>
           </div>

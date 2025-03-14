@@ -81,6 +81,7 @@ body {
     border-radius: 5px;
     border: 1px solid #ccc;
     font-size: 14px;
+    width: 100%;
   }
   
   .button2 {
@@ -118,6 +119,33 @@ body {
   .link2:hover {
     color: #006400;
     text-decoration: underline;
+  }
+
+  .password-field2 {
+    position: relative;
+    width: 100%;
+    display: flex;
+    align-items: center;
+  }
+
+  .input-full2 {
+    width: 100%;
+  }
+
+  .eye-icon2.inside2 {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 20px;
+    color: #ccc;
+  }
+
+  .eye-icon2:hover {
+    color: #008000;
   }
 
   

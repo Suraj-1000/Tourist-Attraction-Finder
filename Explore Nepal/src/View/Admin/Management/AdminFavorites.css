@@ -237,3 +237,21 @@ body {
     margin-bottom: 2px;
 }
 
+.toast-message29 {
+  font-family: 'Mitr';
+  font-size: 14px;
+  border-radius: 8px;
+}
+
+/* Custom styles for success toast */
+.Toastify__toast--success {
+  background: rgba(0, 128, 0, 0.9);
+  color: white;
+}
+
+/* Custom styles for error toast */
+.Toastify__toast--error {
+  background: rgba(230, 57, 70, 0.9);
+  color: white;
+}
+

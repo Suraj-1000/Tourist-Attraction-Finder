@@ -3,9 +3,20 @@ import axios from "axios";
 
 export const CurrencyContext = createContext();
 
-export const CurrencyProvider = ({ children }) => {
-    const [currency, setCurrency] = useState(localStorage.getItem("selectedCurrency") || "USD");
-    const [exchangeRates, setExchangeRates] = useState({});
+export function CurrencyProvider({ children }) {
+    const [currency, setCurrency] = useState('USD');
+    const [exchangeRates, setExchangeRates] = useState({
+        USD: 1,
+        NPR: 132.95,
+        EUR: 0.92,
+        GBP: 0.79,
+        AUD: 1.52,
+        // Add more currencies as needed
+    });
+
+    const updateCurrency = (newCurrency) => {
+        setCurrency(newCurrency);
+    };
 
     useEffect(() => {
         const fetchExchangeRates = async () => {
@@ -29,8 +40,8 @@ export const CurrencyProvider = ({ children }) => {
     
 
     return (
-        <CurrencyContext.Provider value={{ currency, setCurrency, exchangeRates }}>
+        <CurrencyContext.Provider value={{ currency, exchangeRates, updateCurrency }}>
             {children}
         </CurrencyContext.Provider>
     );
-};
+}

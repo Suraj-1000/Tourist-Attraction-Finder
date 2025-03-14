@@ -18,6 +18,7 @@ body {
   display: block;
   justify-content: center;
   align-items: center;
+  padding: 20px;
 }
 
 
@@ -33,7 +34,7 @@ body {
 }
 
 .title-heading7 {
-  margin-top: 85px;
+  margin-top: 55px;
   font-size: 16px;
   font-weight: bold;
   color: #e63946;
@@ -48,34 +49,68 @@ body {
 }
 
 .upload-card7 {
-  background: white;
+  background: #ffffff;
   box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
-  border-radius: 10px;
-  padding: 20px;
+  border-radius: 15px;
+  padding: 30px;
   width: 400px;
   margin: -30px auto;
   text-align: center;
   margin-bottom: 20px;
+  transition: transform 0.3s ease;
+}
+
+.upload-card7:hover {
+  transform: translateY(-10px);
 }
 
 .upload-image7 {
-  width: 100%; 
-  height: auto; 
+  width: 100%;
+  height: auto;
+  max-height: 300px;
   object-fit: contain;
-  border-radius: 10px; 
+  border-radius: 10px;
+  margin-bottom: 20px;
 }
 
-
+/* Section inside the card */
 .upload-section7 {
-  margin-top: 10px;
+  margin-top: 20px;
 }
 
+
+/* File input field */
 .file-input7 {
   display: block;
-  margin: 10px auto;
-  padding: 10px;
+  margin: 15px auto;
+  padding: 12px 20px;
   border: 1px solid #ccc;
-  border-radius: 5px;
+  border-radius: 10px;
+  font-size: 16px;
+  width: 100%;
+  background-color: #f9f9f9;
+}
+
+.file-input7:focus {
+  border-color: #e63946;
+  outline: none;
+}
+
+
+.tags-input7 {
+  display: block;
+  margin: 10px auto;
+  padding: 12px 20px;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  font-size: 16px;
+  width: 100%;
+  background-color: #f9f9f9;
+}
+
+.tags-input7:focus {
+  border-color: #e63946;
+  outline: none;
 }
 
 .file-info7 {
@@ -111,4 +146,36 @@ body {
   width: 100px;  
   height: 100px;
   margin-top: 10px;
+}
+
+.toast-message7 {
+  font-family: 'Mitr';
+  font-size: 14px;
+  border-radius: 8px;
+}
+
+.Toastify__toast--success {
+  background: rgba(0, 128, 0, 0.9) !important;
+  color: white;
+}
+
+.Toastify__toast--error {
+  background: rgba(174, 8, 8, 0.9) !important;
+  color: white;
+}
+
+.loading-text7 {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.loading-text7::after {
+  content: "";
+  width: 16px;
+  height: 16px;
+  border: 2px solid #ffffff;
+  border-radius: 50%;
+  border-top-color: transparent;
+  animation: spin
 }

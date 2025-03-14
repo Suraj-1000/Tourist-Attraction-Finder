@@ -2,8 +2,10 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 import "./AdminEmergency.css";
-import Header from "../../../Components/Header";
+import Header from "../../../Components/Admin Header/Admin-Header";
 import Footer from "../../../Components/Footer";
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const emergencyContacts = [
   { icon: "🚔", type: "Police", phone: "+977 1 100" },
@@ -19,6 +21,8 @@ export default function AdminEmergencyPage() {
   const [type, setType] = useState("");
   const [userContacts, setUserContacts] = useState([]);
   const [editingContactId, setEditingContactId] = useState(null); // New state for tracking editing contact
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [contactToDelete, setContactToDelete] = useState(null);
 
   const fetchUserContacts = async () => {
     try {
@@ -39,27 +43,33 @@ export default function AdminEmergencyPage() {
         if (editingContactId) {
           // Update existing contact
           const response = await axios.put(`http://localhost:4000/adminEmergency/${editingContactId}`, { name, phone, type });
-          alert(response.data.message);
           setUserContacts((prevContacts) =>
             prevContacts.map((contact) =>
               contact._id === editingContactId ? response.data.updatedEmergency : contact
             )
           );
+          toast.success('Emergency Contact updated successfully!', {
+            className: 'toast-message31',
+          });
         } else {
           // Add new contact
           const response = await axios.post("http://localhost:4000/adminEmergency", { name, phone, type });
-          alert(`✅ ${response.data.message}`);
           setUserContacts([...userContacts, response.data.newEmergency]);
+          toast.success('New Emergency contact added successfully!', {
+            className: 'toast-message31',
+          });
         }
 
         // Reset the form fields
         setName("");
         setPhone("");
         setType("");
-        setEditingContactId(null); // Reset editing contact ID
+        setEditingContactId(null);
       } catch (error) {
         console.error("Error adding/updating contact:", error);
-        alert("❌ An error occurred. Please try again.");
+        toast.error('An error occurred. Please try again.', {
+          className: 'toast-message31',
+        });
       }
     }
   };
@@ -72,23 +82,64 @@ export default function AdminEmergencyPage() {
   };
 
   const handleDelete = async (contact) => {
-    const confirmDelete = window.confirm(`Are you sure you want to delete "${contact.name}"?`);
+    setContactToDelete(contact);
+    setShowDeleteModal(true);
+  };
 
-    if (confirmDelete) {
-      try {
-        const response = await axios.delete(`http://localhost:4000/adminEmergency/${contact._id}`);
-        setUserContacts((prevContacts) => prevContacts.filter((c) => c._id !== contact._id));
-        alert(`✅ Contact "${contact.name}" deleted successfully.`);
-      } catch (error) {
-        console.error("Failed to delete the contact:", error);
-        alert("❌ An error occurred while deleting the contact. Please try again.");
-      }
+  const confirmDelete = async () => {
+    try {
+      await axios.delete(`http://localhost:4000/adminEmergency/${contactToDelete._id}`);
+      setUserContacts((prevContacts) => prevContacts.filter((c) => c._id !== contactToDelete._id));
+      toast.success(`Emergency Contact "${contactToDelete.name}" deleted successfully.`, {
+        className: 'toast-message31',
+      });
+    } catch (error) {
+      console.error("Failed to delete the contact:", error);
+      toast.error('An error occurred while deleting the contact.', {
+        className: 'toast-message31',
+      });
+    } finally {
+      setShowDeleteModal(false);
+      setContactToDelete(null);
     }
   };
 
   return (
     <>
       <Header />
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        closeOnClick
+        pauseOnHover
+        draggable
+      />
+      
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="modal-overlay31">
+          <div className="modal-content31">
+            <h2>Confirm Delete</h2>
+            <p>Are you sure you want to delete "{contactToDelete?.name}"?</p>
+            <div className="modal-buttons31">
+              <button 
+                className="modal-cancel-btn31" 
+                onClick={() => setShowDeleteModal(false)}
+              >
+                Cancel
+              </button>
+              <button 
+                className="modal-delete-btn31" 
+                onClick={confirmDelete}
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="main-container31">
         <div className="heading31">
           <h1 className="title-heading31">Emergency Events & Resources</h1>

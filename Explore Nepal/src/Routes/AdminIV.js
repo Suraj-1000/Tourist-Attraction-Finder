@@ -6,55 +6,51 @@ import AdminAddIV from '../Models/AdminAddIV.js';
 
 const router = express.Router();
 
-// Cloudinary storage setup
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
     folder: 'images_videos', 
-    allowed_formats: ['jpg', 'png', 'mp4'], // Allowed file types
-    resource_type: 'auto', // Allows both images and videos
+    allowed_formats: ['jpg', 'png', 'mp4'], 
+    resource_type: 'auto',
   },
 });
 
 const upload = multer({ storage: storage });
 
-// Route to upload images/videos
-router.post('/upload', upload.single('file'), async (req, res) => {
+router.post("/upload", upload.single("file"), async (req, res) => {
   try {
     if (!req.file) {
-      return res.status(400).json({ message: 'No file uploaded' });
+      return res.status(400).json({ message: "No file uploaded" });
     }
 
-    console.log('Uploaded file:', req.file);
-
     const { filename, mimetype, size } = req.file;
-    const url = req.file.path; // Cloudinary URL
+    const url = req.file.path;
+    const tags = req.body.tags ? req.body.tags.split(",") : [];
 
-    // Save to MongoDB
     const newMedia = new AdminAddIV({
       url,
       filename,
       mimetype,
       size,
+      tags,
     });
 
     await newMedia.save();
-    res.status(201).json({ message: 'File uploaded successfully', file: url });
+    res.status(201).json({ message: "File uploaded successfully", file: url });
   } catch (error) {
-    console.error('Error uploading file:', error);
-    res.status(500).json({ message: 'Failed to upload file', error });
+    res.status(500).json({ message: "Failed to upload file", error });
   }
 });
 
-router.get('/files', async (req, res) => {
+router.get("/files", async (req, res) => {
   try {
-    const files = await AdminAddIV.find(); 
+    const files = await AdminAddIV.find();
     res.status(200).json(files);
   } catch (error) {
-    console.error('Error retrieving files:', error);
-    res.status(500).json({ message: 'Failed to retrieve files', error });
+    res.status(500).json({ message: "Failed to retrieve files", error });
   }
 });
+
 
 router.get('/files/:id', async (req, res) => {
   try {
@@ -73,38 +69,29 @@ router.put('/update/:id', upload.single('file'), async (req, res) => {
     const file = await AdminAddIV.findById(req.params.id);
     if (!file) return res.status(404).json({ message: "File not found" });
 
-    if (!req.file) {
-      return res.status(400).json({ message: "No file uploaded" });
+    // If a new file is uploaded, process the new file
+    if (req.file) {
+      const oldUrl = file.url;
+      const oldPublicIdMatch = oldUrl.match(/\/upload\/v\d+\/(.+)\.\w+$/);
+      if (!oldPublicIdMatch) {
+        return res.status(500).json({ message: "Failed to extract Cloudinary public ID" });
+      }
+      const oldPublicId = oldPublicIdMatch[1]; 
+
+      await cloudinary.uploader.destroy(oldPublicId);
+
+      const uploadResponse = await cloudinary.uploader.upload(req.file.path, {
+        folder: 'images_videos',
+        resource_type: req.file.mimetype.startsWith('video') ? 'video' : 'image',
+      });
+
+      file.url = uploadResponse.secure_url;
+      file.filename = uploadResponse.public_id;
+      file.mimetype = req.file.mimetype;
+      file.size = req.file.size;
     }
 
-    // Extract Cloudinary Public ID correctly (removes file extension)
-    const oldUrl = file.url;
-    const oldPublicIdMatch = oldUrl.match(/\/upload\/v\d+\/(.+)\.\w+$/);
-    if (!oldPublicIdMatch) {
-      return res.status(500).json({ message: "Failed to extract Cloudinary public ID" });
-    }
-    const oldPublicId = oldPublicIdMatch[1]; // This should now correctly extract "images_videos/ogpzigtbltrcl6dffwrh"
-
-    // Determine resource type for deletion
-    let oldResourceType = file.mimetype.startsWith('video') ? 'video' : 'image';
-
-    // Delete old file from Cloudinary
-    await cloudinary.uploader.destroy(oldPublicId, { resource_type: oldResourceType });
-
-    // Determine new file type
-    let newResourceType = req.file.mimetype.startsWith('video') ? 'video' : 'image';
-
-    // Upload new file to Cloudinary
-    const uploadResponse = await cloudinary.uploader.upload(req.file.path, {
-      folder: 'images_videos',
-      resource_type: newResourceType,
-    });
-
-    // Update MongoDB
-    file.url = uploadResponse.secure_url;
-    file.filename = uploadResponse.public_id;
-    file.mimetype = req.file.mimetype;
-    file.size = req.file.size;
+    file.tags = req.body.tags ? req.body.tags.split(",") : file.tags;
     await file.save();
 
     res.status(200).json({ message: "File updated successfully", file });
@@ -113,6 +100,7 @@ router.put('/update/:id', upload.single('file'), async (req, res) => {
     res.status(500).json({ message: "Failed to update file", error });
   }
 });
+
 
 
 router.delete('/deleteByFilename', async (req, res) => {

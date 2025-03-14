@@ -2,14 +2,17 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import axios from "axios";
 import "./AdminSearchPage.css";
-import Header from "../../../Components/Header";
+import Header from "../../../Components/Admin Header/Admin-Header";
 import Footer from "../../../Components/Footer";
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 export default function AdminSearchPage() {
   const [files, setFiles] = useState([]);
   const [recentSearch, setRecentSearch] = useState(null);
   const [loading, setLoading] = useState(false);
-
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [fileToDelete, setFileToDelete] = useState(null);
 
   useEffect(() => {
     const fetchFiles = async () => {
@@ -32,40 +35,87 @@ export default function AdminSearchPage() {
   const handleResetSearches = () => {
     localStorage.removeItem("recentSearches");
     setRecentSearch([]);
+    toast.success('Search history cleared successfully!', {
+      className: 'toast-message6',
+    });
   };
 
-const handleDelete = async (file) => {
-  if (!window.confirm("Are you sure you want to delete this file?")) return;
+  const handleDelete = async (file) => {
+    setFileToDelete(file);
+    setShowDeleteModal(true);
+  };
 
-  setLoading(true);
-  try {
-    const response = await fetch(`http://localhost:4000/adminMedia/deleteByFilename?filename=${file.filename}`, {
-      method: "DELETE",
-    });
+  const confirmDelete = async () => {
+    try {
+      // Show loading state in modal
+      const modalContent = document.querySelector('.modal-delete-btn6');
+      if (modalContent) {
+        modalContent.textContent = 'Deleting...';
+        modalContent.disabled = true;
+      }
 
-    const result = await response.json();
-    if (response.ok) {
-      alert("✅ File deleted successfully!");
+      const response = await fetch(`http://localhost:4000/adminMedia/deleteByFilename?filename=${fileToDelete.filename}`, {
+        method: "DELETE",
+      });
 
-      // ✅ Remove deleted file from UI
-      setFiles((prevFiles) => prevFiles.filter((f) => f._id !== file._id));
-    } else {
-      alert("❌ Error deleting file: " + result.message);
+      const result = await response.json();
+      if (response.ok) {
+        setFiles((prevFiles) => prevFiles.filter((f) => f._id !== fileToDelete._id));
+        toast.success('File deleted successfully!', {
+          className: 'toast-message6',
+        });
+      } else {
+        toast.error(`Error deleting file: ${result.message}`, {
+          className: 'toast-message6',
+        });
+      }
+    } catch (error) {
+      console.error("Error deleting file:", error);
+      toast.error('Failed to delete file.', {
+        className: 'toast-message6',
+      });
+    } finally {
+      setShowDeleteModal(false);
+      setFileToDelete(null);
     }
-  } catch (error) {
-    console.error("Error deleting file:", error);
-    alert("❌ Failed to delete file.");
-  } finally {
-    setLoading(false);
-  }
-};
-
-  
-  
+  };
 
   return (
     <>
       <Header />
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        closeOnClick
+        pauseOnHover
+        draggable
+      />
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="modal-overlay6">
+          <div className="modal-content6">
+            <h2>Confirm Delete</h2>
+            <p>Are you sure you want to delete this file?</p>
+            <div className="modal-buttons6">
+              <button 
+                className="modal-cancel-btn6" 
+                onClick={() => setShowDeleteModal(false)}
+              >
+                Cancel
+              </button>
+              <button 
+                className="modal-delete-btn6" 
+                onClick={confirmDelete}
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="main-container6">
         <div className="heading6">
           <h1 className="title-heading6">Upload Moments, Share Stories!</h1>
@@ -102,9 +152,6 @@ const handleDelete = async (file) => {
             <span className="add-media-text6">Add Media</span>
           </Link>
         </div>
-
-
-
 
         <div className="picture-container6">
           {(() => {
@@ -147,7 +194,8 @@ const handleDelete = async (file) => {
                             Your browser does not support the video tag.
                           </video>
                           <div className="overlay6">
-                            <Link to={`/AdmineditIV/${item.file._id}`}>
+                          <p className="tags-video6">Tags: {Array.isArray(item.file.tags) && item.file.tags.length > 0 ? item.file.tags.join(", ") : "No tags available"}</p>
+                            <Link to={`/AdminaddIV/${item.file._id}`}>
                               <img src="/images/edit.png" alt="Edit" className="edit-icon6" />
                             </Link>
                             <img
@@ -181,7 +229,8 @@ const handleDelete = async (file) => {
                                   height="229"
                                 />
                                 <div className="overlay6">
-                                  <Link to={`/AdmineditIV/${img.file._id}`}>
+                                <p className="tags-image6">Tags: {Array.isArray(img.file.tags) && img.file.tags.length > 0 ? img.file.tags.join(", ") : "No tags available"}</p>
+                                  <Link to={`/AdminaddIV/${img.file._id}`}>
                                     <img src="/images/edit.png" alt="Edit" className="edit-icon6" />
                                   </Link>
                                   <img
@@ -219,7 +268,8 @@ const handleDelete = async (file) => {
                                   height="229"
                                 />
                                 <div className="overlay6">
-                                  <Link to={`/AdmineditIV/${img.file._id}`}>
+                                <p className="tags-image6">Tags: {Array.isArray(img.file.tags) && img.file.tags.length > 0 ? img.file.tags.join(", ") : "No tags available"}</p>
+                                  <Link to={`/AdminaddIV/${img.file._id}`}>
                                     <img src="/images/edit.png" alt="Edit" className="edit-icon6" />
                                   </Link>
                                   <img
@@ -242,7 +292,8 @@ const handleDelete = async (file) => {
                             Your browser does not support the video tag.
                           </video>
                           <div className="overlay6">
-                            <Link to={`/AdmineditIV/${item.file._id}`}>
+                          <p className="tags-video6">Tags: {Array.isArray(item.file.tags) && item.file.tags.length > 0 ? item.file.tags.join(", ") : "No tags available"}</p>
+                            <Link to={`/AdminaddIV/${item.file._id}`}>
                               <img src="/images/edit.png" alt="Edit" className="edit-icon6" />
                             </Link>
                             <img
@@ -261,9 +312,6 @@ const handleDelete = async (file) => {
             ));
           })()}
         </div>
-
-
-          
       </div>
       <Footer />
     </>

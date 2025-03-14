@@ -128,24 +128,55 @@ body {
 
 .buttons-container32 {
     display: flex;
-    justify-content: center; 
-    gap: 15px; 
+    justify-content: center;
+    gap: 15px;
+    margin-top: 20px;
 }
 
-.buttons-container32 button {
+.swap-btn32,
+.convert-btn32 {
     padding: 12px 20px;
     font-size: 1rem;
     width: 130px;
     color: #fff;
-    background-color: #007bff; /* Bootstrap blue */
     border: none;
     border-radius: 6px;
     cursor: pointer;
-    transition: background-color 0.3s;
+    transition: all 0.3s ease;
+    font-family: 'Mitr';
 }
 
-.buttons-container32 button:hover {
-    background-color: #0056b3; /* Darker blue on hover */
+.swap-btn32 {
+    background-color: #F25019;
+}
+
+.convert-btn32 {
+    background-color: #008000;
+}
+
+.swap-btn32:hover {
+    background-color: #d94615;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(242, 80, 25, 0.2);
+}
+
+.convert-btn32:hover {
+    background-color: #006400;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 128, 0, 0.2);
+}
+
+.Toastify__close-button {
+    color: white !important;
+    opacity: 0.8;
+}
+
+.Toastify__close-button:hover {
+    opacity: 1;
+}
+
+.Toastify__progress-bar {
+    background: rgba(255, 255, 255, 0.7) !important;
 }
 
 .conversion-result32 {
@@ -252,4 +283,26 @@ body {
     font-weight: bold; 
   }
   
+  /* Toast Styles */
+  .toast-message32 {
+    font-family: 'Mitr';
+    font-size: 14px;
+    border-radius: 8px;
+  }
+
+  .Toastify__toast--success {
+    background: rgba(0, 128, 0, 0.9) !important;
+    color: white;
+  }
+
+  .Toastify__toast--error {
+    background: rgba(174, 8, 8, 0.9) !important;
+    color: white;
+  }
+
+  .Toastify__toast--info {
+    background: rgba(242, 80, 25, 0.9) !important;
+    color: white;
+  }
+
   

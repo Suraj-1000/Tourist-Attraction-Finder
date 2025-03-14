@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import "./AdminAttractionViewPage.css";
-import Header from "../../../Components/Header";
+import Header from "../../../Components/Admin Header/Admin-Header";
 import Footer from "../../../Components/Footer";
 
 export default function AdminAttractionViewPage() {
@@ -150,10 +150,17 @@ export default function AdminAttractionViewPage() {
 
 
         {/* Plan Your Trip Section */}
-        <p className="plan-trip-text16">To plan your own trip, click the button below:</p>
-        <Link to="/PlanYourTrip"><button className="plan-trip-btn16">
-          Plan Your Trip <img src="/images/arow.png" alt="arrow" className="arrow-down16" />
-        </button></Link>
+        <p className="plan-trip-text16">To plan your trip or go back, click one of the buttons below:</p>
+        <div className="button-container16">
+          <button className="back-button" onClick={() => navigate(-1)}>
+            &#8592; Back
+          </button>
+          <Link to="/PlanYourTrip">
+            <button className="plan-trip-btn16">
+              Plan Your Trip <img src="/images/arow.png" alt="arrow" className="arrow-down16" />
+            </button>
+          </Link>
+        </div>
       </div>
       <Footer />
     </>

@@ -1,21 +1,21 @@
 import React from 'react';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import { CurrencyProvider } from './config/CurrencyContext';
+import { Toaster } from 'react-hot-toast';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import ProtectedRoute from './config/ProtectedRoute';
 
-import LandingPage from './View/Admin/Home/LandingPage';
+import LandingPage from './View/Landing Page/LandingPage';
 import Login from './View/User_Authentication/Login';
 import Signup from './View/User_Authentication/Signup';
 import ForgotPass from './View/User_Authentication/ForgotPass';
 import PassReset from './View/User_Authentication/PassReset';
 import PassConfirm from './View/User_Authentication/PassConfirm'
-import AdminHomepage from './View/Admin/Home/AdminHomepage';
+
+import AdminHomepage from './View/Admin/Home/AdminHomePage';
 import AdminSearchPage from './View/Admin/Search_Page/AdminSearchPage';
 import AdminAddIVPage from './View/Admin/Search_Page/AdminAddIVPage';
-import AdminEditIVPage from './View/Admin/Search_Page/AdminEditIVPage';
-import AdminAddIVSuccessPage from './View/Admin/Search_Page/AdminAddIVSuccessPage';
-import AdminEditIVSuccessPage from './View/Admin/Search_Page/AdminEditIVSuccessPage';
 import AdminSearchAttractionPage from './View/Admin/Search_Page/AdminSearchAttractionPage';
-import AdminAddAttractionDetailsPage from './View/Admin/Search_Page/AdminAddAttractionDetails';
 import AdminEditAttractionDetailsPage from './View/Admin/Search_Page/AdminEditAttractionDetails';
 import AdminAttractionViewPage from './View/Admin/Search_Page/AdminAttractionViewPage';
 import ItineraryPackagePage from './View/Admin/Itinerary Planning/Package';
@@ -36,16 +36,14 @@ import AdminEmergencyPage from './View/Admin/Management/AdminEmergency';
 import AdminCurrenciesPage from './View/Admin/Management/AdminCurrency';
 import AdminLanguagePage from './View/Admin/Management/AdminLanguage';
 
-
+import UserHomepage from './View/User/Home Page/UserHomepage';
 
 export default function App() {
   const router = createBrowserRouter([
-
     {
       path: '/',
       element: <LandingPage />
     },
-
     {
       path: '/signup',
       element: <Signup />
@@ -66,11 +64,6 @@ export default function App() {
       path: '/passConfirm',
       element: <PassConfirm />
     },
-
-
-
-    // Admin Page Routing
-    // Admin Attraction
     {
       path: '/AdminHome',
       element: <AdminHomepage />
@@ -84,24 +77,12 @@ export default function App() {
       element: <AdminAddIVPage />
     },
     {
-      path: '/AdmineditIV/:id',
-      element: <AdminEditIVPage />
-    },
-    {
-      path: '/AdminaddIVSucess',
-      element: <AdminAddIVSuccessPage />
-    },
-    {
-      path: '/AdmineditIVSucess',
-      element: <AdminEditIVSuccessPage />
+      path: '/AdminaddIV/:id',
+      element: <AdminAddIVPage />
     },
     {
       path: '/AdminSearchAttraction',
       element: <AdminSearchAttractionPage />
-    },
-    {
-      path: '/AdminAddAttractionDetails',
-      element: <AdminAddAttractionDetailsPage />
     },
     {
       path: '/AdminEditAttractionDetails/:attractionName',
@@ -109,117 +90,97 @@ export default function App() {
     },
     {
       path: '/AdminAttractionView/:attractionName',
-      element: <AdminAttractionViewPage />
+      element: (
+        <ProtectedRoute>
+          <AdminAttractionViewPage />
+        </ProtectedRoute>
+      )
     },
-
-    //Admin Package 
     {
       path: '/ItineraryPackage',
       element: <ItineraryPackagePage />
     },
-
     {
       path: '/ItineraryPackageView/:packageName',
-      element: <ItineraryPackageViewPage />
+      element: <ProtectedRoute><ItineraryPackageViewPage /></ProtectedRoute>
     },
-
     {
       path: '/AddItineraryPackage',
       element: <AddItineraryPackagePage />
     },
-
     {
       path: '/EditItineraryPackage/:packageName',
       element: <EditItineraryPackagePage />
     },
-
     {
       path: '/PlanYourTrip',
       element: <PlanYourTripPage />
     },
-
     {
       path: '/ViewTrip',
       element: <ViewTripPage />
     },
-
     {
       path: '/PlanTripEdit/:tripName',
       element: <PlanTripEditPage />
     },
-
     {
       path: '/ViewTripDetails/:tripName',
-      element: <ViewTripDetailsPage />
+      element: <ProtectedRoute><ViewTripDetailsPage /></ProtectedRoute>
     },
-
-
-
-
-    // Booking Page Routes
     {
       path: '/AdminBookingAD',
       element: <AdminBookingADPage />
     },
-
-
-
-
-    // Management and Others Routes
-
     {
       path: '/AdminProfileManage',
       element: <AdminProfileManagePage />
     },
-
     {
       path: '/AdminChangePass',
       element: <AdminChangePassPage />
     },
-
     {
       path: '/AdminHistory',
       element: <AdminHistoryPage />
     },
-
     {
       path: '/AdminFavorites',
       element: <AdminFavoritesPage />
     },
-
     {
       path: '/AdminNotification',
       element: <AdminNotificationPage />
     },
-
     {
       path: '/AdminEmergency',
       element: <AdminEmergencyPage />
     },
-
     {
       path: '/AdminCurrencies',
       element: <AdminCurrenciesPage />
     },
-
     {
       path: '/AdminLanguage',
       element: <AdminLanguagePage />
+    },
+    {
+      path: '/Homepage',
+      element: <UserHomepage />
     }
-
-    
-
-
-
-
-
   ]);
+
   return (
-    <>
-     <CurrencyProvider>
-     <RouterProvider router={router}/>
-     </CurrencyProvider>
-    </>
-  )
+    <CurrencyProvider>
+      <Router>
+        <Routes>
+          {router.routes.map((route) => (
+            <Route key={route.path} path={route.path} element={route.element} />
+          ))}
+        </Routes>
+        <Toaster position="top-right" />
+      </Router>
+    </CurrencyProvider>
+  );
 }
 

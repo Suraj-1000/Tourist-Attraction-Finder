@@ -164,4 +164,27 @@ body {
   border-radius: 5px;
 }
 
+/* Toast Styles */
+.toast-message20 {
+  font-family: 'Mitr' !important;
+  font-size: 14px !important;
+  border-radius: 6px !important;
+}
+
+.Toastify__toast--success {
+  background-color: #008000 !important;
+  color: white !important;
+}
+
+.Toastify__toast--error {
+  background-color: #AE0808 !important;
+  color: white !important;
+}
+
+/* Disabled button state */
+.update-btn20:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+}
+
 

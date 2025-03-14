@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import "./AdminFavorites.css";
-import Header from "../../../Components/Header";
+import Header from "../../../Components/Admin Header/Admin-Header";
 import Footer from "../../../Components/Footer";
 
 export default function AdminFavoritesPage() {
@@ -19,6 +21,17 @@ export default function AdminFavoritesPage() {
 
     setFavorites(updatedFavorites);
     localStorage.setItem("favorites", JSON.stringify(updatedFavorites));
+    
+    // Add toast notification
+    toast.success(`${card.title || card.name} removed from favorites!`, {
+      position: "top-right",
+      autoClose: 3000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+      className: 'toast-message29',
+    });
   };
 
   // Helper to render stars
@@ -29,6 +42,7 @@ export default function AdminFavoritesPage() {
   return (
     <>
       <Header />
+      <ToastContainer />
       <div className="main-container29">
         <div className="heading29">
           <h1 className="title-heading29">Manage Your Favorites</h1>

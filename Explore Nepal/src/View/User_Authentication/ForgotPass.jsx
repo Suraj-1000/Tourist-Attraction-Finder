@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import './ForgotPass.css';
 import axios from 'axios';
+import { toast } from "react-hot-toast";
 
 const SendLinkButton = ({ email }) => {
   const navigate = useNavigate();
@@ -10,10 +11,10 @@ const SendLinkButton = ({ email }) => {
     e.preventDefault();
     try {
       const response = await axios.post('http://localhost:4000/forgot', { email });  // Updated route here
-      alert(response.data.message);
+      toast.success(response.data.message);
       navigate('/passReset'); 
     } catch (error) {
-      alert(error.response?.data?.message || 'Something went wrong.');
+      toast.error(error.response?.data?.message || 'Something went wrong.');
     }
   };
 

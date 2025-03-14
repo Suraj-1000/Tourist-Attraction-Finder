@@ -69,35 +69,50 @@ router.get("/trips", async (req, res) => {
       console.error("❌ Error fetching trips:", error.stack);  // ✅ Log full error
       res.status(500).json({ error: "Internal Server Error", details: error.message });
     }
-  });
-  
-  
-  
-  router.put("/trips/:tripName", async (req, res) => {
-    try {
-      const { status } = req.body;  // Get the status from the request body
-      const tripName = req.params.tripName;
-  
-      if (!status) {
-        return res.status(400).json({ error: 'Status is required to update the trip' });
-      }
-  
-      const trip = await PlanTrip.findOne({ tripName: tripName });
-      if (!trip) {
-        return res.status(404).json({ error: `Trip "${tripName}" not found` });
-      }
-  
-      trip.status = status;
-      await trip.save();
-  
-      res.json({ message: `Trip "${trip.tripName}" successfully updated!`, trip });
-    } catch (error) {
-      console.error("❌ Error updating trip status:", error);
-      res.status(500).json({ error: "Error updating trip status", details: error.message });
-    }
-  });
-  
+});
 
-  
+// Update trip status
+router.put('/trips/:tripName', async (req, res) => {
+    try {
+        const { tripName } = req.params;
+        const { status } = req.body;
+
+        const trip = await PlanTrip.findOne({ tripName });
+        if (!trip) {
+            return res.status(404).json({ message: 'Trip not found' });
+        }
+
+        trip.status = status;
+        await trip.save();
+
+        // Send email notification
+        if (trip.userEmail) {
+            await sendEmailNotification(trip.userEmail, status, tripName);
+        }
+
+        // Send real-time notification
+        const notificationHub = req.app.get('notificationHub');
+        if (notificationHub) {
+            if (status === 'approved') {
+                notificationHub.sendTripApprovalNotification({
+                    tripName: trip.tripName,
+                    userName: trip.userName,
+                    userEmail: trip.userEmail
+                });
+            } else {
+                notificationHub.sendTripDeclinedNotification({
+                    tripName: trip.tripName,
+                    userName: trip.userName,
+                    userEmail: trip.userEmail
+                });
+            }
+        }
+
+        res.json({ message: 'Trip status updated successfully', trip });
+    } catch (error) {
+        console.error('Error updating trip status:', error);
+        res.status(500).json({ message: error.message });
+    }
+});
 
 export default router;

@@ -2,9 +2,11 @@ import React, { useState, useEffect, useContext  } from "react";
 import axios from "axios";
 import "./AdminCurrency.css";
 import { CurrencyContext } from "../../../config/CurrencyContext";
-import Header from "../../../Components/Header";
+import Header from "../../../Components/Admin Header/Admin-Header";
 import Footer from "../../../Components/Footer";
 import { FaTrash } from "react-icons/fa";
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 export default function AdminCurrencyPage() {
   const [exchangeRates, setExchangeRates] = useState({});
@@ -13,7 +15,7 @@ export default function AdminCurrencyPage() {
   const [inputPrice, setInputPrice] = useState("");
   const [convertedPrice, setConvertedPrice] = useState("");
   const [conversionHistory, setConversionHistory] = useState([]);
-  const { currency, setCurrency } = useContext(CurrencyContext);
+  const { currency, updateCurrency } = useContext(CurrencyContext);
 
   const apiKey = "b62d5df1597e71921544174d"; 
 
@@ -38,7 +40,6 @@ export default function AdminCurrencyPage() {
       const converted = (inputPrice * (rateTo / rateFrom)).toFixed(2);
       setConvertedPrice(converted);
       
-      // Add to conversion history
       setConversionHistory(prevHistory => [
         ...prevHistory,
         {
@@ -49,8 +50,14 @@ export default function AdminCurrencyPage() {
           date: new Date().toLocaleString(),
         },
       ]);
+
+      toast.success(`Successfully converted ${inputPrice} ${selectedCurrencyFrom} to ${selectedCurrencyTo}`, {
+        className: 'toast-message32',
+      });
     } else {
-      setConvertedPrice("");
+      toast.error('Please enter an amount to convert', {
+        className: 'toast-message32',
+      });
     }
   };
 
@@ -59,10 +66,23 @@ export default function AdminCurrencyPage() {
     setSelectedCurrencyTo(selectedCurrencyFrom);
     setConvertedPrice("");
     setInputPrice("");
+    toast.info('Currencies swapped successfully!', {
+      className: 'toast-message32',
+    });
   };
 
   const handleClearHistory = () => {
     setConversionHistory([]);
+    toast.success('Conversion history cleared!', {
+      className: 'toast-message32',
+    });
+  };
+
+  const handleCurrencyChange = (e) => {
+    updateCurrency(e.target.value);
+    toast.success(`Currency preference updated to ${e.target.value}`, {
+      className: 'toast-message32',
+    });
   };
 
   const desiredCurrencies = [
@@ -81,6 +101,14 @@ export default function AdminCurrencyPage() {
   return (
     <>
       <Header />
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        closeOnClick
+        pauseOnHover
+        draggable
+      />
       <div className="main-container32">
         <div className="heading32">
           <h1 className="title-heading32">Currency Converter</h1>
@@ -112,7 +140,7 @@ export default function AdminCurrencyPage() {
           <h2 className="currency-heading32" style={{ textAlign: 'center' }}>Adjust Prices to Your Preference</h2>
           <div className="currency-selection-card32">
             <h2 className="selection-heading32">Select Another Currency</h2>
-            <select value={currency} onChange={(e) => setCurrency(e.target.value)}>
+            <select value={currency} onChange={handleCurrencyChange}>
               {Object.keys(exchangeRates).map(curr => (
                 <option key={curr} value={curr}>{curr}</option>
               ))}
@@ -157,8 +185,8 @@ export default function AdminCurrencyPage() {
                 </div>
 
                 <div className="buttons-container32">
-                  <button onClick={handleSwap}>Swap</button>
-                  <button onClick={handleConvert}>Convert</button>
+                  <button className="swap-btn32" onClick={handleSwap}>Swap</button>
+                  <button className="convert-btn32" onClick={handleConvert}>Convert</button>
                 </div>
               </div>
 

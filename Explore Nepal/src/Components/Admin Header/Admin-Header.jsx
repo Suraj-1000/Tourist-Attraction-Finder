@@ -1,7 +1,8 @@
 import React, { useState, useEffect  } from "react";
-import "./Header.css";
+import "./Admin-Header.css";
 import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
+import { toast } from "react-hot-toast";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faUser, faHistory, faHeart, faLock, faExclamationTriangle, faTrash, faSignOutAlt, faBell, faGlobe, faDollarSign } from "@fortawesome/free-solid-svg-icons";
 
@@ -12,6 +13,9 @@ export default function Header() {
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const [user, setUser] = useState(null);
   const navigate = useNavigate();
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
@@ -20,39 +24,75 @@ export default function Header() {
     }
   }, []);
 
-  const handleLogout = () => {
-    const confirmLogout = window.confirm("Are you sure you want to log out?");
-    if (confirmLogout) {
-    localStorage.removeItem("user"); 
-    setUser(null);
-    navigate("/"); 
+  const handleLogout = async () => {
+    setShowLogoutModal(true);
+  };
+
+  const confirmLogout = async () => {
+    try {
+      const storedUser = JSON.parse(localStorage.getItem("user"));
+      if (storedUser && storedUser._id) {
+        await axios.post(`http://localhost:4000/adminDashboard/logout/${storedUser._id}`, {
+          logoutTime: new Date().toISOString()
+        });
+      }
+
+      localStorage.removeItem("user"); 
+      setUser(null);
+      toast.success("Logged out successfully!", {
+        duration: 3000,
+        position: 'top-center',
+        className: 'toast-success10'
+      });
+      setShowLogoutModal(false);
+      navigate("/"); 
+    } catch (error) {
+      console.error("Error during logout:", error);
+      toast.error("Error updating logout time, but logged out successfully", {
+        duration: 3000,
+        position: 'top-center',
+        className: 'toast-error10'
+      });
+      localStorage.removeItem("user"); 
+      setUser(null);
+      setShowLogoutModal(false);
+      navigate("/"); 
     }
   };
 
+  const handleDeleteAccount = () => {
+    setShowDeleteModal(true);
+  };
 
-  const handleDeleteAccount = async () => {
-    const confirmationText = prompt("Type 'CONFIRM' to delete your account. This action cannot be undone.");
-  
-    if (confirmationText === 'CONFIRM') {
-      const confirmDelete = window.confirm("Are you sure you want to delete your account? This action cannot be undone.");
-    
-      if (confirmDelete) {
-        const userId = user.id; // Get the user ID from the logged-in user
-        try {
-          const response = await axios.delete(`http://localhost:4000/deleteAccount/${userId}`); // Adjust the endpoint as necessary
-          alert(`✅ ${response.data.message}`);
-          
-          // Clear user data from local storage and state
-          localStorage.removeItem("user");
-          setUser(null);
-          navigate("/");
-        } catch (error) {
-          console.error('Error deleting account:', error);
-          alert('❌ Failed to delete account. Please try again.');
-        }
+  const confirmDeleteAccount = async () => {
+    if (deleteConfirmText === 'CONFIRM') {
+      const userId = user.id;
+      try {
+        const response = await axios.delete(`http://localhost:4000/deleteAccount/${userId}`);
+        toast.success(response.data.message, {
+          duration: 4000,
+          position: 'top-center',
+          className: 'toast-success10'
+        });
+        
+        localStorage.removeItem("user");
+        setUser(null);
+        setShowDeleteModal(false);
+        navigate("/");
+      } catch (error) {
+        console.error('Error deleting account:', error);
+        toast.error('Failed to delete account. Please try again.', {
+          duration: 4000,
+          position: 'top-center',
+          className: 'toast-error10'
+        });
       }
     } else {
-      alert("❌ Deletion cancelled. You must type 'CONFIRM' to proceed.");
+      toast.error("Please type 'CONFIRM' to delete your account.", {
+        duration: 3000,
+        position: 'top-center',
+        className: 'toast-error10'
+      });
     }
   };
   
@@ -126,6 +166,64 @@ export default function Header() {
           </div>
         </div>
       </div>
+
+      {showLogoutModal && (
+        <div className="modal-overlay10">
+          <div className="modal-content10">
+            <div className="modal-header10">Confirm Logout</div>
+            <div className="modal-body10">Are you sure you want to log out?</div>
+            <div className="modal-buttons10">
+              <button 
+                className="modal-button10 cancel-button10" 
+                onClick={() => setShowLogoutModal(false)}
+              >
+                Cancel
+              </button>
+              <button 
+                className="modal-button10 confirm-button10" 
+                onClick={confirmLogout}
+              >
+                Logout
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showDeleteModal && (
+        <div className="modal-overlay10">
+          <div className="modal-content10">
+            <div className="modal-header10">Delete Account</div>
+            <div className="modal-body10">
+              <p>This action cannot be undone. Please type 'CONFIRM' to delete your account.</p>
+              <input
+                type="text"
+                className="delete-input10"
+                value={deleteConfirmText}
+                onChange={(e) => setDeleteConfirmText(e.target.value)}
+                placeholder="Type 'CONFIRM'"
+              />
+            </div>
+            <div className="modal-buttons10">
+              <button 
+                className="modal-button10 cancel-button10" 
+                onClick={() => {
+                  setShowDeleteModal(false);
+                  setDeleteConfirmText('');
+                }}
+              >
+                Cancel
+              </button>
+              <button 
+                className="modal-button10 confirm-button10" 
+                onClick={confirmDeleteAccount}
+              >
+                Delete Account
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

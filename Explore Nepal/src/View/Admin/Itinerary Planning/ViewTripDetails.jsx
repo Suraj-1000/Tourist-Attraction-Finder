@@ -3,7 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import axios from "axios";
 import "./ViewTripDetails.css";
 import { CurrencyContext } from "../../../config/CurrencyContext";
-import Header from "../../../Components/Header";
+import Header from "../../../Components/Admin Header/Admin-Header";
 import Footer from "../../../Components/Footer";
 
 export default function ViewTripDetailsPage() {
@@ -116,12 +116,21 @@ const convertPrice = (priceString) => {
                 <p className="info-item24"><strong>Highlights:</strong> {day.highlights || "Not Specified"}</p>
                 <p className="info-item24"><strong>Stay:</strong> {day.stay || "Not Specified"}</p>
                 <p className="info-item24"><strong>Meals:</strong> {day.meals || "Not Specified"}</p>
-                <p className="info-item24"><strong>Cost Breakdown:</strong></p>
-                <ul>
-                    {day.costBreakdown?.split(',').map((cost, i) => (
-                        <li key={i}>{cost.trim()}</li>
-                    )) || <li>Not Specified</li>}
-                </ul>
+                
+                <div className="cost-breakdown-container24">
+                    <p className="cost-breakdown-title24">Cost Breakdown:</p>
+                    <ul className="cost-breakdown-list24">
+                        {day.costBreakdown?.split(',').map((cost, i) => {
+                            const [item, value] = cost.split(':').map(str => str.trim());
+                            return (
+                                <li key={i} className="cost-breakdown-item24">
+                                    <span>{item}</span>
+                                    <span className="cost-breakdown-value24">{value}</span>
+                                </li>
+                            );
+                        }) || <li className="cost-breakdown-item24">Not Specified</li>}
+                    </ul>
+                </div>
             </div>
             ))
         ) : (
@@ -129,43 +138,79 @@ const convertPrice = (priceString) => {
             )}
             </div>
 
-
-        
-        <h3 className="section-heading24">Trip Budget</h3>
-        <p className="info-item24"><strong>Total Budget:</strong> <span className="span24" style={{ color: 'green', fontWeight:"bold" }}>{tripDetails.totalBudget ? convertPrice(tripDetails.totalBudget) : "Budget Not Available"}</span></p>
-        <p className="info-item24"><strong>Transport:</strong> <span className="span24" style={{ color: 'green', fontWeight:"bold" }}>{tripDetails.transportCost ? convertPrice(tripDetails.transportCost) : "Transport Cost Not Available"}</span></p>
-        <p className="info-item24"><strong>Accommodation:</strong> <span className="span24" style={{ color: 'green', fontWeight:"bold" }}>{tripDetails.accommodationCost ? convertPrice(tripDetails.accommodationCost) : "Accomodation Cost Not Available"}</span></p>
-        <p className="info-item24"><strong>Meals:</strong> <span className="span24" style={{ color: 'green', fontWeight:"bold" }}>{tripDetails.mealsCost ? convertPrice(tripDetails.mealsCost) : "Meals Cost Not Available"}</span></p>
-        <p className="info-item24"><strong>Activities:</strong> <span className="span24" style={{ color: 'green', fontWeight:"bold" }}>{tripDetails.activitiesCost ? convertPrice(tripDetails.activitiesCost) : "Activities Cost Not Available"}</span></p>
-
-        <p className="info-item24">
-          <strong>Status:</strong>
+        <div className="section-heading24">Status</div>
+        <div className="info-item24">
           {tripDetails.status?.toLowerCase() === "pending" ? (
-            <span> ⏳ Pending</span>
+            <div className="status-indicator status-pending">
+              ⏳ Pending Review
+            </div>
           ) : tripDetails.status?.toLowerCase() === "approved" ? (
-            <span> ✅ Approved</span>
-          ) : result.status?.toLowerCase() === "declined" ? (
-            <span> ❌ Declined</span>
+            <div className="status-indicator status-approved">
+              ✅ Approved
+            </div>
+          ) : tripDetails.status?.toLowerCase() === "declined" ? (
+            <>
+              <div className="status-indicator status-declined">
+                ❌ Declined
+              </div>
+              {tripDetails.declineMessage && (
+                <div className="decline-message24">
+                  <strong>Reason for decline:</strong> {tripDetails.declineMessage}
+                </div>
+              )}
+            </>
           ) : (
-            <span> ❌ Unknown</span>
+            <div className="status-indicator status-declined">
+              ❌ Unknown Status
+            </div>
           )}
-        </p>
+        </div>
 
+        <div className="section-heading24">Trip Budget</div>
+        <div className="budget-info24">
+            <div className="budget-item24">
+                <strong>Total Budget:</strong>
+                <span className="budget-value24">{tripDetails.totalBudget ? convertPrice(tripDetails.totalBudget) : "Budget Not Available"}</span>
+            </div>
+            <div className="budget-item24">
+                <strong>Transport:</strong>
+                <span className="budget-value24">{tripDetails.transportCost ? convertPrice(tripDetails.transportCost) : "Not Available"}</span>
+            </div>
+            <div className="budget-item24">
+                <strong>Accommodation:</strong>
+                <span className="budget-value24">{tripDetails.accommodationCost ? convertPrice(tripDetails.accommodationCost) : "Not Available"}</span>
+            </div>
+            <div className="budget-item24">
+                <strong>Meals:</strong>
+                <span className="budget-value24">{tripDetails.mealsCost ? convertPrice(tripDetails.mealsCost) : "Not Available"}</span>
+            </div>
+            <div className="budget-item24">
+                <strong>Activities:</strong>
+                <span className="budget-value24">{tripDetails.activitiesCost ? convertPrice(tripDetails.activitiesCost) : "Not Available"}</span>
+            </div>
+        </div>
 
-        
         <div className="button-container24">
-          <Link to="/ViewTrip">
-            <button className="back-btn24">Back</button>
-          </Link>
-          {tripDetails.status?.toLowerCase() === "approved" ? (
-            <button className="book-now-btn24">Book Now</button>
-          ) : tripDetails.status?.toLowerCase() === "pending" ? (
-            <p className="important-message24">⏳ Your booking request is under approval. Please check back later.</p>
-          ) : result.status?.toLowerCase() === "declined" ? (
-           <p className="important-message22">❌ Your booking request has been declined.</p>
-          ) : (
-            <p className="important-message22">❌ Booking not available.</p>
-          )}
+            <div className="button-wrapper24">
+                <Link to="/ViewTrip">
+                    <button className="back-btn24">Back</button>
+                </Link>
+                {tripDetails.status?.toLowerCase() === "approved" ? (
+                    <button className="book-now-btn24">Book Now</button>
+                ) : tripDetails.status?.toLowerCase() === "pending" ? (
+                    <div className="message-container24">
+                        <p className="important-message24">⏳ Your booking request is under approval. Please check back later.</p>
+                    </div>
+                ) : tripDetails.status?.toLowerCase() === "declined" ? (
+                    <div className="message-container24">
+                        <p className="important-message24">❌ Your booking request has been declined.</p>
+                    </div>
+                ) : (
+                    <div className="message-container24">
+                        <p className="important-message24">❌ Booking not available.</p>
+                    </div>
+                )}
+            </div>
         </div>
         </div>
 

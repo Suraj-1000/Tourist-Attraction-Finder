@@ -2,7 +2,7 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    font-family: 'Mitr';
+    font-family: 'Mitr', sans-serif;
   }
   
   body {
@@ -70,10 +70,11 @@
 
 /* Main Title */
 .main-heading16 {
-  font-size: 36px;
-  color: #5D0606;
+  font-size: 42px;
+  color: #2C3E50;
   text-align: center;
-  margin-top: 10px;
+  margin: 30px 0;
+  font-weight: 500;
 }
 
 /* Description */
@@ -83,6 +84,8 @@
   height: auto;
   text-align: justify;
   margin: 30px auto;
+  line-height: 1.6;
+  color: #34495E;
 }
 
 /* Read More Button */
@@ -201,19 +204,47 @@
   margin-left: 180px;
 }
 
-.plan-trip-btn16 {
+/* New container for buttons */
+.button-container16 {
   display: flex;
+  gap: 20px;
+  justify-content: center;
   align-items: center;
-  gap: 10px;
-  background-color: #008000;
-  color: white;
-  border-radius: 5px;
-  padding: 8px 12px;
-  cursor: pointer;
   margin: 20px auto;
-  font-size: 16px;
 }
 
+.plan-trip-btn16, .back-button {
+  width: 200px; /* Set fixed width for both buttons */
+  height: 45px; /* Set fixed height for both buttons */
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 24px;
+  font-size: 16px;
+  font-weight: 500;
+  transition: background-color 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center; /* Center content horizontally */
+  gap: 10px;
+  cursor: pointer;
+}
+
+.plan-trip-btn16 {
+  background-color: #008000;
+}
+
+.plan-trip-btn16:hover {
+  background-color: #006400;
+}
+
+.back-button {
+  background-color: #AE0808;
+}
+
+.back-button:hover {
+  background-color: #8B0000;
+}
 
 .arrow-down16 {
   transform: rotate(-90deg);
@@ -222,50 +253,44 @@
 }
 
 
-.back-button {
-  background-color: #008000; 
-  color: white; 
-  border: none; 
-  padding: 10px 20px; 
-  font-size: 16px; 
-  cursor: pointer; 
-  border-radius: 5px; 
-  margin-top: 120px; 
-  transition: background-color 0.3s ease; 
-}
-
-
-.back-button:hover {
-  background-color: #008000; 
-}
-
-
-  
 .info-container16 {
   width: 1120px;
-  margin: 30px auto;
-  background: #f9f9f9;
-  padding: 20px;
-  border-radius: 10px;
+  margin: 40px auto;
+  background: #FFFFFF;
+  padding: 30px;
+  border-radius: 15px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
 }
 
-.additional-heading16{
-  margin-bottom: 20px;
-  margin-top: -20px;
+.additional-heading16 {
+  font-size: 24px;
+  color: #2C3E50;
+  margin-bottom: 25px;
+  font-weight: 500;
 }
 
 .info-table16 {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0 12px;
 }
 
 .info-table16 td {
-  padding: 10px;
-  border-bottom: 1px solid #ddd;
+  padding: 12px 20px;
+  border: none;
+  background: #F8F9FA;
 }
 
-.info-table16 tr:last-child td {
-  border-bottom: none;
+.info-table16 td:first-child {
+  border-radius: 8px 0 0 8px;
+  font-weight: 500;
+  color: #2C3E50;
+  width: 30%;
+}
+
+.info-table16 td:last-child {
+  border-radius: 0 8px 8px 0;
+  color: #34495E;
 }
 
 .info-table16 a {
@@ -277,9 +302,11 @@
   text-decoration: underline;
 }
 
-.photos-heading16{
-  margin-top: 30px;
-  margin-left: 180px;
+.photos-heading16, .reviews-heading16 {
+  font-size: 28px;
+  color: #2C3E50;
+  margin: 40px 0 20px 180px;
+  font-weight: 500;
 }
 
 .photos-section16 {
@@ -296,17 +323,17 @@
   flex: 1 1 calc(20% - 15px); 
   max-width: 220px;
   overflow: hidden;
-  border-radius: 10px;
-  box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.15);
+  border-radius: 15px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
   text-align: center;
-  background-color: #fff;
+  background-color: #FFFFFF;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 
 .photo-card16:hover {
-  transform: scale(1.1); 
-  box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.3); 
+  transform: translateY(-5px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
 }
 
 .photo-image16 {
@@ -322,11 +349,6 @@
 }
 
 
-.reviews-heading16{
-  margin-top: 30px;
-  margin-left: 180px;
-}
-
 .reviews-section16 {
   display: flex;
   gap: 15px;
@@ -339,27 +361,27 @@
 .review-card16 {
   flex: 1 1 calc(20% - 15px); 
   max-width: 220px; 
-  padding: 15px;
-  border-radius: 10px;
-  background-color: #fff;
-  box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.15);
+  padding: 20px;
+  border-radius: 15px;
+  background-color: #FFFFFF;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
   text-align: center;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .review-card16:hover {
-  transform: scale(1.1); 
-  box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.3); 
+  transform: translateY(-5px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
 }
 
 .review-title16 {
   font-size: 18px;
-  font-weight: bold;
-  color: #333;
-  margin-bottom: 5px;
+  color: #2C3E50;
+  margin-bottom: 10px;
+  font-weight: 500;
 }
 
 .review-text16 {
   font-size: 14px;
-  color: #666;
+  color: #7F8C8D;
 }

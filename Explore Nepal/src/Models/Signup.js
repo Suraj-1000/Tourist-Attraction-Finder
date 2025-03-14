@@ -11,7 +11,7 @@ const signupSchema = new mongoose.Schema({
     type: String,
     required: true,
     trim: true,
-    minlength: 3,
+    minlength: 2,
   },
   email: {
     type: String,
@@ -25,7 +25,7 @@ const signupSchema = new mongoose.Schema({
     type: String,
     required: true,
     unique: true,
-    match: /^\d{10}$/,
+    match: /^(98|97)\d{8}$/,
   },
   password: {
     type: String,
@@ -47,20 +47,40 @@ const signupSchema = new mongoose.Schema({
     default: null,  
   },
 
+  address: {
+    type: String,
+    trim: true,
+    default: '',
+  },
+
   termsAccepted: {
     type: Boolean,
-    required: true,
     default: false,
   },
+  
+  role: {
+    type: String,
+    enum: ['admin', 'user'],
+    default: 'user',
+  },
+  
   createdAt: {
     type: Date,
     default: Date.now,
   },
+  lastLogin: {
+    type: Date,
+    default: null,
+  },  
   resetCode: {
     type: String,
     default: null,
   },
   resetCodeExpires: {
+    type: Date,
+    default: null,
+  },
+  logoutTime: {
     type: Date,
     default: null,
   },

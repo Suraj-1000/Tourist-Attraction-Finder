@@ -1,4 +1,4 @@
-.header10 {
+.header1000 {
   position: fixed;
   width: 100%;
   height: 125px;
@@ -10,7 +10,7 @@
   padding: 10px 20px;
 }
 
-.welcome10 {
+.welcome1000 {
   display: flex;
   justify-content: center;
   gap: 10px;
@@ -20,13 +20,13 @@
   margin-right:600px;
 }
 
-.welcome-user {
+.welcome-user1000 {
   color: #008EC4;
   font-weight: bold;
 }
 
 
-.iconcontainer10 {
+.iconcontainer1000 {
   position: relative;
   display: flex;
   align-items: center;
@@ -43,7 +43,7 @@
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
 }
 
-.icon1 {
+.icon1000 {
   cursor: pointer;
   background-repeat: no-repeat;
   background-position: center;
@@ -51,35 +51,35 @@
   transition: transform 0.3s ease-in-out;
 }
 
-.icon1:hover {
+.icon1000:hover {
   transform: scale(1.2);
 }
 
-.icon_notification10 {
+.icon_notification1000 {
   background-image: url('/images/icon_bell.png');
   width: 21px;
   height: 21px;
 }
 
-.icon_language10 {
+.icon_language1000 {
   background-image: url('/images/icon_language.png');
   width: 21px;
   height: 21px;
 }
 
-.icon_currency10 {
+.icon_currency1000 {
   background-image: url('/images/icon_currency.png');
   width: 32px;
   height: 19px;
 }
 
-.icon_user10 {
+.icon_user1000 {
   background-image: url('/images/icon_user.png');
   width: 30px;
   height: 30px;
 }
 
-.logo10 {
+.logo1000 {
   width: 120px;
   height: 120px;
   background: url("/images/Logo.png");
@@ -92,7 +92,7 @@
   }
 
 
-.nav10 {
+.nav1000{
   display: flex;
   justify-content: flex-end;
   align-items: center;
@@ -102,13 +102,13 @@
 
 
 
-.nav-bar10 {
+.nav-bar1000 {
   display: flex;
   align-items: center;
   gap: 30px;
 }
 
-.nav-item10 {
+.nav-item1000 {
   font-size: 16px;
   color: #000;
   text-transform: capitalize;
@@ -119,24 +119,24 @@
   text-decoration: none;
 }
 
-.nav-item10:hover {
+.nav-item1000:hover {
   background-color: #e63946;
   color: #fff;
 }
 
-.dropdown10 {
+.dropdown1000 {
   position: relative;
 }
 
 
-.dropdown-toggle10 {
+.dropdown-toggle1000 {
   display: block;
   padding: 10px 15px;
   cursor: pointer;
 }
 
 
-.dropdown-menu10 {
+.dropdown-menu1000 {
   position: absolute;
   top: 100%;
   left: 0;
@@ -150,13 +150,13 @@
   z-index: 10;
 }
 
-.dropdown10:hover .dropdown-menu10,
-.dropdown-menu10.show {
+.dropdown1000:hover .dropdown-menu1000,
+.dropdown-menu1000.show {
   display: block;
 }
 
 
-.dropdown-item10 {
+.dropdown-item1000 {
   padding: 10px;
   display: block;
   color: #333;
@@ -164,13 +164,13 @@
   font-size: 14px;
 }
 
-.dropdown-item10:hover {
+.dropdown-item1000:hover {
 background-color: rgba(0, 87, 255, 0.15);
 transition: background-color 0.3s ease-in-out;
 }
 
 
-.user-menu10 {
+.user-menu1000 {
 position: absolute;
 top: 125%; 
 left: -170px; 
@@ -185,7 +185,7 @@ border: 1px solid #ddd;
 }
 
 
-.user-menu10::before {
+.user-menu1000::before {
 content: "";
 position: absolute;
 top: -6px; 
@@ -196,7 +196,7 @@ border-color: transparent transparent white transparent;
 z-index: 1;
 }
 
-.user-menu10 .dropdown-item10 {
+.user-menu1000 .dropdown-item1000 {
 display: flex;
 align-items: center;
 padding: 8px 16px;
@@ -205,22 +205,22 @@ color: #333;
 transition: background 0.2s ease-in-out;
 }
 
-.dropdown-item10 span {
+.dropdown-item1000 span {
 margin-right: 30px; 
 }
 
-.user-menu10 .dropdown-item10:hover {
+.user-menu1000 .dropdown-item1000:hover {
 background: rgba(0, 136, 204, 0.1); 
 color: #0088cc;
 }
 
-.user-menu10 .dropdown-divider10 {
+.user-menu1000 .dropdown-divider1000 {
 height: 1px;
 background: #e0e0e0;
 margin: 10px 0;
 }
 
-.user-info10 {
+.user-info1000 {
 display: flex;
 align-items: center;
 padding: 12px 16px;
@@ -231,28 +231,28 @@ border-top: 1px solid #ddd;
 margin-top: 30px;
 }
 
-.user-info10 .icon_user10 {
+.user-info1000 .icon_user1000 {
 margin-right: 12px;
 }
 
-.user-menu10 {
+.user-menu1000 {
 opacity: 0;
 transform: translateY(-10px);
 transition: opacity 0.3s ease, transform 0.3s ease;
 }
 
-.user-menu10.show {
+.user-menu1000.show {
 opacity: 1;
 transform: translateY(0);
 }
 
-.user-email10{
-font-size: 12px;
+.user-email1000{
+font-size: 11px;
 color: #808080;
 margin-top: -3px;
 }
 
-.icon_img10 {
+.icon_img1000 {
 width: 35px;  
 height: 35px;  
 background-color: #ccc;  
@@ -264,14 +264,14 @@ overflow: hidden;
 margin-right: 12px;  
 }
 
-.icon_img10 img {
+.icon_img1000 img {
 width: 100%; 
 height: 100%;  
 object-fit: cover; 
 }
 
 
-.icon-gap {
+.icon-gap1000 {
   margin-right: 30px;
 }
 

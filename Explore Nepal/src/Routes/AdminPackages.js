@@ -19,28 +19,44 @@ const storage = new CloudinaryStorage({
 const upload = multer({ storage: storage });
 
 // Route to Add a New Itinerary Package
-router.post("/", upload.single("image"), async (req, res) => {
-  console.log("Received Data:", req.body);
-  console.log("Uploaded File:", req.file);
-
-  if (!req.file) {
-    return res.status(400).json({ message: "Image upload failed" });
-  }
-
+router.post("/Add-Package", upload.single("image"), async (req, res) => {
   try {
-    const newPackage = new AdminPackage({
+    const packageData = {
       ...req.body,
-      itinerary: JSON.parse(req.body.itinerary), // Ensure correct parsing
-      imageUrl: req.file.path, // Cloudinary image URL
-      price: req.body.price ? req.body.price.toString() : "", // Convert to string
-      groupSize: req.body.groupSize ? req.body.groupSize.toString() : "", // Convert to string
-    });
+      imageUrl: req.file ? req.file.path : null, // Save the Cloudinary URL
+    };
 
+    // Parse the itinerary if it's a string
+    if (typeof packageData.itinerary === 'string') {
+      try {
+        packageData.itinerary = JSON.parse(packageData.itinerary);
+      } catch (error) {
+        console.error("Error parsing itinerary:", error);
+        return res.status(400).json({ message: "Invalid itinerary format" });
+      }
+    }
+
+    const newPackage = new Package(packageData);
     await newPackage.save();
-    res.status(201).json({ message: "Itinerary Package added!", package: newPackage });
+
+    // Send notification
+    const notificationHub = req.app.get('notificationHub');
+    if (notificationHub) {
+      notificationHub.sendPackageAddedNotification({
+        title: packageData.title,
+        category: packageData.category,
+        price: packageData.price,
+        duration: packageData.duration
+      });
+    }
+
+    res.status(201).json({
+      message: "Package added successfully",
+      package: newPackage,
+    });
   } catch (error) {
-    console.error("Error saving package:", error);
-    res.status(500).json({ message: "Server Error", error });
+    console.error("Error adding package:", error);
+    res.status(500).json({ message: "Error adding package", error: error.message });
   }
 });
 

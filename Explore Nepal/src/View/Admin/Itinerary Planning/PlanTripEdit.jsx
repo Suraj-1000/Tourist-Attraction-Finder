@@ -2,8 +2,11 @@ import React, { useState, useEffect } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import "./PlanTripEdit.css";
-import Header from "../../../Components/Header";
+import Header from "../../../Components/Admin Header/Admin-Header";
 import Footer from "../../../Components/Footer";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { toast } from "react-hot-toast";
 
 export default function PlanTripUpdatePage() {
   const navigate = useNavigate();
@@ -36,6 +39,8 @@ export default function PlanTripUpdatePage() {
     mealsCost: "",
     activitiesCost: ""
   });
+
+  const [isUpdating, setIsUpdating] = useState(false);
 
   const COST_RANGES = {
     transport: {
@@ -291,21 +296,29 @@ const handleChange = (e) => {
         });
         
       } else {
-        alert("❌ No Trip Found.");
+        toast.error(`No Trip Found: "${tripName}"`, {
+          position: "top-right",
+          autoClose: 3000,
+          className: 'toast-message23'
+        });
       }
     } catch (error) {
       console.error("Error fetching trip details:", error);
-      alert("❌ Failed to load trip details.");
+      toast.error(`Failed to load trip details for "${tripName}"`, {
+        position: "top-right",
+        autoClose: 3000,
+        className: 'toast-message23'
+      });
     }
 };
 
 
 const handleUpdate = async (e) => {
   e.preventDefault();
+  setIsUpdating(true);
 
   let updatedFormData = { ...formData };
 
-  // 🚀 Ensure itinerary remains an array, not a string
   if (typeof updatedFormData.itinerary === "string") {
     updatedFormData.itinerary = JSON.parse(updatedFormData.itinerary);
   }
@@ -318,14 +331,30 @@ const handleUpdate = async (e) => {
     );
 
     if (response.status === 200) {
-      alert("✅ Trip updated successfully!");
-      navigate(-1);
+      toast.success(`"${formData.tripName}" has been updated successfully!`, {
+        position: "top-right",
+        autoClose: 3000,
+        className: 'toast-message23'
+      });
+      setTimeout(() => {
+        navigate(-1);
+      }, 2000);
     } else {
-      alert("❌ Failed to update trip.");
+      toast.error(`Failed to update "${formData.tripName}". Please try again.`, {
+        position: "top-right",
+        autoClose: 3000,
+        className: 'toast-message23'
+      });
     }
   } catch (error) {
-    console.error("🔥 Error updating trip:", error);
-    alert("❌ Error updating trip. Check the console for details.");
+    console.error("Error updating trip:", error);
+    toast.error(`Error updating "${formData.tripName}". Please try again.`, {
+      position: "top-right",
+      autoClose: 3000,
+      className: 'toast-message23'
+    });
+  } finally {
+    setIsUpdating(false);
   }
 };
 
@@ -335,6 +364,7 @@ const handleUpdate = async (e) => {
   return (
     <>
       <Header />
+      <ToastContainer />
       <div className="main-container23">
         <div className="heading23">
           <h1 className="title-heading23">Update Your Trip Plan</h1>
@@ -587,8 +617,18 @@ const handleUpdate = async (e) => {
 
           
           <div className="button-container23">
-            <Link to="/ViewTrip"><button type="button" className="cancel-btn23">Cancel</button></Link>
-            <button type="submit" className="create-btn23">Update</button>
+            <Link to="/ViewTrip">
+              <button type="button" className="cancel-btn23" disabled={isUpdating}>
+                Cancel
+              </button>
+            </Link>
+            <button 
+              type="submit" 
+              className="create-btn23" 
+              disabled={isUpdating}
+            >
+              {isUpdating ? `Updating ${formData.tripName}...` : "Update"}
+            </button>
           </div>
         </form>
       </div>

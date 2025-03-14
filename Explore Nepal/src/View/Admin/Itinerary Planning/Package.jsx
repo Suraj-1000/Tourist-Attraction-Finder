@@ -3,8 +3,10 @@ import { Link } from "react-router-dom";
 import axios from "axios";
 import "./Package.css";
 import { CurrencyContext } from "../../../config/CurrencyContext";
-import Header from "../../../Components/Header";
+import Header from "../../../Components/Admin Header/Admin-Header";
 import Footer from "../../../Components/Footer";
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 export default function PackagePage() {
   const { currency, exchangeRates,  } = useContext(CurrencyContext);
@@ -17,6 +19,28 @@ export default function PackagePage() {
   const [shareLink, setShareLink] = useState("");
   const [showShareModal, setShowShareModal] = useState(false);
   const [favorites, setFavorites] = useState([]);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [packageToDelete, setPackageToDelete] = useState(null);
+
+  const user = JSON.parse(localStorage.getItem("user"));
+
+  const saveToHistory = (action, attraction) => {
+    if (!user) return;
+
+    const historyEntry = {
+      user: `${user.firstName}`,
+      action,
+      attraction,
+      timestamp: new Date().toLocaleString(),
+    };
+
+    const existingHistory = JSON.parse(localStorage.getItem("userHistory")) || [];
+    existingHistory.unshift(historyEntry);
+    localStorage.setItem("userHistory", JSON.stringify(existingHistory));
+  };
+
+
+
 
   const formatNumberWithCommas = (number) => {
     return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
@@ -51,6 +75,11 @@ const convertPrice = (priceString) => {
   const fetchPackages = async () => {
     try {
       const response = await axios.get("http://localhost:4000/adminPackage/all");
+      console.log("Fetched packages with categories:", response.data.map(pkg => ({ 
+        title: pkg.title, 
+        category: pkg.category,
+        tripType: pkg.tripType 
+      }))); // Debug log to see what categories are actually in the data
       setAllResults(response.data);
       setResults(response.data);
       setHeading(`Displaying ${response.data.length} packages:`);
@@ -61,24 +90,79 @@ const convertPrice = (priceString) => {
     }
   };
 
-
+  // Handle text search
   const handleSearch = () => {
-    if (!query && !category) {
-      setResults(allResults);
-      setHeading(`Showing ${allResults.length} packages`);
-    } else {
-      const filteredResults = allResults.filter((pkg) =>
-        (pkg.title.toLowerCase().includes(query.toLowerCase()) || query === "") &&
-        (pkg.category === category || category === "")
-      );
+    if (query.trim()) {
+      saveToHistory("searched", query);
+    }
 
-      setResults(filteredResults);
-      setHeading(
-        filteredResults.length > 0
-          ? `Search Results for "${query || "All"}" in ${category || "All Categories"}`
-          : "No results found."
+    let filteredResults = [...allResults];
+
+    // Only filter by search query
+    if (query) {
+      filteredResults = filteredResults.filter(pkg =>
+        pkg.title.toLowerCase().includes(query.toLowerCase())
       );
     }
+
+    setResults(filteredResults);
+    setHeading(
+      filteredResults.length > 0
+        ? `${filteredResults.length} Results for "${query}"`
+        : "No results found."
+    );
+  };
+
+  // Handle category change
+  const handleCategoryChange = (e) => {
+    const selectedCategory = e.target.value;
+    console.log("Selected category:", selectedCategory); // Debug log
+    setCategory(selectedCategory);
+    
+    let filteredResults = [...allResults];
+    console.log("All results before filtering:", filteredResults.map(pkg => ({ 
+      title: pkg.title, 
+      tripType: pkg.tripType 
+    }))); // Debug log
+
+    // Filter by tripType
+    if (selectedCategory) {
+      filteredResults = filteredResults.filter(pkg => {
+        // Check only tripType field and handle case-insensitive comparison
+        const matchesTripType = pkg.tripType && 
+          pkg.tripType.toLowerCase() === selectedCategory.toLowerCase();
+        
+        console.log(`Package "${pkg.title}":`, {
+          tripType: pkg.tripType,
+          selectedCategory,
+          isMatch: matchesTripType
+        });
+        
+        return matchesTripType;
+      });
+    }
+
+    console.log("Filtered results:", filteredResults.map(pkg => ({ 
+      title: pkg.title, 
+      tripType: pkg.tripType 
+    }))); // Debug log
+
+    setResults(filteredResults);
+    setHeading(
+      filteredResults.length > 0
+        ? selectedCategory 
+          ? `${filteredResults.length} ${selectedCategory} Packages` 
+          : `All Packages (${filteredResults.length})`
+        : `No packages found in ${selectedCategory || "any category"}`
+    );
+  };
+
+  // Reset filters
+  const resetFilters = () => {
+    setQuery("");
+    setCategory("");
+    setResults(allResults);
+    setHeading(`Showing all ${allResults.length} packages`);
   };
 
   
@@ -141,59 +225,86 @@ const convertPrice = (priceString) => {
   }, [sortBy]); 
   
 
-  const handleDelete = async (card) => {
-    if (window.confirm(`Are you sure you want to delete "${card.title}"?`)) {
-      try {
-        await axios.delete(`http://localhost:4000/adminPackage/deleteByTitle?title=${encodeURIComponent(card.title)}`);
-        const updatedResults = results.filter((result) => result.title !== card.title);
-        setResults(updatedResults);
-        setAllResults(updatedResults);
-        alert(`🎉 Package "${card.title}" has been deleted.`);
-      } catch (error) {
-        console.error("Delete failed:", error);
-        alert("❌ Failed to delete the package.");
-      }
+  const initiateDelete = (card) => {
+    setPackageToDelete(card);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = async () => {
+    try {
+      await axios.delete(`http://localhost:4000/adminPackage/deleteByTitle?title=${encodeURIComponent(packageToDelete.title)}`);
+      const updatedResults = results.filter((result) => result.title !== packageToDelete.title);
+      setResults(updatedResults);
+      setAllResults(updatedResults);
+      toast.success(`Package "${packageToDelete.title}" has been deleted successfully!`, {
+        position: "top-right",
+        autoClose: 3000,
+        className: 'toast-message17'
+      });
+    } catch (error) {
+      console.error("Delete failed:", error);
+      toast.error("Failed to delete the package. Please try again.", {
+        position: "top-right",
+        autoClose: 3000,
+        className: 'toast-message17'
+      });
+    } finally {
+      setShowDeleteModal(false);
+      setPackageToDelete(null);
     }
   };
-  
-const copyToClipboard = () => {
-  navigator.clipboard.writeText(shareLink);
-  alert("Link copied to clipboard!");
-};
+
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(shareLink);
+    toast.success("Link copied to clipboard!");
+    saveToHistory("copied the link of", shareLink);
+  };
 
 const handleShare = (card) => {
   const generatedLink = `${window.location.origin}/ItineraryPackageView/${encodeURIComponent(card.title)}`;
   setShareLink(generatedLink);
   setShowShareModal(true);
+  saveToHistory("click share", card.title);
 };
 
   
   
-  const toggleFavorite = (card) => {
+   const toggleFavorite = (card) => {
     let updatedFavorites = [...favorites];
+    const isAlreadyFavorite = favorites.some((fav) => fav.title === card.title);
 
-    if (favorites.some((fav) => fav.title === card.title)) {
-
+    if (isAlreadyFavorite) {
       updatedFavorites = updatedFavorites.filter((fav) => fav.title !== card.title);
+      toast.error(`Removed "${card.title}" from favorites`, {
+        position: "top-right",
+        autoClose: 3000,
+        className: 'toast-message17'
+      });
+      saveToHistory("removed from favorites", card.title);
     } else {
-    
       updatedFavorites.push(card);
+      toast.success(`Added "${card.title}" to favorites`, {
+        position: "top-right",
+        autoClose: 3000,
+        className: 'toast-message17'
+      });
+      saveToHistory("added to favorites", card.title);
     }
 
     setFavorites(updatedFavorites);
     localStorage.setItem("favorites", JSON.stringify(updatedFavorites));
   };
 
-
   const isFavorite = (card) => {
     return favorites.some((fav) => fav.title === card.title);
   };
-
+  
   
 
   return (
     <>
       <Header />
+      <ToastContainer />
       <div className="main-container17">
         <div className="heading17">
           <h1 className="title-heading17">Explore Your Perfect Trip</h1>
@@ -217,11 +328,11 @@ const handleShare = (card) => {
             <select
               className="search-category17"
               value={category}
-              onChange={(e) => setCategory(e.target.value)}
+              onChange={handleCategoryChange}
             >
-              <option value="">Select Category</option>
-              <option value="Short">Short Trip</option>
-              <option value="Long">Long Trip</option>
+              <option value="">All Categories</option>
+              <option value="Short Trip">Short Trip</option>
+              <option value="Long Trip">Long Trip</option>
             </select>
           </div>
 
@@ -275,7 +386,7 @@ const handleShare = (card) => {
                         src="/images/dlete.png"
                         alt="Delete"
                         className="icon-image17"
-                        onClick={() => handleDelete(result)}
+                        onClick={() => initiateDelete(result)}
                       />
                     </div>
                   </div>
@@ -313,13 +424,21 @@ const handleShare = (card) => {
                     <p className="ranking-string17">Trip Type: {result.tripType || "Short"}</p>
                     <p className="ranking-string17">Duration: {result.duration || "3 Days, Cultural & Historical Exploration"}</p>
                     <p className="ranking-string17">Category: {result.category || "Cultural & Historical Exploration"}</p>
-                    <p className="category-string17">Price: <span className="span17" style={{ color: 'green', fontWeight:"bold" }}>{result.price ? convertPrice(result.price) : "Price Not Available"}</span></p>
+                    <p className="category-string17">
+                        Price: 
+                        <span className="budget-value17">
+                            {result.price ? convertPrice(result.price) : "Price Not Available"}
+                        </span>
+                    </p>
                     <p className="category-string17">Group Size: {result.groupSize || "Starting"}</p>
                     <p className="category-string17">Difficulty: {result.difficulty || "Easy"}</p>
                     <p className="category-string17">Highlight: {result.highlight || "Traditional villages, breathtaking views, cultural exploration."}</p>
-                    <Link to={`/ItineraryPackageView/${encodeURIComponent(result.title)}`} className="view-details17">
-                      View Details
-                    </Link>
+                    <Link
+              to={`/ItineraryPackageView/${encodeURIComponent(result.title)}`}
+              onClick={() => saveToHistory("viewed details of", result.title)}
+              className="view-details17">
+              View Details
+            </Link>
 
 
                     
@@ -342,6 +461,30 @@ const handleShare = (card) => {
               <input type="text" value={shareLink} readOnly className="share-input17" />
               <button onClick={copyToClipboard} className="copy-button17">Copy Link 🔗</button>
               <button onClick={() => setShowShareModal(false)} className="close-button17">Close</button>
+            </div>
+          </div>
+        )}
+
+        {/* Add Delete Confirmation Modal */}
+        {showDeleteModal && (
+          <div className="delete-modal-overlay17">
+            <div className="delete-modal17">
+              <h3>Confirm Delete</h3>
+              <p>Are you sure you want to delete "{packageToDelete?.title}"?</p>
+              <div className="delete-modal-buttons17">
+                <button 
+                  className="delete-cancel-btn17" 
+                  onClick={() => setShowDeleteModal(false)}
+                >
+                  Cancel
+                </button>
+                <button 
+                  className="delete-confirm-btn17" 
+                  onClick={confirmDelete}
+                >
+                  Delete
+                </button>
+              </div>
             </div>
           </div>
         )}

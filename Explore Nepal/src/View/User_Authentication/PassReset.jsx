@@ -2,7 +2,9 @@ import React, { useState } from "react";
 import "./PassReset.css";
 import { useNavigate } from "react-router-dom"; 
 import { Link } from "react-router-dom";
+import { FiEye, FiEyeOff } from "react-icons/fi";
 import axios from "axios";
+import { toast } from "react-hot-toast";
 
 const ResetButton = ({ handlePasswordReset }) => {
   return (
@@ -22,13 +24,15 @@ export default function PassReset() {
   const [resetCode, setResetCode] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [newPasswordVisible, setNewPasswordVisible] = useState(false);
+  const [confirmPasswordVisible, setConfirmPasswordVisible] = useState(false);
 
   const handlePasswordReset = async (e) => {
     e.preventDefault();
 
     // Validate that passwords match
     if (newPassword !== confirmPassword) {
-      alert("Passwords do not match!");
+      toast.error("Passwords do not match!");
       return;
     }
 
@@ -40,14 +44,14 @@ export default function PassReset() {
       });
 
       if (response.status === 200) {
-        alert(response.data.message);
+        toast.success(response.data.message);
         navigate("/passConfirm");  // Redirect user to the login page after a successful reset
       } else {
-        alert(response.data.message);  // Display error message
+        toast.error(response.data.message);  // Display error message
       }
     } catch (error) {
       console.error("Error resetting password:", error);
-      alert("Something went wrong. Please try again.");
+      toast.error("Something went wrong. Please try again.");
     }
   };
 
@@ -70,25 +74,43 @@ export default function PassReset() {
               required
             />
             <label htmlFor="new-password">New Password</label>
-            <input
-              id="new-password"
-              type="password"
-              placeholder="Enter new password"
-              className="input2"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              required
-            />
+            <div className="password-field2">
+              <input
+                id="new-password"
+                type={newPasswordVisible ? "text" : "password"}
+                placeholder="Enter new password"
+                className="input2 input-full2"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                required
+              />
+              <button
+                type="button"
+                className="eye-icon2 inside2"
+                onClick={() => setNewPasswordVisible(!newPasswordVisible)}
+              >
+                {newPasswordVisible ? <FiEyeOff /> : <FiEye />}
+              </button>
+            </div>
             <label htmlFor="confirm-password">Confirm Password</label>
-            <input
-              id="confirm-password"
-              type="password"
-              placeholder="Confirm new password"
-              className="input2"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              required
-            />
+            <div className="password-field2">
+              <input
+                id="confirm-password"
+                type={confirmPasswordVisible ? "text" : "password"}
+                placeholder="Confirm new password"
+                className="input2 input-full2"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+              />
+              <button
+                type="button"
+                className="eye-icon2 inside2"
+                onClick={() => setConfirmPasswordVisible(!confirmPasswordVisible)}
+              >
+                {confirmPasswordVisible ? <FiEyeOff /> : <FiEye />}
+              </button>
+            </div>
             <ResetButton handlePasswordReset={handlePasswordReset} />
           </form>
           <p className="or2">or</p>

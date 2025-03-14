@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useContext } from "react";
 import { Link } from "react-router-dom";
 import axios from "axios";
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import "./ViewTrip.css";
 import { CurrencyContext } from "../../../config/CurrencyContext";
-import Header from "../../../Components/Header";
+import Header from "../../../Components/Admin Header/Admin-Header";
 import Footer from "../../../Components/Footer";
 
 export default function ViewTripPage() {
@@ -16,7 +18,9 @@ export default function ViewTripPage() {
   const [shareLink, setShareLink] = useState("");
   const [showShareModal, setShowShareModal] = useState(false);
   const [favorites, setFavorites] = useState([]);
-  const { currency, exchangeRates } = useContext(CurrencyContext);
+  const { currency = 'USD', exchangeRates = { USD: 1 } } = useContext(CurrencyContext) || {};
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [tripToDelete, setTripToDelete] = useState(null);
 
   const formatNumberWithCommas = (number) => {
     return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
@@ -27,16 +31,21 @@ const convertPrice = (priceString) => {
       return "N/A"; 
   }
 
-  const priceInUSD = parseFloat(priceString.replace(/[^0-9.]+/g, "")); 
+  try {
+    const priceInUSD = parseFloat(priceString.replace(/[^0-9.]+/g, "")); 
 
-  if (!exchangeRates || !exchangeRates[currency]) {
-      return "Loading..."; // Exchange rates not yet loaded
+    if (!exchangeRates || !exchangeRates[currency]) {
+        return `USD ${formatNumberWithCommas(priceInUSD)}`; // Fallback to USD
+    }
+
+    const conversionRate = exchangeRates[currency]; 
+    const convertedPrice = (priceInUSD * conversionRate).toFixed(2);
+    
+    return `${currency} ${formatNumberWithCommas(parseFloat(convertedPrice))}`;
+  } catch (error) {
+    console.error("Error converting price:", error);
+    return "N/A";
   }
-
-  const conversionRate = exchangeRates[currency]; 
-  const convertedPrice = (priceInUSD * conversionRate).toFixed(2);
-  
-  return `${currency} ${formatNumberWithCommas(parseFloat(convertedPrice))}`;
 };
 
   useEffect(() => {
@@ -60,22 +69,34 @@ const convertPrice = (priceString) => {
 
 
   const handleSearch = () => {
-    if (!query && !category) {
-      setResults(allResults);
-      setHeading(`Showing ${allResults.length} trips`);
-    } else {
-      const filteredResults = allResults.filter((pkg) =>
-        (pkg.tripName?.toLowerCase().includes(query?.toLowerCase() || "") || query === "") &&
-        (pkg.category === category || category === "")
-      );
-  
-      setResults(filteredResults);
-      setHeading(
-        filteredResults.length > 0
-          ? `Search Results for "${query || "All"}" in ${category || "All Categories"}`
-          : "No results found."
+    console.log("Searching with:", { query, category }); 
+    
+    let filteredResults = [...allResults];
+
+    if (query) {
+      filteredResults = filteredResults.filter(pkg =>
+        pkg.tripName.toLowerCase().includes(query.toLowerCase())
       );
     }
+
+    if (category) {
+      filteredResults = filteredResults.filter(pkg => {
+        const matchesTripType = pkg.tripType && 
+          pkg.tripType.toLowerCase() === category.toLowerCase();
+        return matchesTripType;
+      });
+    }
+
+    setResults(filteredResults);
+    setHeading(
+      filteredResults.length > 0
+        ? category 
+          ? `${filteredResults.length} ${category}${filteredResults.length === 1 ? '' : 's'}` 
+          : query 
+            ? `Search Results for "${query}"`
+            : `All Trips (${filteredResults.length})`
+        : "No trips found."
+    );
   };
   
 
@@ -146,7 +167,7 @@ const convertPrice = (priceString) => {
   // Function to copy link to clipboard
 const copyToClipboard = () => {
   navigator.clipboard.writeText(shareLink);
-  alert("Link copied to clipboard!");
+  toast.success("Link copied to clipboard!");
 };
 
 // Function to generate and display shareable link (Admin View)
@@ -159,12 +180,22 @@ const handleShare = (card) => {
 
   const toggleFavorite = (card) => {
     let updatedFavorites = [...favorites];
+    const isAlreadyFavorite = favorites.some((fav) => fav.tripName === card.tripName);
 
-    if (favorites.some((fav) => fav.tripName === card.tripName)) {
+    if (isAlreadyFavorite) {
       updatedFavorites = updatedFavorites.filter((fav) => fav.tripName !== card.tripName);
+      toast.error(`Removed "${card.tripName}" from favorites`, {
+        position: "top-right",
+        autoClose: 3000,
+        className: 'toast-message22'
+      });
     } else {
-      // Add to favorites if not present
       updatedFavorites.push(card);
+      toast.success(`Added "${card.tripName}" to favorites`, {
+        position: "top-right",
+        autoClose: 3000,
+        className: 'toast-message22'
+      });
     }
 
     setFavorites(updatedFavorites);
@@ -176,11 +207,40 @@ const handleShare = (card) => {
     return favorites.some((fav) => fav.tripName === card.tripName);
   };
 
-  
+  // Update delete handling
+  const initiateDelete = (card) => {
+    setTripToDelete(card);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = async () => {
+    try {
+      await axios.delete(`http://localhost:4000/adminTrip/deleteByTripName?tripName=${encodeURIComponent(tripToDelete.tripName)}`);
+      const updatedResults = results.filter((result) => result.tripName !== tripToDelete.tripName);
+      setResults(updatedResults);
+      setAllResults(updatedResults);
+      toast.success(`Trip "${tripToDelete.tripName}" has been deleted successfully!`, {
+        position: "top-right",
+        autoClose: 3000,
+        className: 'toast-message22'
+      });
+    } catch (error) {
+      console.error("Delete failed:", error);
+      toast.error("Failed to delete the trip. Please try again.", {
+        position: "top-right",
+        autoClose: 3000,
+        className: 'toast-message22'
+      });
+    } finally {
+      setShowDeleteModal(false);
+      setTripToDelete(null);
+    }
+  };
 
   return (
     <>
       <Header />
+      <ToastContainer />
       <div className="main-container22">
         <div className="heading22">
           <h1 className="title-heading22">Explore Your Planned Itineraries</h1>
@@ -203,11 +263,31 @@ const handleShare = (card) => {
             <select
               className="search-category22"
               value={category}
-              onChange={(e) => setCategory(e.target.value)}
+              onChange={(e) => {
+                setCategory(e.target.value);
+                setQuery("");
+                const newCategory = e.target.value;
+                let filteredResults = [...allResults];
+                
+                if (newCategory) {
+                  filteredResults = filteredResults.filter(pkg => 
+                    pkg.tripType && pkg.tripType.toLowerCase() === newCategory.toLowerCase()
+                  );
+                }
+                
+                setResults(filteredResults);
+                setHeading(
+                  filteredResults.length > 0
+                    ? newCategory 
+                      ? `${filteredResults.length} ${newCategory}${filteredResults.length === 1 ? '' : 's'}` 
+                      : `All Trips (${filteredResults.length})`
+                    : `No trips found in ${newCategory || "any category"}`
+                );
+              }}
             >
-              <option value="">Select Category</option>
-              <option value="Short">Short Trip</option>
-              <option value="Long">Long Trip</option>
+              <option value="">All Categories</option>
+              <option value="Short Trip">Short Trip</option>
+              <option value="Long Trip">Long Trip</option>
             </select>
           </div>
 
@@ -254,7 +334,7 @@ const handleShare = (card) => {
                         src="/images/dlete.png"
                         alt="Delete"
                         className="icon-image22"
-                        onClick={() => handleDelete(result)}
+                        onClick={() => initiateDelete(result)}
                       />
                     </div>
                   </div>
@@ -297,7 +377,12 @@ const handleShare = (card) => {
             </p>
 
             <p className="ranking-string22"><strong>Accommodation Preferences:</strong> {result.accommodationType || "N/A"}</p>
-            <p className="ranking-string22"><strong>Total Budget:</strong> <span className="span18" style={{ color: 'green', fontWeight:"bold" }}>{result.totalBudget ? convertPrice(result.totalBudget) : "Price Not Available"}</span></p>
+            <p className="ranking-string22">
+                <strong>Total Budget:</strong> 
+                <span className="budget-value22">
+                    {result.totalBudget ? convertPrice(result.totalBudget) : "Price Not Available"}
+                </span>
+            </p>
 
             <p className="ranking-string22">
             <strong>Status:</strong>
@@ -352,6 +437,31 @@ const handleShare = (card) => {
               <input type="text" value={shareLink} readOnly className="share-input22" />
               <button onClick={copyToClipboard} className="copy-button22">Copy Link 🔗</button>
               <button onClick={() => setShowShareModal(false)} className="close-button22">Close</button>
+            </div>
+          </div>
+        )}
+
+        {/* Add Delete Confirmation Modal */}
+        {showDeleteModal && (
+          <div className="delete-modal-overlay22">
+            <div className="delete-modal22">
+              <h3>Confirm Delete</h3>
+              <p>Are you sure you want to delete "{tripToDelete?.tripName}"?</p>
+              <div className="delete-modal-buttons22">
+                
+                <button 
+                  className="delete-cancel-btn22" 
+                  onClick={() => setShowDeleteModal(false)}
+                >
+                  Cancel
+                </button>
+                <button 
+                  className="delete-confirm-btn22" 
+                  onClick={confirmDelete}
+                >
+                  Delete
+                </button>
+              </div>
             </div>
           </div>
         )}

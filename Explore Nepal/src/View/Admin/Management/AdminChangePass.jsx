@@ -1,9 +1,11 @@
 import React, { useState } from "react";
 import { FiEye, FiEyeOff } from "react-icons/fi";
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import "./AdminChangePass.css";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import Header from "../../../Components/Header";
+import Header from "../../../Components/Admin Header/Admin-Header";
 import Footer from "../../../Components/Footer";
 
 export default function PassReset() {
@@ -21,16 +23,25 @@ export default function PassReset() {
   const [newPasswordVisible, setNewPasswordVisible] = useState(false);
   const [confirmPasswordVisible, setConfirmPasswordVisible] = useState(false);
 
+  const [isLoading, setIsLoading] = useState(false);
+
   const handleChangePassword = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
 
     if (!userEmail) {
-      alert("User email not found. Please log in again.");
+      toast.error("User email not found. Please log in again.", {
+        className: 'toast-message27',
+      });
+      setIsLoading(false);
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      alert("Passwords do not match!");
+      toast.error("Passwords do not match!", {
+        className: 'toast-message27',
+      });
+      setIsLoading(false);
       return;
     }
 
@@ -42,22 +53,38 @@ export default function PassReset() {
       });
 
       if (response.status === 200) {
-        alert("✅ Password updated successfully!");
+        toast.success("Password updated successfully!", {
+          className: 'toast-message27',
+        });
         setCurrentPassword("");
         setNewPassword("");
         setConfirmPassword("");
       } else {
-        alert(response.data.message);
+        toast.error(response.data.message, {
+          className: 'toast-message27',
+        });
       }
     } catch (error) {
-      console.error("❌ Error updating password:", error);
-      alert(error.response?.data?.message || "Something went wrong.");
+      console.error("Error updating password:", error);
+      toast.error(error.response?.data?.message || "Something went wrong.", {
+        className: 'toast-message27',
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
     <>
       <Header />
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        closeOnClick
+        pauseOnHover
+        draggable
+      />
       <div className="main-container27">
         <div className="card27">
           <h1 className="title27">Change Password</h1>
@@ -110,7 +137,19 @@ export default function PassReset() {
               </button>
             </div>
 
-            <button type="submit" className="button27">Update Password</button>
+            <button 
+              type="submit" 
+              className="button27" 
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <span className="loading-text27">
+                  Updating...
+                </span>
+              ) : (
+                "Update Password"
+              )}
+            </button>
           </form>
         </div>
       </div>

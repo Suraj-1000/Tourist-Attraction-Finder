@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef  } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import "./editPackage.css";
-import Header from "../../../Components/Header";
+import Header from "../../../Components/Admin Header/Admin-Header";
 import Footer from "../../../Components/Footer";
 
 export default function EditPackagePage() {
@@ -12,6 +14,8 @@ export default function EditPackagePage() {
   const [imagePreview, setImagePreview] = useState(null);
   const [fileName, setFileName] = useState(""); 
   const [loading, setLoading] = useState(false);
+  const [updating, setUpdating] = useState(false); 
+
 
   const [formData, setFormData] = useState({
     title: "",
@@ -69,11 +73,19 @@ export default function EditPackagePage() {
         // Set the image URL correctly (imageUrl from backend)
         setImagePreview(packageData.imageUrl || ""); // Use imageUrl from backend
       } else {
-        alert("No Package Found.");
+        toast.error("No Package Found.", {
+          position: "top-right",
+          autoClose: 3000,
+          className: 'toast-message20'
+        });
       }
     } catch (error) {
       console.error("Error fetching package details:", error);
-      alert("Failed to load package details.");
+      toast.error("Failed to load package details.", {
+        position: "top-right",
+        autoClose: 3000,
+        className: 'toast-message20'
+      });
     } finally {
       setLoading(false);
     }
@@ -144,6 +156,7 @@ export default function EditPackagePage() {
 
   const handleUpdate = async (e) => {
     e.preventDefault();
+    setUpdating(true);
     try {
       const updateFormData = new FormData();
       Object.keys(formData).forEach((key) => {
@@ -156,8 +169,6 @@ export default function EditPackagePage() {
         }
       });
 
-      console.log("📤 Sending Update Request:", Object.fromEntries(updateFormData));
-
       const response = await axios.put(
         "http://localhost:4000/adminPackage/updatePackage",
         updateFormData,
@@ -165,14 +176,30 @@ export default function EditPackagePage() {
       );
 
       if (response.status === 200) {
-        alert("✅ Package updated successfully!");
-        navigate(-1);
+        toast.success("Package updated successfully!", {
+          position: "top-right",
+          autoClose: 3000,
+          className: 'toast-message20'
+        });
+        setTimeout(() => {
+          navigate(-1);
+        }, 2000);
       } else {
-        alert("❌ Failed to update package.");
+        toast.error("Failed to update package.", {
+          position: "top-right",
+          autoClose: 3000,
+          className: 'toast-message20'
+        });
       }
     } catch (error) {
-      console.error("❌ Error updating package:", error);
-      alert(`Update failed: ${error.response?.data?.message || "Unknown error"}`);
+      console.error("Error updating package:", error);
+      toast.error(error.response?.data?.message || "Unknown error occurred", {
+        position: "top-right",
+        autoClose: 3000,
+        className: 'toast-message20'
+      });
+    } finally {
+      setUpdating(false);
     }
   };
 
@@ -181,6 +208,7 @@ export default function EditPackagePage() {
   return (
     <>
       <Header />
+      <ToastContainer />
       <div className="main-container20">
         <div className="heading20">
           <h1 className="title-heading20">Plan Your Perfect Itinerary</h1>
@@ -234,7 +262,10 @@ export default function EditPackagePage() {
 
           <div className="button-container20">
            <Link to="/ItineraryPackage"><button type="button" className="cancel-btn20">Cancel</button></Link>
-            <button type="submit" className="update-btn20">Update</button>
+           <button type="submit" className="update-btn20" disabled={updating}>
+    {updating ? "Updating..." : "Update"}
+</button>
+
           </div>
         </form>
       </div>

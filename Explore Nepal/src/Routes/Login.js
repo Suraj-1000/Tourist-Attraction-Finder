@@ -14,6 +14,14 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ message: 'Email and password are required' });
     }
 
+    const adminRegex = /^[a-zA-Z0-9._%+-]+\.explore\.nepal@gmail\.com$/;
+    const userRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/; // Any email for user
+
+
+    if (!adminRegex.test(email) && !userRegex.test(email)) {
+      return res.status(400).json({ message: 'Invalid email format' });
+    }
+
     const user = await Signup.findOne({ email });
     if (!user) {
       return res.status(400).json({ message: 'User not found' });
@@ -23,6 +31,10 @@ router.post('/', async (req, res) => {
     if (!isMatch) {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
+
+    user.lastLogin = new Date();
+    await user.save();
+    
 
     // Generate JWT token
     const token = jwt.sign(
@@ -44,8 +56,11 @@ router.post('/', async (req, res) => {
         gender: user.gender,
         dateOfBirth: user.dateOfBirth,
         image: user.image,
+        role: user.role,
+        lastLogin: user.lastLogin,
       }
     });
+
   } catch (error) {
     console.error('Error during login:', error);
     res.status(500).json({ message: 'Server error', error: error.message });

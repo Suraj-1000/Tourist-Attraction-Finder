@@ -22,7 +22,11 @@ const PlanTripSchema = new mongoose.Schema({
   foodCulinary: [String],
   nightlifeEntertainment: [String],
   customActivities: String,
-  travelStyle: { type: String, enum: ['Solo', 'Couples', 'Groups', 'Family'] },
+  travelStyle: { 
+    type: String, 
+    enum: ['Solo', 'Couples', 'Groups', 'Family'],
+    required: false
+  },
   accommodationType: { type: String, enum: ['Guesthouses', 'Hostels', 'Mid-Range', '3-Star Hotels', 'Homestays', 'Luxury', '5-Star Hotels', 'Resorts'] },
   mealsPreferences: { type: String, enum: ['All-Inclusive', 'Self-Catering'] },
   dietaryPreferences: { type: String, enum: ['Vegetarian', 'Vegan', 'Gluten-Free', 'Nut-Free'] },
@@ -38,6 +42,7 @@ const PlanTripSchema = new mongoose.Schema({
   mealsCost: String,
   activitiesCost: String,
   status: { type: String, default: "pending" },
+  declineMessage: { type: String },
 }, { timestamps: true });
 
 const PlanTrip = mongoose.model('PlanTrip', PlanTripSchema);

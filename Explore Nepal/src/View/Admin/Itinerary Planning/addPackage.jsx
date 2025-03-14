@@ -2,8 +2,10 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import "./addPackage.css";
-import Header from "../../../Components/Header";
+import Header from "../../../Components/Admin Header/Admin-Header";
 import Footer from "../../../Components/Footer";
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 export default function AddPackagePage() {
   const [formData, setFormData] = useState({
@@ -32,6 +34,7 @@ export default function AddPackagePage() {
     cancellationPolicy: "",
   });
 
+  const [loading, setLoading] = useState(false); // Add loading state
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -99,35 +102,87 @@ export default function AddPackagePage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
     const formDataToSubmit = new FormData();
-  
+
+    // Handle itinerary data separately to ensure it's properly formatted
+    const itineraryData = formData.itinerary.map(day => ({
+      day: day.day,
+      mode: day.mode || '',
+      highlights: day.highlights || '',
+      stay: day.stay || '',
+      meals: day.meals || '',
+      costBreakdown: day.costBreakdown || ''
+    }));
+
+    // Append all form data
     for (const key in formData) {
       if (key === "itinerary") {
-        formDataToSubmit.append(key, JSON.stringify(formData[key]));
+        formDataToSubmit.append(key, JSON.stringify(itineraryData));
       } else if (key === "image" && formData.image) {
         formDataToSubmit.append("image", formData.image);
       } else {
         formDataToSubmit.append(key, formData[key].toString());
       }
     }
-  
+
     try {
-      const response = await axios.post("http://localhost:4000/adminAddPackage", formDataToSubmit, {
-        headers: { "Content-Type": "multipart/form-data" },
+      const response = await axios.post(
+        "http://localhost:4000/adminPackage/Add-Package",
+        formDataToSubmit,
+        {
+          headers: { "Content-Type": "multipart/form-data" },
+        }
+      );
+
+      // Show success toast
+      toast.success("Package added successfully!", {
+        position: "top-center",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        className: 'toast-message19',
       });
-  
-      alert("✅ Success! " + response.data.message);
-      navigate(-1); 
+
+      setTimeout(() => {
+        navigate(-1);
+      }, 2000);
+
     } catch (error) {
+      // Show error toast
+      toast.error(error.response?.data?.message || "Error adding package. Please try again.", {
+        position: "top-center",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        className: 'toast-message19',
+      });
       console.error("Error submitting form", error);
-      alert("❌ Error adding package. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
-  
-  
 
   return (
     <>
+      <ToastContainer
+        position="top-center"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="colored"
+      />
       <Header />
       <div className="main-container19">
         <div className="heading19">
@@ -139,10 +194,7 @@ export default function AddPackagePage() {
           <h2 className="h2-19">Create New Itinerary Package</h2>
 
           <label className="label19">Title: <input className="input19" type="text" name="title" value={formData.title} onChange={handleChange} /></label>
-          
-          
           <label className="label19">Image: <input type="file" name="image" onChange={handleFileChange} /></label>
-          
           <label className="label19">Highlight: <input className="input19" type="text" name="highlight" value={formData.highlight} onChange={handleChange} /></label>
           <label className="label19">Overview: <textarea className="textarea19" name="overview" value={formData.overview} onChange={handleChange} /></label>
 
@@ -178,14 +230,15 @@ export default function AddPackagePage() {
               <label className="label19">Cost Breakdown: <textarea className="textarea19" name="costBreakdown" value={day.costBreakdown} onChange={(e) => handleItineraryChange(index, e)} /></label>
             </div>
           ))}
-          
 
           <label className="label19">What's Included: <textarea className="textarea19" name="included" value={formData.included} onChange={handleChange} /></label>
           <label className="label19">Additional Information: <textarea className="textarea19" name="additionalInfo" value={formData.additionalInfo} onChange={handleChange} /></label>
 
           <div className="button-container19">
-           <Link to="/ItineraryPackage"><button type="button" className="cancel-btn19">Cancel</button></Link>
-            <button type="submit" className="create-btn19">Create</button>
+            <Link to="/ItineraryPackage"><button type="button" className="cancel-btn19">Cancel</button></Link>
+            <button type="submit" className="create-btn19">
+              {loading ? "Adding..." : "Create"}
+            </button>
           </div>
         </form>
       </div>

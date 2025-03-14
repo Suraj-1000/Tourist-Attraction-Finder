@@ -188,6 +188,42 @@ padding: 0;
   color: white;
 }
 
+/* Toast Styles */
+.toast-message15 {
+  font-family: 'Mitr';
+  font-size: 14px;
+  border-radius: 8px;
+}
+
+.Toastify__toast--success {
+  background: rgba(0, 128, 0, 0.9) !important;
+  color: white;
+}
+
+.Toastify__toast--error {
+  background: rgba(174, 8, 8, 0.9) !important;
+  color: white;
+}
+
+/* Make all toast icons white */
+.Toastify__toast-icon svg {
+  fill: white !important;
+}
+
+/* Style for close button and progress bar */
+.Toastify__close-button {
+  color: white !important;
+  opacity: 0.8;
+}
+
+.Toastify__close-button:hover {
+  opacity: 1;
+}
+
+.Toastify__progress-bar {
+  background: rgba(255, 255, 255, 0.7) !important;
+}
+
 
 
 

@@ -416,7 +416,7 @@ cursor: pointer;
 }
 
 .copy-button17 {
-  background: #007bff;
+  background: #008000;
   color: white;
   border: none;
   padding: 8px 15px;
@@ -425,20 +425,135 @@ cursor: pointer;
 }
 
 .copy-button17:hover {
-  background: #0056b3;
+  background: #008000;
 }
 
 .close-button17 {
-  background: #ccc;
+  background: #AE0808;
   border: none;
   padding: 8px 15px;
   border-radius: 5px;
   cursor: pointer;
   margin-left: 10px;
+  color: white;
 }
 
 
 .ranking-string17,
 .category-string17 {
     margin-bottom: 2px;
+}
+
+/* Toast Styles */
+.toast-message17 {
+  font-family: 'Mitr' !important;
+  font-size: 14px !important;
+  border-radius: 6px !important;
+}
+
+.Toastify__toast--success {
+  background-color: #008000 !important;
+  color: white !important;
+  font-family: 'Mitr' !important;
+}
+
+.Toastify__toast--error {
+  background-color: #AE0808 !important;
+  color: white !important;
+}
+
+.Toastify__toast--info {
+  background-color: #AE0808 !important;
+  color: white !important;
+}
+
+/* Delete Modal Styles */
+.delete-modal-overlay17 {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.delete-modal17 {
+  background: white;
+  padding: 30px;
+  border-radius: 12px;
+  width: 400px;
+  text-align: center;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.delete-modal17 h3 {
+  color: #AE0808;
+  margin-bottom: 15px;
+  font-size: 20px;
+}
+
+.delete-modal17 p {
+  margin-bottom: 25px;
+  color: #333;
+}
+
+.delete-modal-buttons17 {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+}
+
+.delete-confirm-btn17, 
+.delete-cancel-btn17 {
+  padding: 10px 25px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 500;
+  transition: background-color 0.3s;
+}
+
+.delete-confirm-btn17 {
+  background-color: #AE0808;
+  color: white;
+}
+
+.delete-confirm-btn17:hover {
+  background-color: #8B0000;
+}
+
+.delete-cancel-btn17 {
+  background-color: #008000;
+  color: white;
+}
+
+.delete-cancel-btn17:hover {
+  background-color: #006400;
+}
+
+.budget-value17 {
+    background: #f0fff0;
+    color: #008000;
+    padding: 8px 15px;
+    border-radius: 20px;
+    font-weight: bold;
+    margin-left: 10px;
+    display: inline-block;
+    box-shadow: 0 2px 5px rgba(0, 128, 0, 0.1);
+}
+
+/* Update your existing span17 class */
+.span17 {
+    background: #f0fff0;
+    color: #008000;
+    padding: 8px 15px;
+    border-radius: 20px;
+    font-weight: bold;
+    display: inline-block;
+    box-shadow: 0 2px 5px rgba(0, 128, 0, 0.1);
 }

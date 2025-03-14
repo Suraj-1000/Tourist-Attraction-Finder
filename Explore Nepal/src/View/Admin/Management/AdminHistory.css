@@ -93,7 +93,7 @@
     border: 1px solid #121111;    border-radius: 5px;
     font-size: 16px;
     cursor: pointer;
-    width: 300px; 
+    width: 150px; 
     height: 50px; 
     transition: background-color 0.3s;
   }
@@ -155,6 +155,9 @@
     cursor: pointer;
     font-size: 20px;
     color: #666;
+    padding: 5px 10px;
+    border-radius: 50%;
+    transition: background-color 0.2
   }
   
   .dropdown-menu28 {
@@ -207,13 +210,83 @@
     font-size: 16px;
     cursor: pointer;
     transition: background-color 0.3s;
+    width: 150px;
   }
   
   .delete-button28:hover {
     background-color: #AE0808;
   }
   
+  /* Toast Container Styles */
+  .Toastify__toast-container28 {
+    z-index: 9999;
+    position: fixed;
+    padding: 4px;
+    width: 320px;
+    box-sizing: border-box;
+    color: #fff;
+  }
 
+  .Toastify__toast28 {
+    position: relative;
+    min-height: 64px;
+    box-sizing: border-box;
+    margin-bottom: 1rem;
+    padding: 8px;
+    border-radius: 4px;
+    box-shadow: 0 1px 10px 0 rgba(0, 0, 0, 0.1), 0 2px 15px 0 rgba(0, 0, 0, 0.05);
+    display: flex;
+    justify-content: space-between;
+    max-height: 800px;
+    overflow: hidden;
+    font-family: 'Mitr', sans-serif;
+    cursor: pointer;
+    direction: ltr;
+  }
+
+  .Toastify__toast--success28 {
+    background: #008000;
+  }
+
+  .Toastify__toast--error28 {
+    background: #AE0808;
+  }
+
+  .Toastify__toast-body28 {
+    margin: auto 0;
+    flex: 1;
+    padding: 6px;
+  }
+
+  .Toastify__progress-bar28 {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 5px;
+    z-index: 9999;
+    opacity: 0.7;
+    background-color: rgba(255, 255, 255, 0.7);
+    transform-origin: left;
+  }
+  
+  .clear-all-button28 {
+    padding: 10px 20px;
+    background-color: #AE0808;
+    color: white;
+    border: 1px solid #121111;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    width: 150px;
+    height: 50px;
+  }
+
+  .clear-all-button28:hover {
+    background-color: #8B0000;
+  }
+  
   
   
   

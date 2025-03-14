@@ -185,7 +185,7 @@ body {
   }
   
   .resource-btn31 {
-    background-color: #007bff;
+    background-color: #F25019;
     color: white;
     font-size: 16px;
     padding: 10px 20px;
@@ -196,7 +196,7 @@ body {
   }
   
   .resource-btn31:hover {
-    background-color: #0056b3;
+    background-color: #F25019;
   }
 
 
@@ -228,5 +228,87 @@ body {
 
 .emergency-card31:hover .overlay31 {
   opacity: 1; /* Show overlay on hover */
+}
+
+/* Toast Styles */
+.toast-message31 {
+  font-family: 'Mitr';
+  font-size: 14px;
+  border-radius: 8px;
+}
+
+.Toastify__toast--success {
+  background: rgba(0, 128, 0, 0.9);
+  color: white;
+}
+
+.Toastify__toast--error {
+  background: rgba(174, 8, 8, 0.9);
+  color: white;
+}
+
+/* Modal Styles */
+.modal-overlay31 {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content31 {
+  background: white;
+  padding: 30px;
+  border-radius: 10px;
+  width: 90%;
+  max-width: 400px;
+  text-align: center;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.modal-content31 h2 {
+  color: #333;
+  margin-bottom: 15px;
+}
+
+.modal-content31 p {
+  color: #666;
+  margin-bottom: 20px;
+}
+
+.modal-buttons31 {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+}
+
+.modal-cancel-btn31,
+.modal-delete-btn31 {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: transform 0.2s ease;
+}
+
+.modal-cancel-btn31 {
+  background-color: #008000;
+  color: white;
+}
+
+.modal-delete-btn31 {
+  background-color: #AE0808;
+  color: white;
+}
+
+.modal-cancel-btn31:hover,
+.modal-delete-btn31:hover {
+  transform: scale(1.05);
 }
 

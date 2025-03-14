@@ -106,6 +106,37 @@
       background-color: #006400;
   }
 
+  .button27:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+  }
+
+  .toast-message27 {
+    font-family: "Mitr";
+    font-size: 14px;
+    border-radius: 8px;
+  }
+
+  /* Custom styles for success toast */
+  .Toastify__toast--success {
+    background: rgba(0, 128, 0, 0.9);
+    color: white;
+  }
+
+  /* Custom styles for error toast */
+  .Toastify__toast--error {
+    background: rgba(174, 8, 8, 0.9);
+    color: white;
+  }
+
+  /* Toast container styles */
+  .Toastify__toast-container {
+    z-index: 9999;
+  }
+
+  .Toastify__toast {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
   
   
   

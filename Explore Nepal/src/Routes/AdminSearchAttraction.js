@@ -22,24 +22,43 @@ const upload = multer({ storage: storage });
 // Route: Search attractions by name or address
 router.get('/', async (req, res) => {
   try {
-    const { query } = req.query;
-    if (!query) {
-      return res.status(400).json({ error: 'Please provide a search query' });
-    }
+    const { query, category } = req.query;
+    let searchQuery = {};
 
-    const attractions = await Attraction.find({
-      $or: [
+    // Build search query based on parameters
+    if (query) {
+      searchQuery.$or = [
         { name: { $regex: query, $options: 'i' } },
         { address: { $regex: query, $options: 'i' } },
-      ],
-    }).select('name image rating numberOfReviews category description address rankingString');
+      ];
+    }
+
+    if (category) {
+      searchQuery.category = { $regex: new RegExp(`^${category}$`, 'i') }; // Case-insensitive exact match
+    }
+
+    console.log('Search Query:', searchQuery); // Debug log
+
+    // If no filters are provided, return all attractions
+    const attractions = await Attraction.find(searchQuery)
+      .select('name image rating numberOfReviews category description address rankingString');
+
+    console.log(`Found ${attractions.length} attractions`); // Debug log
+    console.log('Categories found:', attractions.map(a => a.category)); // Debug log
 
     if (attractions.length === 0) {
-      return res.status(404).json({ message: 'No attractions found' });
+      return res.status(404).json({ 
+        message: category 
+          ? `No attractions found in category "${category}"${query ? ` matching "${query}"` : ''}`
+          : query 
+          ? `No attractions found matching "${query}"`
+          : 'No attractions found'
+      });
     }
 
     res.status(200).json(attractions);
   } catch (error) {
+    console.error("Search error:", error); // Debug log
     res.status(500).json({ error: error.message });
   }
 });
