@@ -1,0 +1,207 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: "Mitr";
+  background-color: #f9f9f9; /* Light background for better contrast */
+}
+
+.logo1 {
+  width: 120px;
+  height: 120px;
+  background: url("/images/Logo.png");
+  background-size: cover;
+  background-position: center;
+  position: absolute;
+  top: 20px;
+  left: 100px;
+  border-radius: 50%;
+}
+
+.main-container1 {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh; 
+}
+
+.card1 {
+  background-color: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+  padding: 30px;
+  width: 100%;
+  max-width: 600px;
+  align-items: center;
+  margin-top: 10px;
+  transition: transform 0.2s; 
+}
+
+.card1:hover {
+  transform: translateY(-5px);
+}
+
+.title1 {
+  font-size: 32px;
+  color: #ae0808;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.subtitle1 {
+  color: #02073e;
+  font-size: 16px;
+  margin-bottom: 30px;
+  text-align: center;
+}
+
+.input-row0 {
+  display: flex;
+  justify-content: space-between;
+  gap: 40px;
+  margin-bottom: 20px;
+}
+
+.input-group0 {
+  width: 48%;
+  text-align: left;
+}
+
+.input-group0 label {
+  display: block;
+  font-size: 14px;
+  color: #02073e;
+  margin-bottom: 5px;
+}
+
+.input-field0 {
+  width: 250px; 
+  padding: 12px; 
+  font-size: 14px;
+  border-radius: 5px;
+  border: 1px solid #cccccc; /* Lighter border */
+  background-color: #f9f9f9; /* Subtle background color */
+  transition: border-color 0.3s; /* Smooth transition */
+}
+
+.input-field0:focus {
+  border-color: #008000; /* Highlight on focus */
+  outline: none; /* Remove default outline */
+}
+
+.terms1 {
+  margin-top: 20px;
+  margin-bottom: 20px;
+  display: flex; /* Use flexbox for alignment */
+  align-items: center; /* Center checkbox vertically */
+}
+
+.terms1 input {
+  margin-right: 10px; /* Space between checkbox and label */
+}
+
+.agree-terms-conditions1 {
+  font-size: 14px;
+  color: #02073e;
+}
+
+.submit-button1 {
+  font-family: "Mitr", sans-serif;
+  background-color: #008000;
+  color: #fff;
+  padding: 12px 20px; /* Increased padding */
+  border: none;
+  border-radius: 5px;
+  width: 100%; /* Full width */
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s; /* Smooth transition */
+}
+
+.submit-button1:hover {
+  background-color: #005700; /* Darker shade on hover */
+}
+
+.or1 {
+  margin: 20px 0;
+  font-size: 14px;
+  color: #02073e;
+  text-align: center;
+}
+
+.login-link1 {
+  font-size: 14px;
+  text-align: center;
+}
+
+.login-here1 {
+  text-decoration: underline;
+}
+
+.login-here1:hover {
+  color: #008000;
+  text-decoration: underline;
+}
+
+.error-message1,
+.success-message1 {
+  text-align: center;
+  color: red; /* Red for error messages */
+  margin-top: 10px; /* Space above messages */
+}
+
+.success-message1 {
+  color: green; /* Green for success messages */
+}
+
+
+.password-field {
+  position: relative;
+  width: 100%;
+}
+
+.eye-icon.inside {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 20px;
+  color: #ccc;
+}
+
+.eye-icon:hover {
+  color: #008000;
+}
+
+/* Centering the input group */
+.input-group01 {
+  display: flex;
+  flex-direction: column; /* Stack the label and input vertically */
+  justify-content: center;
+  align-items: center;
+  margin: 20px 0; /* Optional: adds spacing between form fields */
+}
+
+.input-group01 label {
+  margin-bottom: 10px; /* Adds space between the label and the input field */
+  font-size: 16px; /* Optional: makes the label text a bit larger */
+}
+
+.input-field01 {
+  width: 250px;
+  padding: 12px;
+  font-size: 14px;
+  border-radius: 5px;
+  border: 1px solid #cccccc;
+  background-color: #f9f9f9;
+  transition: border-color 0.3s;
+  text-align: center; /* Centers the text inside the input field */
+}
+
+

@@ -1,0 +1,166 @@
+*{
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Mitr';
+}
+
+body {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+.main-container19 {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+
+.heading19 {
+    display: flex;
+    flex-direction: column;
+    align-items: center;  
+    justify-content: center;
+    padding: 60px 40px;
+    width: 100%;
+    text-align: center;
+  }
+  
+  .title-heading19 {
+    margin-top: 85px;
+    font-size: 16px;
+    font-weight: bold;
+    color: #e63946;
+    margin-bottom: 5px;
+  }
+  
+  .title-para19 {
+    font-size: 28px;
+    font-weight: 500;
+    color: #000;
+    margin: 0;
+  }
+
+
+  .form19 {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    width: 60%;
+    margin: 40px auto;  
+    background: #fff;
+    margin-top: -30px;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  }
+  
+  .h2-19, .h3-19 {
+    color: #e63946;
+    border-bottom: 2px solid #e63946;
+    padding-bottom: 5px;
+    margin-bottom: 10px;
+  }
+  
+  .label19 {
+    font-size: 16px;
+    font-weight: 500;
+    color: #333;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+  
+  .input19, .textarea19 {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 14px;
+    transition: 0.3s;
+  }
+  
+  
+  /* Itinerary Section */
+  .itinerary-day19 {
+    background: #f1f1f1;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+  }
+
+  /* Center the Button */
+.additi19 {
+  display: block;
+  margin: 20px auto; 
+  width: 200px; 
+  background: #008000;
+  color: #fff;
+  border: none;
+  padding: 14px 0;
+  font-size: 16px;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: 0.3s;
+  text-align: center;
+}
+
+/* Hover Effect */
+.additi19:hover {
+  background: #006400; 
+}
+
+
+  .button-container19 {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    margin-top: 20px;
+  }
+  
+  .create-btn19, .cancel-btn19 {
+    width: 200px; 
+    background: #008000; 
+    color: #fff;
+    border: none;
+    padding: 14px 0; 
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: 0.3s;
+    text-align: center;
+  }
+  
+
+  .cancel-btn19 {
+    background: #AE0808; 
+  }
+  
+  .create-btn19:hover {
+    background: #006400; 
+  }
+  
+  .cancel-btn19:hover {
+    background: #8B0000; 
+  }
+  
+
+.toast-message19 {
+  font-family: 'Mitr' !important;
+  font-size: 14px !important;
+  border-radius: 6px !important;
+}
+
+/* Custom toast colors */
+.Toastify__toast--success {
+  background-color: #4caf50 !important;
+  color: white !important;
+}
+
+.Toastify__toast--error {
+  background-color: #f44336 !important;
+  color: white !important;
+}
+  

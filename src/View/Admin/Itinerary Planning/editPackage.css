@@ -1,0 +1,190 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Mitr'; 
+}
+
+body {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+.main-container20 {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.heading20 {
+  display: flex;
+  flex-direction: column;
+  align-items: center;  
+  justify-content: center;
+  padding: 60px 40px;
+  width: 100%;
+  text-align: center;
+}
+
+.title-heading20 {
+  margin-top: 85px;
+  font-size: 16px;
+  font-weight: bold;
+  color: #e63946;
+  margin-bottom: 5px;
+}
+
+.title-para20 {
+  font-size: 28px;
+  font-weight: 500;
+  color: #000;
+  margin: 0;
+}
+
+.form20 {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  width: 60%;
+  margin: 40px auto;  
+  background: #fff;
+  margin-top: -30px;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.h2-20 {
+  color: #e63946;
+  border-bottom: 2px solid #e63946;
+  padding-bottom: 5px;
+  margin-bottom: 10px;
+}
+
+.h3-20 {
+  color: #e63946;
+  border-bottom: 2px solid #e63946;
+  padding-bottom: 5px;
+  margin-bottom: 10px;
+}
+
+.label20 {
+  font-size: 16px;
+  font-weight: 500;
+  color: #333;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.input20,
+.textarea20 {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  transition: 0.3s;
+}
+
+.input20:focus,
+.textarea20:focus {
+  border-color: #e63946;
+  outline: none;
+}
+
+/* Itinerary Section */
+.itinerary-day20 {
+  background: #f1f1f1;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 10px;
+}
+
+/* Center the Button */
+.additi20 {
+  display: block;
+  margin: 20px auto; 
+  width: 200px; 
+  background: #008000;
+  color: #fff;
+  border: none;
+  padding: 14px 0;
+  font-size: 16px;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: 0.3s;
+  text-align: center;
+}
+
+/* Hover Effect */
+.additi20:hover {
+  background: #006400; 
+}
+
+.button-container20 {
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  margin-top: 20px;
+}
+
+.update-btn20,
+.cancel-btn20 {
+  width: 200px; 
+  background: #008000; 
+  color: #fff;
+  border: none;
+  padding: 14px 0; 
+  font-size: 16px;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: 0.3s;
+  text-align: center;
+}
+
+.cancel-btn20 {
+  background: #AE0808; 
+}
+
+.update-btn20:hover {
+  background: #006400; 
+}
+
+.cancel-btn20:hover {
+  background: #8B0000; 
+}
+
+
+.image-preview20 {
+  width: 200px;
+  height: auto;
+  margin-top: 10px;
+  border-radius: 5px;
+}
+
+/* Toast Styles */
+.toast-message20 {
+  font-family: 'Mitr' !important;
+  font-size: 14px !important;
+  border-radius: 6px !important;
+}
+
+.Toastify__toast--success {
+  background-color: #008000 !important;
+  color: white !important;
+}
+
+.Toastify__toast--error {
+  background-color: #AE0808 !important;
+  color: white !important;
+}
+
+/* Disabled button state */
+.update-btn20:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+}
+
+

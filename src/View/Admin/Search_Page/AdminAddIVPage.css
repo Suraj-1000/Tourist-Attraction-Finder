@@ -1,0 +1,181 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Mitr';
+}
+
+body {
+  width: 100%;
+  background: #fff;
+  margin: 0;
+  padding: 0;
+}
+
+.main-container7 {
+  width: 100%;
+  height: auto;
+  display: block;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+}
+
+
+
+.heading7 {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 40px;
+  width: 100%;
+  text-align: center;
+}
+
+.title-heading7 {
+  margin-top: 55px;
+  font-size: 16px;
+  font-weight: bold;
+  color: #e63946;
+  margin-bottom: 5px;
+}
+
+.title-para7 {
+  font-size: 28px;
+  font-weight: 500;
+  color: #000;
+  margin: 0;
+}
+
+.upload-card7 {
+  background: #ffffff;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 15px;
+  padding: 30px;
+  width: 400px;
+  margin: -30px auto;
+  text-align: center;
+  margin-bottom: 20px;
+  transition: transform 0.3s ease;
+}
+
+.upload-card7:hover {
+  transform: translateY(-10px);
+}
+
+.upload-image7 {
+  width: 100%;
+  height: auto;
+  max-height: 300px;
+  object-fit: contain;
+  border-radius: 10px;
+  margin-bottom: 20px;
+}
+
+/* Section inside the card */
+.upload-section7 {
+  margin-top: 20px;
+}
+
+
+/* File input field */
+.file-input7 {
+  display: block;
+  margin: 15px auto;
+  padding: 12px 20px;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  font-size: 16px;
+  width: 100%;
+  background-color: #f9f9f9;
+}
+
+.file-input7:focus {
+  border-color: #e63946;
+  outline: none;
+}
+
+
+.tags-input7 {
+  display: block;
+  margin: 10px auto;
+  padding: 12px 20px;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  font-size: 16px;
+  width: 100%;
+  background-color: #f9f9f9;
+}
+
+.tags-input7:focus {
+  border-color: #e63946;
+  outline: none;
+}
+
+.file-info7 {
+  margin-top: 10px;
+  font-weight: bold;
+}
+
+.button-container7 {
+  margin-top: 20px;
+}
+
+.cancel-btn7, .upload-btn7 {
+  width: 156px;
+  height: 50px;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: bold;
+  color: white;
+  border-radius: 5px;
+  margin: 5px;
+}
+
+.cancel-btn7 {
+  background-color: #AE0808;
+}
+
+.upload-btn7 {
+  background-color: #008000;
+}
+
+.upload-image7 {
+  width: 100px;  
+  height: 100px;
+  margin-top: 10px;
+}
+
+.toast-message7 {
+  font-family: 'Mitr';
+  font-size: 14px;
+  border-radius: 8px;
+}
+
+.Toastify__toast--success {
+  background: rgba(0, 128, 0, 0.9) !important;
+  color: white;
+}
+
+.Toastify__toast--error {
+  background: rgba(174, 8, 8, 0.9) !important;
+  color: white;
+}
+
+.loading-text7 {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.loading-text7::after {
+  content: "";
+  width: 16px;
+  height: 16px;
+  border: 2px solid #ffffff;
+  border-radius: 50%;
+  border-top-color: transparent;
+  animation: spin
+}

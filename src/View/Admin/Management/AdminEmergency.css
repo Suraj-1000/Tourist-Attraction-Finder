@@ -1,0 +1,314 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Mitr';
+}
+
+body {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    background-color: #f8f9fa;
+}
+
+.main-container31 {
+    width: 100%;
+    height: auto;
+    display: block;
+    text-align: center;
+    background-color: #f8f9fa;
+}
+
+.heading31 {
+    display: flex;
+    flex-direction: column;
+    align-items: center;  
+    justify-content: center;
+    padding: 40px 40px;
+    width: 100%;
+    text-align: center;
+}
+
+.title-heading31 {
+    margin-top: 100px;
+    font-size: 16px;
+    font-weight: bold;
+    color: #e63946;
+}
+
+.title-para31 {
+    font-size: 31px;
+    font-weight: 500;
+    color: #000;
+    margin: 0;
+}
+
+.h2-31{
+    text-align: center;
+    margin-top: -20px;
+}
+
+
+/* Emergency Grid */
+.emergency-grid31 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    justify-content: center;
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+  
+  .emergency-card31 {
+    background: #fff;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    transition: transform 0.3s ease; 
+  }
+  
+  .emergency-card31:hover {
+    transform: scale(1.05); 
+  }
+  
+  .emergency-card31 h2 {
+    font-size: 20px;
+    color: #e63946;
+    margin-bottom: 10px;
+  }
+  
+  .emergency-icon31 {
+    font-size: 3rem; 
+    margin-bottom: 10px; 
+  }
+  
+  .phone-container p {
+    font-size: 1.2rem;
+    margin-bottom: 20px;
+  }
+  
+  .quick-dial31 {
+    background-color: #008000;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-top: 20px;
+  }
+  
+  .quick-dial31:hover {
+    background-color: #008000;
+    transform: scale(1.1); 
+    transition: transform 0.3s ease;
+  }
+  /* Form Styling */
+.form-heading31 {
+    font-size: 22px;
+    font-weight: bold;
+    margin-top: 30px;
+}
+
+.form-group31 {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.form-group31 input, .form-group31 select {
+    width: 300px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+/* Buttons */
+.form-buttons31 {
+    margin-top: 20px;
+}
+
+.cancel-btn31, .save-btn31 {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    width: 100px;
+    margin-bottom: 20px;
+}
+
+.cancel-btn31 {
+    background-color: #AE0808;
+    color: white;
+    margin-right: 10px;
+}
+
+.cancel-btn31:hover {
+    background-color: #AE0808;
+}
+
+.save-btn31 {
+    background-color: #008000;
+    color: white;
+}
+
+.save-btn31:hover {
+    background-color: #008000;
+}
+
+
+.additional-resources31 {
+    background-color: white;
+    padding: 20px;
+    margin: 30px auto;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    max-width: 600px;
+  }
+  
+  .resources-heading31 {
+    font-size: 24px;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 10px;
+  }
+  
+  .resources-para31 {
+    font-size: 16px;
+    color: #666;
+    margin-bottom: 20px;
+  }
+  
+  .resource-btn31 {
+    background-color: #F25019;
+    color: white;
+    font-size: 16px;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease-in-out;
+  }
+  
+  .resource-btn31:hover {
+    background-color: #F25019;
+  }
+
+
+  .edit-icon31,
+.delete-icon31 {
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+  transition: transform 0.2s ease-in-out;
+  background-color: #f4f4f4;
+  padding: 6px; 
+  border-radius: 10px;
+}
+
+.edit-icon31:hover,
+.delete-icon31:hover {
+  transform: scale(1.1);
+}
+
+.overlay31 {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  gap: 8px;
+  opacity: 0;  /* Initially hidden */
+  transition: opacity 0.2s ease-in-out;
+}
+
+.emergency-card31:hover .overlay31 {
+  opacity: 1; /* Show overlay on hover */
+}
+
+/* Toast Styles */
+.toast-message31 {
+  font-family: 'Mitr';
+  font-size: 14px;
+  border-radius: 8px;
+}
+
+.Toastify__toast--success {
+  background: rgba(0, 128, 0, 0.9);
+  color: white;
+}
+
+.Toastify__toast--error {
+  background: rgba(174, 8, 8, 0.9);
+  color: white;
+}
+
+/* Modal Styles */
+.modal-overlay31 {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content31 {
+  background: white;
+  padding: 30px;
+  border-radius: 10px;
+  width: 90%;
+  max-width: 400px;
+  text-align: center;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.modal-content31 h2 {
+  color: #333;
+  margin-bottom: 15px;
+}
+
+.modal-content31 p {
+  color: #666;
+  margin-bottom: 20px;
+}
+
+.modal-buttons31 {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+}
+
+.modal-cancel-btn31,
+.modal-delete-btn31 {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: transform 0.2s ease;
+}
+
+.modal-cancel-btn31 {
+  background-color: #008000;
+  color: white;
+}
+
+.modal-delete-btn31 {
+  background-color: #AE0808;
+  color: white;
+}
+
+.modal-cancel-btn31:hover,
+.modal-delete-btn31:hover {
+  transform: scale(1.05);
+}
+

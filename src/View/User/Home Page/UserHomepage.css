@@ -1,0 +1,614 @@
+/* General styles */
+*{
+  margin: 0px;
+  padding: 0px;
+  box-sizing: border-box;
+  font-family: 'Mitr';
+}
+body {
+  height: auto;
+}
+
+.main-container5 {
+  width: 100%;
+  padding-top: 120px;
+  height: 1000px;
+}
+
+.content5 {
+  position: relative;
+  bottom: 159px;
+  height: 784px;
+  background-image: url("/images/coverpage.png");
+  background-position: center;
+  background-size: cover;
+  display: flex; /* Arrange children horizontally */
+  justify-content: space-between; /* Space items to left and right */
+  align-items: center; /* Center items vertically */
+  padding: 20px;
+  color: #fff;
+}
+
+.Headings5 {
+  max-width: 45%; /* Limit width to half the container */
+  text-align: left;
+  margin-left: 60px; /* Left margin for spacing */
+}
+
+.Headings5 .discover-best,
+.Headings5 .tourist,
+.Headings5 .attractions {
+  font-size: 52px;
+  font-weight: bold;
+}
+
+.Headings5 .discover-best {
+  color: #000;
+}
+
+.Headings5 .tourist,
+.Headings5 .attractions {
+  color: #AE0808;
+}
+
+.greetings {
+  max-width: 30%; 
+  margin-right: 40px;
+  padding: 30px;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 10px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  margin-bottom: -140px;
+}
+
+
+.greeting-text {
+  font-size: 32px;
+  color: #000;
+}
+
+.user-suraj {
+  font-size: 32px;
+  font-weight: bold;
+  color: #007bff;
+}
+
+.explore-text {
+  display: block;
+  font-size: 16px;
+  color: #666;
+}
+
+.travelerspoint {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 60px 40px;
+  background: #fff;
+  margin-top: -165px;
+}
+
+.travelerspng {
+  flex: 1;
+  width: auto; 
+  height: 448px; 
+  background: url('/images/travelerspoin.png') no-repeat center center;
+  background-size: contain; 
+}
+
+.card-feature {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: -15px;
+  margin-left: -0px;
+}
+
+.feature-title {
+  font-size: 16px;
+  font-weight: bold;
+  color: #e63946;
+}
+
+.feature-subtitle {
+  font-size: 28px;
+  font-weight: 500;
+  color: #000;
+}
+
+.feature-description {
+  font-size: 16px;
+  color: #555;
+  line-height: 1.6;
+}
+
+.stats {
+  display: flex;
+  flex-wrap: wrap;
+  margin-top: 10px;
+  gap: 20px;
+}
+
+.stat-card {
+  flex: 1 1 calc(50% - 10px); /* Adjust for four cards per row */
+  text-align: center;
+  background-color: #f9f9f9;
+  padding: 15px 20px;
+  border-radius: 10px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  cursor: pointer;
+}
+
+.stat-card:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.stat-number {
+  font-size: 28px;
+  font-weight: bold;
+  color: #e63946;
+}
+
+.stat-label {
+  font-size: 14px;
+  color: #555;
+}
+
+
+.section2 {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 40px;
+  background: linear-gradient(to bottom, #f9f9f9, #e0e0e0);
+  overflow: hidden;
+}
+
+.top-destinations {
+  font-size: 16px;
+  font-weight: bold;
+  color: #e63946;
+  margin-bottom: 20px;
+}
+
+.top-picks-for-you {
+  font-size: 28px;
+  font-weight: 500;
+  color: #000;
+  margin-bottom: 20px;
+}
+
+
+.destination-container {
+  position: relative;
+  width: 700px; 
+  height: 450px;
+  overflow: hidden;
+}
+
+.destination-card {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  opacity: 0;
+  transition: transform 1s ease-in-out, opacity 1s ease-in-out;
+}
+
+
+.destination-card.active {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+
+.destination-card.hidden {
+  opacity: 0;
+  transform: translateX(100%); /* Moves out of view */
+}
+
+.destination-card.previous {
+  opacity: 0;
+  transform: translateX(-100%);
+}
+
+
+.destination-image {
+  width: 700px;  
+  height: 450px;
+  object-fit: cover;
+  border-radius: 10px;
+}
+
+
+.destination-name {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.6); 
+  color: white;
+  padding: 10px 20px;
+  font-size: 20px;
+  font-weight: bold;
+  border-radius: 5px;
+  text-align: center;
+  width: 80%;
+}
+
+.dots-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.dot {
+  width: 12px;
+  height: 12px;
+  margin: 0 5px;
+  background-color: #ccc;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: background-color 0.3s ease-in-out;
+}
+
+.dot.active-dot {
+  background-color: #008000; 
+  width: 14px;
+  height: 14px;
+}
+
+
+
+.section3 {
+  display: flex;
+  flex-direction: column;
+  align-items: center;  
+  justify-content: center;
+  padding: 60px 40px;
+  background: #fff;
+}
+
+.title-recommendations {
+  font-size: 16px;
+  font-weight: bold;
+  color: #e63946;
+}
+
+.explore-by-category {
+  font-size: 28px;
+  font-weight: 500;
+  color: #000;
+}
+
+.categories {
+  display: flex;
+  flex-wrap: wrap; /* Allow wrapping to the next line */
+  justify-content: center; /* Center items horizontally */
+  margin-bottom: 20px; /* Space below the categories */
+  width: 100%; /* Take full width */
+}
+
+.category-card {
+  display: flex;
+  flex-direction: column; /* Stack image and text vertically */
+  align-items: flex-start; /* Align items to the left */
+  justify-content: flex-start; /* Align items to the top */
+  width: calc(50% - 40px); /* Set width for cards (adjust as needed) */
+  margin: 20px; /* Space around cards */
+  position: relative; /* For absolute positioning of text */
+  overflow: hidden; /* Hide overflow for image containment */
+  transition: transform 0.3s; /* Smooth transition for scaling */
+  border-radius: 10px;
+}
+
+.category-card:hover {
+  transform: scale(1.05); /* Scale up the card on hover */
+}
+
+.category-card div {
+  width: 100%; /* Take full width of card */
+  height: 314px; /* Fixed height for uniformity */
+  background-size: cover; /* Cover to maintain aspect ratio */
+  background-position: center; /* Center background image */
+}
+
+.category-name {
+  color: white; /* Text color for contrast */
+  font-size: 24px; /* Adjust font size as needed */
+  font-weight: bold; /* Make the text bold */
+  position: absolute; /* Position text absolutely */
+  left: 10px; /* Position from the left */
+  bottom: 10px; /* Position from the bottom */
+  text-align: left; /* Align text to the left */
+  transition: color 0.3s; /* Smooth transition for color change */
+}
+
+.category-card:hover .category-name {
+  color: #ffcc00; /* Change text color on hover */
+}
+
+.adventurepng {
+  background-image: url('/images/Adventure.png');
+}
+
+.naturepng {
+  background-image: url('/images/Nature.png'); 
+}
+
+.culturepng {
+  background-image: url('/images/Culture.png');
+}
+
+.foodpng {
+  background-image: url('/images/Food.png');
+}
+
+.adventure-seeker {
+  text-align: center; 
+  margin-top: 20px;
+  width: 100%; 
+}
+
+.section4 {
+  display: flex;
+  flex-direction: column;
+  align-items: center;  
+  justify-content: center;
+  padding: 20px 40px;
+  background: #fff;
+}
+
+.promotions {
+  font-size: 16px;
+  font-weight: bold;
+  color: #e63946;
+}
+
+.deals-offers {
+  font-size: 28px;
+  font-weight: 500;
+  color: #000;
+}
+
+.offerpng {
+  position: relative;
+  width: 1177px; 
+  height: 337px; 
+  background-image: url('/images/offer.png');
+  background-size: cover;
+  background-position: center;
+  border-radius: 10px;
+  overflow: hidden;
+  text-align: center;
+  color: white;
+  display: flex; 
+  flex-direction: column; 
+  justify-content: center;
+  align-items: center; 
+  text-align: center;
+}
+
+.offers-heading {
+  position: absolute;
+  top: 20%;
+  left: 28%; 
+  font-size: 36px; 
+  font-weight: bold;
+  margin: 0;
+}
+
+.offers-description {
+  position: absolute;
+  top: 40%; 
+  left: 25%; 
+  font-size: 18px;
+  margin: 0;
+  width: 50%;
+}
+
+.offers-button {
+  position: absolute;
+  top: 63%; 
+  right: 18%; 
+  padding: 10px 30px;
+  background-color: #008000;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 18px;
+  transition: background-color 0.3s ease;
+}
+
+.offers-button:hover {
+  background-color: #005f00; 
+}
+
+.section5 {
+  display: flex;
+  flex-direction: column;
+  align-items: center;  
+  justify-content: center;
+  padding: 20px 40px;
+  background: #fff;
+}
+
+.why-choose-us {
+  font-size: 32px;
+  font-weight: bold;
+  color: #e63946;
+}
+
+.why-choose-us-text {
+  max-width: 75%;
+  height: auto;
+  font-size: 20px;
+  color: #000;
+}
+
+
+
+.features {
+  margin-top: 40px;
+  display: flex;
+  gap: 60px; 
+  justify-content: flex-start;
+  flex-wrap: wrap;
+}
+
+.feature-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  width: 350px;
+  padding: 20px;
+  border-radius: 10px;
+  background-color: #f9f9f9;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.feature-icon {
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 15px; 
+  cursor: pointer;
+}
+.feature-icon.personalizedreco {
+  background-image: url('/images/c.png');
+  background-size: cover; 
+  background-repeat: no-repeat; 
+  background-position: center;
+}
+
+.feature-icon.itineraryplan {
+  background-image: url('/images/i.png'); 
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+.feature-icon.real-time-location {
+  background-image: url('/images/n.png');
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+
+.feature-name {
+  font-size: 20px;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 8px;
+}
+
+.feature-description {
+  font-size: 16px;
+  color: black;
+}
+
+
+.section6 {
+  display: flex;
+  flex-direction: column;
+  align-items: center;  
+  justify-content: center;
+  padding: 60px 40px;
+  background: #fff;
+}
+
+.testimonial {
+  font-size: 16px;
+  font-weight: bold;
+  color: #e63946;
+}
+
+.what-they-say {
+  font-size: 28px;
+  font-weight: 500;
+  color: #000;
+}
+
+.testimonial-container {
+  height: auto;
+  background-image: url('/images/testo.png');
+  background-size: cover; 
+  background-position: center;
+  width: 100%; 
+  padding: 20px; 
+  display: flex;
+  margin-top: 20px;
+  flex-direction: column; /* Change to column for vertical stacking */
+}
+
+.user-stories {
+  font-size: 24px;
+  font-weight: bold;
+  color: #ffffff; 
+  margin-bottom: 20px;
+  margin-left: 20px;
+}
+
+.card-container {
+  display: flex; /* Keep the cards in a row */
+  justify-content: space-between; 
+}
+
+.testimonial-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  width: 30%; 
+  padding: 20px;
+  border-radius: 10px;
+  background-color: #f9f9f9;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  margin: 10px; 
+}
+
+.testimonial-image {
+  width: 80px;
+  height: 80px;
+  margin-bottom: 15px;
+  background-size: cover;
+  background-position: center;
+}
+
+
+/* User name and post styles */
+.user-name {
+  font-size: 18px;
+  font-weight: bold;
+  color: #333;
+}
+
+.user-post {
+  font-size: 14px;
+  color: #666; 
+}
+
+.user-rating {
+  font-size: 16px;
+  color: #ffcc00; 
+}
+
+.testimonial-text {
+  font-size: 16px;
+  color: black;
+  margin-top: 10px;
+}
+
+

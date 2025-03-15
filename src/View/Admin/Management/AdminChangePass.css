@@ -1,0 +1,143 @@
+* {
+    font-family: "Mitr";
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+  
+  body {
+    font-family: "Mitr";
+  }
+    
+    .main-container27 {
+      overflow: hidden;
+      position: relative;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-color: #ffffff;
+    }
+  
+    .card27 {
+      width: 100%;
+      max-width: 500px;
+      padding: 25px;
+      margin-top: 150px;
+      background-color: #ffffff;
+      border-radius: 20px;
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+      
+    }
+    
+    .title27 {
+      font-family: "Mitr";
+      font-size: 32px;
+      font-weight: 700;
+      color: #ae0808;
+      text-align: center;
+    }
+    
+    .subtitle27 {
+      font-family: "Mitr";
+      font-size: 16px;
+      font-weight: 400;
+      color: #02073e;
+      text-align: center;
+      margin-top: 10px;
+    }
+    
+    .form27 {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+  }
+  
+  .label27 {
+      font-size: 14px;
+      font-weight: 400;
+      color: #02073e;
+  }
+  
+  .password-field27 {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+  
+  .input27 {
+    font-family: "Mitr";
+    padding: 12px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    font-size: 14px;
+    width: 100%; /* Make input fill the available space */
+  }
+  
+  .eye-icon27 {
+    position: absolute;
+    top: 50%;
+    right: 12px;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 20px;
+    color: #ccc;
+  }
+  
+  .eye-icon27:hover {
+    color: #008000;
+  }
+  
+  
+  .button27 {
+      padding: 12px;
+      background-color: #008000;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 16px;
+  }
+  
+  .button27:hover {
+      background-color: #006400;
+  }
+
+  .button27:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+  }
+
+  .toast-message27 {
+    font-family: "Mitr";
+    font-size: 14px;
+    border-radius: 8px;
+  }
+
+  /* Custom styles for success toast */
+  .Toastify__toast--success {
+    background: rgba(0, 128, 0, 0.9);
+    color: white;
+  }
+
+  /* Custom styles for error toast */
+  .Toastify__toast--error {
+    background: rgba(174, 8, 8, 0.9);
+    color: white;
+  }
+
+  /* Toast container styles */
+  .Toastify__toast-container {
+    z-index: 9999;
+  }
+
+  .Toastify__toast {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+  
+  
+  
+  
