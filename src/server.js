@@ -6,26 +6,32 @@ import { createServer } from 'http';
 import NotificationHub from './notificationHub.js';
 import NotificationService from './services/notificationService.js';
 
-import signupRouter from './Routes/Signups.js';
-import loginRouters from './Routes/Login.js';
-import ForgotPassRouters from './Routes/ForgotPass.js'; 
-import PassResetRouter from './Routes/ResetPass.js';
-import adminMediaRouter from './Routes/AdminIV.js';
-import adminSearchRoutes from './Routes/AdminIV.js';
-import adminSearchAttractionRouter from './Routes/AdminSearchAttraction.js'; 
-import adminPackageRouter from './Routes/AdminPackages.js';
-import adminAddTripRouter from './Routes/AdminPlanTrip.js';
-import adminTripRouter from './Routes/AdminPlanTrip.js';
-import adminBookingApproveRouter from './Routes/AdminBookingAppr.js'
-import adminUpdateProfileRouter from './Routes/AdminProfileManage.js'
-import adminEmergencyRouter from './Routes/AdminEmergencys.js'
-import DeleteAccountRouter from './Routes/DeleteAccount.js';
-import ChangePasswordRouter from './Routes/ChangePassword.js';
-import currencyRoutes from './Routes/currencyRoutes.js';
-import LanguageRouter from './Routes/Languages.js';
-import AdminDasboardRouter from './Routes/AdminDashboard.js';
+import signupRouter from './routes/Signups.js';
+import loginRouters from './routes/Login.js';
+import ForgotPassRouters from './routes/ForgotPass.js'; 
+import PassResetRouter from './routes/ResetPass.js';
+import adminMediaRouter from './Routes/Image&Video.js';
+import adminSearchRoutes from './Routes/Image&Video.js';
+import adminSearchAttractionRouter from './Routes/SearchAttractions.js'; 
+import adminPackageRouter from './Routes/Packages.js';
+import adminAddTripRouter from './Routes/PlanTrips.js';
+import adminTripRouter from './Routes/PlanTrips.js';
+import adminBookingApproveRouter from './Routes/BookingApproval.js'
+import adminUpdateProfileRouter from './Routes/ProfileManages.js'
+import adminEmergencyRouter from './Routes/Emergencys.js'
+import DeleteAccountRouter from './routes/DeleteAccount.js';
+import ChangePasswordRouter from './routes/ChangePassword.js';
+import currencyRoutes from './routes/currencyRoutes.js';
+import LanguageRouter from './routes/Languages.js';
+import AdminDasboardRouter from './routes/AdminDashboard.js';
+import AdmineventRoutes from './routes/eventRoutes.js';
+import khaltiRoutes from './Routes/Khalti.js';
+import esewaRoutes from './Routes/Esewa.js';
+import paymentRoutes from './Routes/Payment.js';
 
-dotenv.config();
+if (process.env.NODE_ENV !== "production") {
+  dotenv.config();
+}
 
 const app = express();
 const port = process.env.PORT || 4000;
@@ -74,7 +80,11 @@ app.use('/deleteAccount', DeleteAccountRouter)
 app.use('/changePassword', ChangePasswordRouter)
 app.use('/currency', currencyRoutes)
 app.use('/language', LanguageRouter)
+app.use('/adminEvents', AdmineventRoutes)
 app.use('/adminDashboard', AdminDasboardRouter)
+app.use('/khalti', khaltiRoutes)
+app.use('/esewa', esewaRoutes)
+app.use('/payments', paymentRoutes)
 
 // Start the server
 server.listen(port, () => {

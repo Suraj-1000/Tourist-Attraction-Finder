@@ -73,9 +73,32 @@ export default function AdminNotificationPage() {
 
       console.log('Received notification:', notification);
       setNotifications(prev => {
-        // Check if notification already exists
-        const exists = prev.some(n => n.id === notification.id);
-        if (exists) return prev;
+        // Check if notification already exists by checking id or matching trip name and status
+        const exists = prev.some(n => {
+          // Check if IDs match
+          if (n.id === notification.id) return true;
+          
+          // Extract trip name and status from message for comparison
+          const existingMatch = n.message.match(/Trip "([^"]+)" has been (approved|declined)/);
+          const newMatch = notification.message.match(/Trip "([^"]+)" has been (approved|declined)/);
+          
+          if (existingMatch && newMatch) {
+            const [, existingTrip, existingStatus] = existingMatch;
+            const [, newTrip, newStatus] = newMatch;
+            
+            // If same trip name and status within 5 seconds, consider it a duplicate
+            return existingTrip === newTrip && 
+                   existingStatus === newStatus && 
+                   Math.abs(new Date(n.timestamp) - new Date(notification.timestamp)) < 5000;
+          }
+          
+          return false;
+        });
+        
+        if (exists) {
+          console.log('Duplicate notification detected, skipping...');
+          return prev;
+        }
         
         // Add new notification with parsed date
         const newNotification = {
@@ -87,9 +110,28 @@ export default function AdminNotificationPage() {
         const updatedNotifications = [newNotification, ...prev];
         // Keep only the last 50 notifications to prevent localStorage from getting too large
         const trimmedNotifications = updatedNotifications.slice(0, 50);
+        
+        // Update localStorage
+        localStorage.setItem('adminNotifications', JSON.stringify(trimmedNotifications));
         return trimmedNotifications;
       });
     };
+
+    const handleNotificationDelete = (notificationId) => {
+      console.log('Received notificationDelete event:', notificationId);
+      setNotifications(prev => {
+        const updatedNotifications = prev.filter(n => n.id !== notificationId);
+        localStorage.setItem('adminNotifications', JSON.stringify(updatedNotifications));
+        return updatedNotifications;
+      });
+    };
+
+    // Load notifications from localStorage on mount
+    const savedNotifications = localStorage.getItem('adminNotifications');
+    if (savedNotifications) {
+      const parsedNotifications = JSON.parse(savedNotifications);
+      setNotifications(parsedNotifications);
+    }
 
     // Add event listeners
     socket.on('connect', handleConnect);
@@ -98,6 +140,7 @@ export default function AdminNotificationPage() {
     socket.on('reconnect_attempt', handleReconnectAttempt);
     socket.on('reconnect', handleReconnect);
     socket.on('notification', handleNotification);
+    socket.on('notificationDelete', handleNotificationDelete);
 
     // Cleanup function
     return () => {
@@ -107,36 +150,52 @@ export default function AdminNotificationPage() {
       socket.off('reconnect_attempt', handleReconnectAttempt);
       socket.off('reconnect', handleReconnect);
       socket.off('notification', handleNotification);
+      socket.off('notificationDelete', handleNotificationDelete);
     };
   }, []);
 
   // Function to mark notification as read
   const markAsRead = (notificationId) => {
-    setNotifications(prev =>
-      prev.map(notification =>
-        notification.id === notificationId
-          ? { ...notification, read: true }
-          : notification
-      )
+    console.log('Marking notification as read:', notificationId);
+    const updatedNotifications = notifications.map(notification =>
+      notification.id === notificationId
+        ? { ...notification, read: true }
+        : notification
     );
+    setNotifications(updatedNotifications);
+    localStorage.setItem('adminNotifications', JSON.stringify(updatedNotifications));
+
+    // Emit notification read event with the notification ID
+    const socket = socketService.getSocket();
+    socket.emit('notificationRead', notificationId);
   };
 
   // Function to mark notification as unread
   const markAsUnread = (notificationId) => {
-    setNotifications(prev =>
-      prev.map(notification =>
-        notification.id === notificationId
-          ? { ...notification, read: false }
-          : notification
-      )
+    console.log('Marking notification as unread:', notificationId);
+    const updatedNotifications = notifications.map(notification =>
+      notification.id === notificationId
+        ? { ...notification, read: false }
+        : notification
     );
+    setNotifications(updatedNotifications);
+    localStorage.setItem('adminNotifications', JSON.stringify(updatedNotifications));
+
+    // Emit notification unread event
+    const socket = socketService.getSocket();
+    socket.emit('notificationUnread', notificationId);
   };
 
   // Function to delete notification
   const deleteNotification = (notificationId) => {
+    console.log('Deleting notification:', notificationId);
     setNotifications(prev =>
       prev.filter(notification => notification.id !== notificationId)
     );
+    
+    // Emit notification delete event
+    const socket = socketService.getSocket();
+    socket.emit('notificationDelete', notificationId);
   };
 
   // Function to toggle menu for specific notification
@@ -151,6 +210,14 @@ export default function AdminNotificationPage() {
   const clearAllNotifications = () => {
     setNotifications([]);
     setShowClearConfirm(false);
+    
+    // Emit clear all event
+    const socket = socketService.getSocket();
+    socket.emit('clearAllNotifications');
+    
+    // Update localStorage
+    localStorage.setItem('adminNotifications', JSON.stringify([]));
+    
     toast.success('All notifications cleared', {
       position: "top-right",
       autoClose: 3000,

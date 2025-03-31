@@ -4,7 +4,6 @@ import multer from 'multer';
 import { CloudinaryStorage } from 'multer-storage-cloudinary';
 import cloudinary from '../config/cloudinaryConfig.js';
 import Signup from '../Models/Signup.js';
-import authMiddleware from '../config/auth.js';
 import nodemailer from "nodemailer";
 
 const router = express.Router();
@@ -70,8 +69,8 @@ router.post('/', async (req, res) => {
     }
 
     // Determine role based on email
-    const adminEmailPattern = /\.explore\.nepal@gmail\.com$/; 
-    const role = adminEmailPattern.test(email) ? "admin" : "user";
+    const adminEmail = 'suraj.explore.nepal@gmail.com';
+    const role = email === adminEmail ? "admin" : "user";
     
 
 
@@ -154,8 +153,69 @@ router.post('/verify-otp', async (req, res) => {
   }
 });
 
+// POST route for creating new admin
+router.post('/create-admin', async (req, res) => {
+  try {
+    const { firstName, lastName, email, phone, password, createdBy } = req.body;
 
+    // Check if all required fields are provided
+    if (!firstName || !lastName || !email || !phone || !password || !createdBy) {
+      return res.status(400).json({ message: 'All fields are required' });
+    }
 
+    // Check if the creator is an admin
+    const creator = await Signup.findById(createdBy);
+    if (!creator || creator.role !== 'admin') {
+      return res.status(403).json({ message: 'Only admins can create other admins' });
+    }
 
+    // Check if email already exists
+    const existingUserByEmail = await Signup.findOne({ email });
+    if (existingUserByEmail) {
+      return res.status(400).json({ message: 'Email already in use' });
+    }
+
+    // Check if phone number already exists
+    const existingUserByPhone = await Signup.findOne({ phone });
+    if (existingUserByPhone) {
+      return res.status(400).json({ message: 'Phone number already in use' });
+    }
+
+    // Validate phone number format
+    const phoneRegex = /^(98|97)\d{8}$/;
+    if (!phoneRegex.test(phone)) {
+      return res.status(400).json({ message: 'Phone number must start with 98 or 97 and contain 10 digits' });
+    }
+
+    // Hash the password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Create new admin user
+    const newAdmin = await Signup.create({
+      firstName,
+      lastName,
+      email,
+      phone,
+      password: hashedPassword,
+      role: 'admin',
+      termsAccepted: true
+    });
+
+    res.status(201).json({ 
+      message: 'Admin created successfully',
+      admin: {
+        id: newAdmin._id,
+        firstName: newAdmin.firstName,
+        lastName: newAdmin.lastName,
+        email: newAdmin.email,
+        role: newAdmin.role
+      }
+    });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
 
 export default router;

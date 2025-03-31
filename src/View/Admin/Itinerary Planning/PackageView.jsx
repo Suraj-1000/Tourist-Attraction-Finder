@@ -5,6 +5,9 @@ import "./PackageView.css";
 import { CurrencyContext } from "../../../config/CurrencyContext";
 import Header from "../../../Components/Admin Header/Admin-Header";
 import Footer from "../../../Components/Footer";
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import UserDetailsForm from '../../../View/Payment/UserDetailsForm';
 
 export default function ItineraryPackageViewPage() {
     const { currency, exchangeRates } = useContext(CurrencyContext);
@@ -12,8 +15,9 @@ export default function ItineraryPackageViewPage() {
     const [packageData, setPackageData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
-
+    const [showUserForm, setShowUserForm] = useState(false);
     const navigate = useNavigate();
+    const user = JSON.parse(localStorage.getItem("user"));
 
     const handleBack = () => {
         navigate(-1); 
@@ -75,6 +79,51 @@ export default function ItineraryPackageViewPage() {
     if (error) return <div className="error18">{error}</div>;
     if (!packageData) return <div className="error18">No packages found.</div>;
   
+
+  const handleBookNow = () => {
+    if (!user) {
+        toast.error("Please log in to book a package", {
+            position: "top-right",
+            autoClose: 3000,
+            className: 'toast-message17'
+        });
+        return;
+    }
+    setShowUserForm(true);
+  };
+
+  const handlePaymentSubmit = async (formData) => {
+    try {
+        const paymentDetails = {
+            ...formData,
+            packageDetails: {
+                title: packageData.title,
+                duration: packageData.duration,
+                tripType: packageData.tripType,
+                price: packageData.price ? packageData.price.replace(/[^0-9.-]+/g, "") : "0",
+                category: packageData.category,
+                groupSize: packageData.groupSize,
+                difficulty: packageData.difficulty
+            },
+            userId: user._id,
+            amount: packageData.price ? packageData.price.replace(/[^0-9.-]+/g, "") : "0",
+            transactionId: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+        };
+
+        if (formData.paymentPartner === 'khalti') {
+            // Initialize Khalti payment
+            const response = await axios.post('http://localhost:4000/api/khalti/initiate', paymentDetails);
+            if (response.data.payment_url) {
+                window.location.href = response.data.payment_url;
+            }
+        }
+        // eSewa payment is handled by the EsewaPayment component
+    } catch (error) {
+        console.error('Payment initialization failed:', error);
+        toast.error('Failed to initialize payment. Please try again.');
+        setShowUserForm(false);
+    }
+  };
 
   return (
     <>
@@ -181,15 +230,31 @@ export default function ItineraryPackageViewPage() {
             <h3 className="last18">Ready to book your adventure? "Secure your spot for the Annapurna Base Camp Trek!"</h3>
             <div className="button-container18">
                 <button className="back-btn18" onClick={handleBack}>
-                Back
-              </button>
-                <button className="book-now-btn18">Book Now</button>
+                    Back
+                </button>
+                <button className="book-now-btn18" onClick={handleBookNow}>Book Now</button>
             </div>
 
-
+            {/* User Details Form Modal */}
+            {showUserForm && packageData && (
+                <UserDetailsForm
+                    packageDetails={{
+                        title: packageData.title,
+                        duration: packageData.duration,
+                        tripType: packageData.tripType,
+                        price: packageData.price ? packageData.price.replace(/[^0-9.-]+/g, "") : "0",
+                        category: packageData.category,
+                        groupSize: packageData.groupSize,
+                        difficulty: packageData.difficulty
+                    }}
+                    onSubmit={handlePaymentSubmit}
+                    onCancel={() => setShowUserForm(false)}
+                />
+            )}
         </div>
       </div>
       <Footer />
+      <ToastContainer />
     </>
   );
 }

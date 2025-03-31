@@ -7,6 +7,7 @@ import "./ViewTrip.css";
 import { CurrencyContext } from "../../../config/CurrencyContext";
 import Header from "../../../Components/Admin Header/Admin-Header";
 import Footer from "../../../Components/Footer";
+import UserDetailsForm from '../../../View/Payment/UserDetailsForm';
 
 export default function ViewTripPage() {
   const [query, setQuery] = useState("");
@@ -21,6 +22,9 @@ export default function ViewTripPage() {
   const { currency = 'USD', exchangeRates = { USD: 1 } } = useContext(CurrencyContext) || {};
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [tripToDelete, setTripToDelete] = useState(null);
+  const [showUserForm, setShowUserForm] = useState(false);
+  const [selectedTrip, setSelectedTrip] = useState(null);
+  const user = JSON.parse(localStorage.getItem("user"));
 
   const formatNumberWithCommas = (number) => {
     return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
@@ -237,6 +241,52 @@ const handleShare = (card) => {
     }
   };
 
+  const handleBookNow = (trip) => {
+    if (!user) {
+      toast.error("Please log in to book a trip", {
+        position: "top-right",
+        autoClose: 3000,
+        className: 'toast-message22'
+      });
+      return;
+    }
+    setSelectedTrip(trip);
+    setShowUserForm(true);
+  };
+
+  const handlePaymentSubmit = async (formData) => {
+    try {
+      const paymentDetails = {
+        ...formData,
+        packageDetails: {
+          title: selectedTrip.tripName,
+          duration: selectedTrip.duration,
+          tripType: selectedTrip.tripType,
+          price: selectedTrip.totalBudget ? selectedTrip.totalBudget.replace(/[^0-9.-]+/g, "") : "0",
+          category: selectedTrip.tripType,
+          groupSize: "Custom",
+          difficulty: "Custom"
+        },
+        userId: user._id,
+        amount: selectedTrip.totalBudget ? selectedTrip.totalBudget.replace(/[^0-9.-]+/g, "") : "0",
+        transactionId: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+      };
+
+      if (formData.paymentPartner === 'khalti') {
+        // Initialize Khalti payment
+        const response = await axios.post('http://localhost:4000/api/khalti/initiate', paymentDetails);
+        if (response.data.payment_url) {
+          window.location.href = response.data.payment_url;
+        }
+      }
+      // eSewa payment is handled by the EsewaPayment component
+    } catch (error) {
+      console.error('Payment initialization failed:', error);
+      toast.error('Failed to initialize payment. Please try again.');
+      setShowUserForm(false);
+    }
+  };
+
   return (
     <>
       <Header />
@@ -407,9 +457,7 @@ const handleShare = (card) => {
 
             <div className="card-buttons22">
             {result.status?.toLowerCase() === "approved" ? (
-              <Link to={`/AdminAttractionView/${encodeURIComponent(result.name)}`}>
-                <button className="book-now22">Book Now</button>
-              </Link>
+              <button className="book-now22" onClick={() => handleBookNow(result)}>Book Now</button>
             ) : result.status?.toLowerCase() === "pending" ? (
               <p className="important-message22">⏳ Your booking request is under approval. Please check back later.</p>
             ) : result.status?.toLowerCase() === "declined" ? (
@@ -428,6 +476,26 @@ const handleShare = (card) => {
               <p className="no-results22">No trips found for "{query}".</p>
             )}
           </div>
+
+          {/* User Details Form Modal */}
+          {showUserForm && selectedTrip && (
+            <UserDetailsForm
+              packageDetails={{
+                title: selectedTrip.tripName,
+                duration: selectedTrip.duration,
+                tripType: selectedTrip.tripType,
+                price: selectedTrip.totalBudget ? selectedTrip.totalBudget.replace(/[^0-9.-]+/g, "") : "0",
+                category: selectedTrip.tripType,
+                groupSize: "Custom",
+                difficulty: "Custom"
+              }}
+              onSubmit={handlePaymentSubmit}
+              onCancel={() => {
+                setShowUserForm(false);
+                setSelectedTrip(null);
+              }}
+            />
+          )}
 
          {/* Share Modal */}
          {showShareModal && (

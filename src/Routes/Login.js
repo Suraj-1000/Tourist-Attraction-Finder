@@ -14,11 +14,10 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ message: 'Email and password are required' });
     }
 
-    const adminRegex = /^[a-zA-Z0-9._%+-]+\.explore\.nepal@gmail\.com$/;
+    const adminEmail = 'suraj.explore.nepal@gmail.com';
     const userRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/; // Any email for user
 
-
-    if (!adminRegex.test(email) && !userRegex.test(email)) {
+    if (email !== adminEmail && !userRegex.test(email)) {
       return res.status(400).json({ message: 'Invalid email format' });
     }
 
@@ -38,15 +37,18 @@ router.post('/', async (req, res) => {
 
     // Generate JWT token
     const token = jwt.sign(
-      { id: user._id },
-      process.env.JWT_SECRET, // Store this in `.env`
+      { 
+        id: user._id,
+        role: user.role  // Include role in token
+      },
+      process.env.JWT_SECRET,
       { expiresIn: '1h' }
     );
 
     // Return token along with user details
     res.status(200).json({
       message: 'Login successful',
-      token, // Send token to frontend
+      token,
       user: {
         id: user._id,
         firstName: user.firstName,

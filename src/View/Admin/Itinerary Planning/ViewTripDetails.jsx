@@ -5,6 +5,9 @@ import "./ViewTripDetails.css";
 import { CurrencyContext } from "../../../config/CurrencyContext";
 import Header from "../../../Components/Admin Header/Admin-Header";
 import Footer from "../../../Components/Footer";
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import UserDetailsForm from '../../../View/Payment/UserDetailsForm';
 
 export default function ViewTripDetailsPage() {
   const { tripName } = useParams(); 
@@ -12,6 +15,8 @@ export default function ViewTripDetailsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const { currency, exchangeRates } = useContext(CurrencyContext);
+  const [showUserForm, setShowUserForm] = useState(false);
+  const user = JSON.parse(localStorage.getItem("user"));
 
   const formatNumberWithCommas = (number) => {
     return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
@@ -60,6 +65,51 @@ const convertPrice = (priceString) => {
       setError("Failed to load trip details.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleBookNow = () => {
+    if (!user) {
+      toast.error("Please log in to book a trip", {
+        position: "top-right",
+        autoClose: 3000,
+        className: 'toast-message24'
+      });
+      return;
+    }
+    setShowUserForm(true);
+  };
+
+  const handlePaymentSubmit = async (formData) => {
+    try {
+      const paymentDetails = {
+        ...formData,
+        packageDetails: {
+          title: tripDetails.tripName,
+          duration: tripDetails.duration,
+          tripType: tripDetails.tripType,
+          price: tripDetails.totalBudget ? tripDetails.totalBudget.replace(/[^0-9.-]+/g, "") : "0",
+          category: tripDetails.tripType,
+          groupSize: "Custom",
+          difficulty: "Custom"
+        },
+        userId: user._id,
+        amount: tripDetails.totalBudget ? tripDetails.totalBudget.replace(/[^0-9.-]+/g, "") : "0",
+        transactionId: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+      };
+
+      if (formData.paymentPartner === 'khalti') {
+        // Initialize Khalti payment
+        const response = await axios.post('http://localhost:4000/api/khalti/initiate', paymentDetails);
+        if (response.data.payment_url) {
+          window.location.href = response.data.payment_url;
+        }
+      }
+      // eSewa payment is handled by the EsewaPayment component
+    } catch (error) {
+      console.error('Payment initialization failed:', error);
+      toast.error('Failed to initialize payment. Please try again.');
+      setShowUserForm(false);
     }
   };
 
@@ -196,7 +246,7 @@ const convertPrice = (priceString) => {
                     <button className="back-btn24">Back</button>
                 </Link>
                 {tripDetails.status?.toLowerCase() === "approved" ? (
-                    <button className="book-now-btn24">Book Now</button>
+                    <button className="book-now-btn24" onClick={handleBookNow}>Book Now</button>
                 ) : tripDetails.status?.toLowerCase() === "pending" ? (
                     <div className="message-container24">
                         <p className="important-message24">⏳ Your booking request is under approval. Please check back later.</p>
@@ -212,12 +262,27 @@ const convertPrice = (priceString) => {
                 )}
             </div>
         </div>
+
+        {/* User Details Form Modal */}
+        {showUserForm && tripDetails && (
+            <UserDetailsForm
+                packageDetails={{
+                    title: tripDetails.tripName,
+                    duration: tripDetails.duration,
+                    tripType: tripDetails.tripType,
+                    price: tripDetails.totalBudget ? tripDetails.totalBudget.replace(/[^0-9.-]+/g, "") : "0",
+                    category: tripDetails.tripType,
+                    groupSize: "Custom",
+                    difficulty: "Custom"
+                }}
+                onSubmit={handlePaymentSubmit}
+                onCancel={() => setShowUserForm(false)}
+            />
+        )}
         </div>
-
-
-        
       </div>
       <Footer />
+      <ToastContainer />
     </>
   );
 }

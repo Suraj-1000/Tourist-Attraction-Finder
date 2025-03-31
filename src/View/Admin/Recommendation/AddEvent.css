@@ -1,0 +1,420 @@
+.modal-overlay36 {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content36 {
+  background-color: white;
+  padding: 2rem;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 800px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.event-form36 {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin: 1.5rem 0;
+}
+
+.form-section36 {
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+}
+
+.form-section36 h3 {
+  color: #2c3e50;
+  margin-bottom: 1rem;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.form-group36 {
+  margin-bottom: 1rem;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group36 label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #495057;
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+
+.form-group36 input,
+.form-group36 textarea,
+.form-group36 select {
+  width: 100%;
+  height: 50px;
+  padding: 0.75rem;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  margin: 0;
+}
+
+.form-group36 textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+.date-time-group36 {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.date-group36,
+.time-group36 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.featured-stars-input36,
+.highlights-input36,
+.requirements-input36,
+.schedule-input36 {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 1rem;
+  align-items: stretch;
+  margin-bottom: 1rem;
+}
+
+.featured-stars-input36 {
+  grid-template-columns: 1.2fr 1fr auto;
+}
+
+.featured-stars-input36 button,
+.highlights-input36 button,
+.requirements-input36 button,
+.schedule-input36 button {
+  background-color: #008000;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  padding: 0.5rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.featured-stars-input36 button:hover,
+.highlights-input36 button:hover,
+.requirements-input36 button:hover,
+.schedule-input36 button:hover {
+  background-color: #006400;
+  transform: translateY(-2px);
+}
+
+.list-item36 {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background-color: white;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  font-size: 0.95rem;
+}
+
+/* Media query update to prevent centering on mobile */
+@media (max-width: 768px) {
+  .list-item36 {
+    flex-direction: row; /* Change from column to row */
+    gap: 0.5rem;
+    text-align: left; /* Change from center to left */
+  }
+}
+
+/* Remove button styles for all sections */
+.featured-stars-list36 .list-item36 button,
+.highlights-list36 .list-item36 button,
+.requirements-list36 .list-item36 button,
+.schedule-list36 .list-item36 button,
+.tags-list36 .remove-button36 {
+  background-color: #e63946;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  padding: 0.5rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-left: auto; /* This will push the button to the right */
+}
+
+.featured-stars-list36 .list-item36 button:hover,
+.highlights-list36 .list-item36 button:hover,
+.requirements-list36 .list-item36 button:hover,
+.schedule-list36 .list-item36 button:hover,
+.tags-list36 .remove-button36:hover {
+  background-color: #dc2f3d;
+  transform: translateY(-2px);
+}
+
+/* Schedule input layout */
+.schedule-input36 {
+  display: grid;
+  grid-template-columns: 150px 150px 1fr auto; /* Increased width for day selector */
+  gap: 1rem;
+  align-items: stretch;
+  margin-bottom: 1rem;
+}
+
+.schedule-input36 .form-group36 {
+  margin-bottom: 0;
+}
+
+/* Style for the day select dropdown */
+.day-select36 {
+  width: 100%;
+  height: 50px;
+  padding: 0.75rem;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  font-size: 1rem;
+  background-color: white;
+  cursor: pointer;
+}
+
+/* Add a container for grouped schedules */
+.schedule-list36 {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+/* Optional: Add day grouping styles */
+.schedule-day-group36 {
+  margin-bottom: 1rem;
+  padding: 1rem;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+}
+
+.schedule-day-group36 h4 {
+  margin-bottom: 0.5rem;
+  color: #2c3e50;
+  font-size: 1.1rem;
+}
+
+/* Add/Remove button styles with better alignment */
+.add-button36,
+.featured-stars-input36 button,
+.highlights-input36 button,
+.requirements-input36 button,
+.schedule-input36 button,
+.tags-input-container36 button {
+  background-color: #008000;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  padding: 0 1.5rem;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  white-space: nowrap;
+  margin-top: 0; /* Remove any top margin */
+}
+
+/* Featured event container alignment */
+.featured-event-container36 {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  height: 50px; /* Match input height */
+}
+
+.featured-event-container36 input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  cursor: pointer;
+}
+
+.featured-event-container36 label {
+  font-size: 1rem;
+  color: #495057;
+  cursor: pointer;
+  user-select: none;
+  margin: 0;
+  display: flex;
+  align-items: center;
+}
+
+/* Input container alignments */
+.featured-stars-input36,
+.highlights-input36,
+.requirements-input36,
+.schedule-input36,
+.tags-input-container36 {
+  display: grid;
+  gap: 1rem;
+  align-items: stretch; /* Change from center to stretch */
+}
+
+.featured-stars-input36 .form-group36,
+.highlights-input36 .form-group36,
+.requirements-input36 .form-group36,
+.schedule-input36 .form-group36 {
+  margin: 0;
+}
+
+/* Modal buttons alignment */
+.modal-buttons36 {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.modal-cnl-btn36,
+.modal-submit-btn36 {
+  padding: 0 1.5rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  height: 50px;
+  min-width: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+}
+
+.modal-cnl-btn36 {
+  background-color: #e63946;
+  color: white;
+}
+
+.modal-submit-btn36 {
+  background-color: #008000;
+  color: white;
+}
+
+/* Tags input container */
+.tags-input-container36 {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 1rem;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.tags-input-container36 input {
+  height: 50px;
+  padding: 0.75rem;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  font-size: 1rem;
+}
+
+/* Add background to Tags section */
+.section36 {
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+}
+
+.section36 h3 {
+  color: #2c3e50;
+  margin-bottom: 1rem;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+/* Image preview container */
+.image-preview36 {
+  margin-top: 1rem;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #dee2e6;
+  width: 200px; /* Decreased from full width */
+  height: 150px; /* Decreased height */
+}
+
+.image-preview36 img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* This will maintain aspect ratio while covering the container */
+  display: block;
+}
+
+/* File input container */
+.file-input-container36 {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start; /* Align items to the start */
+  gap: 1rem;
+}
+
+.file-input36 {
+  width: 100%;
+  height: 50px;
+  padding: 0.75rem;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  font-size: 1rem;
+}
+
+.free-event-toggle36 {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+}
+
+.free-event-toggle36 input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  cursor: pointer;
+}
+
+.free-event-toggle36 label {
+  font-size: 1rem;
+  color: #495057;
+  cursor: pointer;
+  user-select: none;
+  margin: 0;
+} 

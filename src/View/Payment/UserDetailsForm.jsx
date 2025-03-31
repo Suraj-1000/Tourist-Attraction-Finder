@@ -1,0 +1,390 @@
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
+import './UserDetailsForm.css';
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
+const UserDetailsForm = ({ onSubmit, onCancel, packageDetails }) => {
+  const navigate = useNavigate();
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    address: '',
+    paymentPartner: ''
+  });
+
+  const [formErrors, setFormErrors] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Load user data from localStorage when component mounts
+  useEffect(() => {
+    const user = JSON.parse(localStorage.getItem('user'));
+    if (user) {
+      setFormData(prev => ({
+        ...prev,
+        firstName: user.firstName || '',
+        lastName: user.lastName || '',
+        email: user.email || '',
+        phone: user.phone || '',
+        address: user.address || ''
+      }));
+    }
+  }, []);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+    // Clear error when user starts typing
+    if (formErrors[name]) {
+      setFormErrors(prev => ({
+        ...prev,
+        [name]: ''
+      }));
+    }
+  };
+
+  const validateForm = () => {
+    const errors = {};
+    if (!formData.firstName.trim()) errors.firstName = 'First name is required';
+    if (!formData.lastName.trim()) errors.lastName = 'Last name is required';
+    if (!formData.email.trim()) {
+      errors.email = 'Email is required';
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      errors.email = 'Invalid email format';
+    }
+    if (!formData.phone.trim()) {
+      errors.phone = 'Phone number is required';
+    } else if (!/^\d{10}$/.test(formData.phone)) {
+      errors.phone = 'Phone number must be 10 digits';
+    }
+    if (!formData.address.trim()) errors.address = 'Address is required';
+    if (!formData.paymentPartner) errors.paymentPartner = 'Please select a payment method';
+    return errors;
+  };
+
+  const handlePayment = async (formData, packageDetails) => {
+    try {
+      // Store the current path before initiating payment
+      localStorage.setItem('returnPath', window.location.pathname);
+
+      // Store user details
+      localStorage.setItem('userDetails', JSON.stringify({
+        name: formData.firstName + ' ' + formData.lastName,
+        email: formData.email,
+        phone: formData.phone,
+        address: formData.address
+      }));
+
+      // Store package details
+      localStorage.setItem('paymentDetails', JSON.stringify({
+        title: packageDetails.title,
+        price: packageDetails.price,
+        duration: packageDetails.duration,
+        category: packageDetails.category
+      }));
+
+      // Store payment gateway
+      localStorage.setItem('paymentGateway', formData.paymentPartner);
+
+      // Log the complete package details for debugging
+      console.log('Complete Package Details:', JSON.stringify(packageDetails, null, 2));
+
+      // Convert price to number and ensure it's valid
+      const price = Number(packageDetails.price);
+      if (isNaN(price)) {
+        throw new Error('Invalid package price');
+      }
+
+      // Generate a unique transaction ID
+      const transactionId = Date.now().toString();
+
+      // Store payment details in localStorage
+      const paymentDetails = {
+        ...formData,
+        packageDetails,
+        amount: price,
+        transactionId,
+      };
+      localStorage.setItem('currentPaymentDetails', JSON.stringify(paymentDetails));
+
+      if (formData.paymentPartner === 'esewa') {
+        // Initialize eSewa payment
+        const requestData = {
+          itemId: transactionId,
+          totalPrice: price,
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          email: formData.email,
+          phone: formData.phone,
+          address: formData.address,
+          packageDetails: {
+            title: packageDetails.title,
+            duration: packageDetails.duration,
+            category: packageDetails.category,
+            price: price
+          }
+        };
+        console.log('Sending eSewa request with data:', requestData);
+
+        const response = await axios.post('http://localhost:4000/esewa/initialize-esewa', requestData);
+
+        console.log('eSewa Response:', response.data);
+
+        if (response.data.success) {
+          // Create a form and submit it
+          const form = document.createElement('form');
+          form.method = 'POST';
+          form.action = response.data.formAction;
+
+          // Add all form fields
+          Object.entries(response.data.formData).forEach(([key, value]) => {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = key;
+            input.value = value;
+            form.appendChild(input);
+          });
+
+          // Add the form to the document and submit it
+          document.body.appendChild(form);
+          form.submit();
+          document.body.removeChild(form);
+        }
+      } else if (formData.paymentPartner === 'khalti') {
+        // Initialize Khalti payment
+        const requestData = {
+          itemId: transactionId,
+          totalPrice: price,
+          website_url: window.location.origin,
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          email: formData.email,
+          phone: formData.phone,
+          address: formData.address,
+          packageDetails: {
+            title: packageDetails.title,
+            duration: packageDetails.duration,
+            category: packageDetails.category,
+            price: price
+          }
+        };
+        console.log('Sending Khalti request with data:', requestData);
+
+        const response = await axios.post('http://localhost:4000/khalti/initialize-khalti', requestData);
+
+        console.log('Khalti Response:', response.data);
+
+        if (response.data.success && response.data.payment?.payment_url) {
+          // Redirect to Khalti payment page
+          window.location.href = response.data.payment.payment_url;
+        } else {
+          throw new Error(response.data.message || 'Failed to get payment URL');
+        }
+      }
+    } catch (error) {
+      console.error('Error initializing payment:', error);
+      toast.error('Failed to initialize payment. Please try again.');
+      setFormErrors({
+        submit: error.message || 'Failed to process payment. Please try again.'
+      });
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const errors = validateForm();
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      await handlePayment(formData, packageDetails);
+      toast.success('Payment processing successfully initiated!');
+      onSubmit();
+    } catch (error) {
+      console.error('Payment error:', error);
+      toast.error(error.message || 'Failed to process payment. Please try again.');
+      setFormErrors({
+        submit: error.message || 'Failed to process payment. Please try again.'
+      });
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="user-details-form-modal">
+      <div className="user-details-modal-content">
+        <div className="user-details-modal-header">
+          <h2>Book {packageDetails.title}</h2>
+          <p>Category: {packageDetails.category}</p>
+          <p>Duration: {packageDetails.duration}</p>
+          <p className="price">Price: NPR {packageDetails.price}</p>
+          <hr className="divider" />
+        </div>
+
+        <form onSubmit={handleSubmit} className="user-details-form">
+          <div className="user-details-form-section">
+            <h3>Personal Information</h3>
+            
+            <div className="user-details-form-row">
+              <div className="user-details-form-group">
+                <label htmlFor="firstName">First Name *</label>
+                <input
+                  type="text"
+                  id="firstName"
+                  name="firstName"
+                  value={formData.firstName}
+                  onChange={handleChange}
+                  className={formErrors.firstName ? 'error' : ''}
+                  placeholder="Enter first name"
+                  disabled={isSubmitting}
+                />
+                {formErrors.firstName && <span className="error-message">{formErrors.firstName}</span>}
+              </div>
+
+              <div className="user-details-form-group">
+                <label htmlFor="lastName">Last Name *</label>
+                <input
+                  type="text"
+                  id="lastName"
+                  name="lastName"
+                  value={formData.lastName}
+                  onChange={handleChange}
+                  className={formErrors.lastName ? 'error' : ''}
+                  placeholder="Enter last name"
+                  disabled={isSubmitting}
+                />
+                {formErrors.lastName && <span className="error-message">{formErrors.lastName}</span>}
+              </div>
+            </div>
+
+            <div className="user-details-form-row">
+              <div className="user-details-form-group">
+                <label htmlFor="email">Email Address *</label>
+                <input
+                  type="email"
+                  id="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  className={formErrors.email ? 'error' : ''}
+                  placeholder="your.email@example.com"
+                  disabled={isSubmitting}
+                />
+                {formErrors.email && <span className="error-message">{formErrors.email}</span>}
+              </div>
+
+              <div className="user-details-form-group">
+                <label htmlFor="phone">Phone Number *</label>
+                <input
+                  type="tel"
+                  id="phone"
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleChange}
+                  className={formErrors.phone ? 'error' : ''}
+                  placeholder="10-digit number"
+                  disabled={isSubmitting}
+                />
+                {formErrors.phone && <span className="error-message">{formErrors.phone}</span>}
+              </div>
+            </div>
+
+            <div className="user-details-form-group">
+              <label htmlFor="address">Address *</label>
+              <input
+                type="text"
+                id="address"
+                name="address"
+                value={formData.address}
+                onChange={handleChange}
+                className={formErrors.address ? 'error' : ''}
+                placeholder="Your complete address"
+                disabled={isSubmitting}
+              />
+              {formErrors.address && <span className="error-message">{formErrors.address}</span>}
+            </div>
+          </div>
+
+          <div className="user-details-form-section">
+            <h3>Select Payment Method</h3>
+            <div className="payment-options">
+              <div className="payment-option">
+                <input
+                  type="radio"
+                  id="esewa"
+                  name="paymentPartner"
+                  value="esewa"
+                  checked={formData.paymentPartner === 'esewa'}
+                  onChange={handleChange}
+                  disabled={isSubmitting}
+                />
+                <label htmlFor="esewa" className="payment-label">
+                  <img src="/images/esewa.png" alt="eSewa" />
+                  <span>Pay with eSewa</span>
+                </label>
+              </div>
+
+              <div className="payment-option">
+                <input
+                  type="radio"
+                  id="khalti"
+                  name="paymentPartner"
+                  value="khalti"
+                  checked={formData.paymentPartner === 'khalti'}
+                  onChange={handleChange}
+                  disabled={isSubmitting}
+                />
+                <label htmlFor="khalti" className="payment-label">
+                  <img src="/images/khalti.png" alt="Khalti" />
+                  <span>Pay with Khalti</span>
+                </label>
+              </div>
+            </div>
+            {formErrors.paymentPartner && (
+              <span className="error-message">{formErrors.paymentPartner}</span>
+            )}
+          </div>
+
+          <div className="user-details-form-buttons">
+            <button
+              type="button"
+              className="button0000"
+              onClick={onCancel}
+              disabled={isSubmitting}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="button0000 primary"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <>
+                  <span className="loading-spinner">
+                    <div className="spinner"></div>
+                  </span>
+                  Processing Payment...
+                </>
+              ) : (
+                'Proceed to Payment'
+              )}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+export default UserDetailsForm;

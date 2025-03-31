@@ -237,15 +237,17 @@
   margin-top: 30px;
 }
 
+/* User Card Styles */
 .user-card35 {
   background: white;
   border-radius: 12px;
   padding: 20px;
   display: flex;
-  flex-direction: column; /* Change to column layout */
+  flex-direction: column;
   position: relative;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
   transition: all 0.3s ease;
+  margin-bottom: 20px;
 }
 
 .user-card35:hover {
@@ -253,11 +255,10 @@
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
 }
 
-/* Card top section with image and details */
 .card-top35 {
   display: flex;
   gap: 20px;
-  margin-bottom: 20px;
+  margin-bottom: 15px;
 }
 
 .user-image35 {
@@ -284,6 +285,75 @@
   line-height: 1.4;
 }
 
+/* Activity Details Styles */
+.activity-details35 {
+  padding: 15px;
+  margin: 15px 0;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+}
+
+.logout-time {
+  color: #e74c3c;
+  font-size: 14px;
+}
+
+.session-duration {
+  color: #7f8c8d;
+  font-size: 14px;
+  margin: 5px 0;
+}
+
+.active-status {
+  margin-top: 10px;
+  font-weight: 500;
+}
+
+.status-dot {
+  margin-right: 5px;
+  font-size: 16px;
+}
+
+.status-dot.online {
+  color: #2ecc71;
+}
+
+.status-dot.offline {
+  color: #e74c3c;
+}
+
+/* Card Actions */
+.card-actions35 {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 15px;
+  padding-top: 15px;
+  border-top: 1px solid #e9ecef;
+  margin-left: auto;
+}
+
+.view-details-btn35 {
+  background: #F25019;
+  color: white;
+  border: none;
+  padding: 8px 15px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  margin-left: auto;
+}
+
+.view-details-btn35:hover {
+  background: #d94615;
+  transform: translateY(-2px);
+}
+
+/* Icons */
 .icons35 {
   position: absolute;
   top: 15px;
@@ -304,29 +374,6 @@
 
 .icon35:hover {
   transform: scale(1.2);
-}
-
-/* View Details Button */
-.view-details-btn35 {
-  background: #F25019;
-  color: white;
-  border: none;
-  padding: 8px 15px;
-  border-radius: 6px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 14px;
-  margin-top: -10px;
-  transition: all 0.3s ease;
-  margin-left: auto;
-  width: fit-content;
-}
-
-.view-details-btn35:hover {
-  background: #d94615;
-  transform: translateY(-2px);
 }
 
 /* Sort and Message Section */
@@ -543,6 +590,139 @@
 
 .confirm-delete-btn35:hover {
   background-color: #8B0000;
+}
+
+/* Create Admin Modal Styles */
+.create-admin-modal35 {
+  max-width: 600px;
+}
+
+.create-admin-form35 {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.form-row35 {
+  display: flex;
+  gap: 20px;
+}
+
+.form-group35 {
+  flex: 1;
+}
+
+.form-group35 label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+  color: #333;
+}
+
+.form-group35 input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  transition: all 0.3s ease;
+}
+
+.form-group35 input:focus {
+  border-color: #e63946;
+  box-shadow: 0 0 0 2px rgba(230, 57, 70, 0.1);
+  outline: none;
+}
+
+.error-message35 {
+  background-color: #fee2e2;
+  color: #dc2626;
+  padding: 10px;
+  border-radius: 6px;
+  margin: 10px 0;
+  font-size: 14px;
+}
+
+/* Update existing submit button styles */
+.submit-btn35 {
+  background-color: #e63946;
+  color: white;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  width: 100%;
+  margin-top: 10px;
+}
+
+.submit-btn35:hover {
+  background-color: #006400 !important;
+  transform: translateY(-1px);
+}
+
+.submit-btn35:active {
+  transform: translateY(0);
+}
+
+/* Add styles for the new nav item */
+.nav-links35 a[href="#"] {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 15px;
+  color: #333;
+  text-decoration: none;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.nav-links35 a[href="#"]:hover {
+  background: rgba(230, 57, 70, 0.1);
+  color: #e63946;
+  transform: translateX(5px);
+}
+
+.nav-links35 a[href="#"].active {
+  background: #e63946;
+  color: white;
+  box-shadow: 0 2px 5px rgba(230, 57, 70, 0.2);
+}
+
+/* Password Field Styles for Create Admin Modal */
+.password-field {
+  position: relative;
+  width: 100%;
+}
+
+.password-field input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  transition: all 0.3s ease;
+}
+
+.password-field .eye-icon {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #666;
+  padding: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.password-field .eye-icon:hover {
+  color: #333;
 }
 
 

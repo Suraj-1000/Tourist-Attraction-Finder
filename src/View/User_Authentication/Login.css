@@ -90,7 +90,7 @@ body {
   color: #008000;
 }
 
-.button {
+.button00 {
   font-family: "Mitr";
   background-color: #008000;
   color: #fff;
@@ -101,7 +101,7 @@ body {
   cursor: pointer;
 }
 
-.button:hover {
+.button00:hover {
   opacity: 0.9;
 }
 

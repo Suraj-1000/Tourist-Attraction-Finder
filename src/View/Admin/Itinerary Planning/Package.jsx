@@ -7,6 +7,7 @@ import Header from "../../../Components/Admin Header/Admin-Header";
 import Footer from "../../../Components/Footer";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import UserDetailsForm from '../../../View/Payment/UserDetailsForm';      
 
 export default function PackagePage() {
   const { currency, exchangeRates,  } = useContext(CurrencyContext);
@@ -21,6 +22,8 @@ export default function PackagePage() {
   const [favorites, setFavorites] = useState([]);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [packageToDelete, setPackageToDelete] = useState(null);
+  const [showUserForm, setShowUserForm] = useState(false);
+  const [selectedPackage, setSelectedPackage] = useState(null);
 
   const user = JSON.parse(localStorage.getItem("user"));
 
@@ -224,6 +227,43 @@ const convertPrice = (priceString) => {
     setResults(sortedData); 
   }, [sortBy]); 
   
+  const handleBookNow = (packageDetails) => {
+    if (!user) {
+      toast.error("Please log in to book a package", {
+        position: "top-right",
+        autoClose: 3000,
+        className: 'toast-message17'
+      });
+      return;
+    }
+    setSelectedPackage(packageDetails);
+    setShowUserForm(true);
+  };
+
+  const handlePaymentSubmit = async (formData) => {
+    try {
+      const paymentDetails = {
+        ...formData,
+        packageDetails: selectedPackage,
+        userId: user._id,
+        amount: selectedPackage.price.replace(/[^0-9.-]+/g, ""),
+        transactionId: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+      };
+
+      if (formData.paymentPartner === 'khalti') {
+        // Initialize Khalti payment
+        const response = await axios.post('http://localhost:4000/api/khalti/initiate', paymentDetails);
+        if (response.data.payment_url) {
+          window.location.href = response.data.payment_url;
+        }
+      }
+      // eSewa payment is handled by the EsewaPayment component
+    } catch (error) {
+      console.error('Payment initialization failed:', error);
+      toast.error('Failed to initialize payment. Please try again.');
+      setShowUserForm(false);
+    }
+  };
 
   const initiateDelete = (card) => {
     setPackageToDelete(card);
@@ -440,9 +480,20 @@ const handleShare = (card) => {
               View Details
             </Link>
 
-
-                    
-                  <button className="book-now17">Book Now</button>
+                    <button 
+                      className="book-now17"
+                      onClick={() => handleBookNow({
+                        title: result.title,
+                        duration: result.duration,
+                        tripType: result.tripType,
+                        price: result.price ? result.price.replace(/[^0-9.-]+/g, "") : "0",
+                        category: result.category,
+                        groupSize: result.groupSize,
+                        difficulty: result.difficulty
+                      })}
+                    >
+                      Book Now
+                    </button>
               
                   </div>
                 </div>
@@ -487,6 +538,17 @@ const handleShare = (card) => {
               </div>
             </div>
           </div>
+        )}
+        {/* User Details Form Modal */}
+        {showUserForm && selectedPackage && (
+          <UserDetailsForm
+            packageDetails={selectedPackage}
+            onSubmit={handlePaymentSubmit}
+            onCancel={() => {
+              setShowUserForm(false);
+              setSelectedPackage(null);
+            }}
+          />
         )}
       </div>
       <Footer />

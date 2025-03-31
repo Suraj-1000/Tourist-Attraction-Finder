@@ -22,6 +22,11 @@ const LinkPreview = () => {
         type: 'Trip',
         title: 'View Trip Details'
       };
+    } else if (path.includes('AdminEventView')) {
+      return {
+        type: 'Event',
+        title: 'Explore Exciting Events'
+      };
     }
     return { type: 'Content', title: 'Explore Content' };
   };

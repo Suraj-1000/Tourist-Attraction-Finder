@@ -72,21 +72,58 @@ router.post('/logout/:userId', async (req, res) => {
   try {
     const userId = req.params.userId;
     const { logoutTime } = req.body;
+    
+    console.log('Received logout request for user:', userId); // Debug log
+    console.log('Logout time:', logoutTime); // Debug log
 
-    const updatedUser = await Signup.findByIdAndUpdate(
-      userId,
-      { logoutTime: logoutTime },
-      { new: true }
-    );
+    // Ensure logoutTime is a valid date
+    const parsedLogoutTime = new Date(logoutTime);
+    if (isNaN(parsedLogoutTime.getTime())) {
+      console.error('Invalid logout time received:', logoutTime);
+      return res.status(400).json({ message: 'Invalid logout time format' });
+    }
 
-    if (!updatedUser) {
+    // First find the user to ensure they exist
+    const user = await Signup.findById(userId);
+    if (!user) {
+      console.log('User not found:', userId);
       return res.status(404).json({ message: 'User not found' });
     }
 
-    res.status(200).json({ message: 'Logout time updated successfully', user: updatedUser });
+    // Update the user with the new logout time
+    const updatedUser = await Signup.findByIdAndUpdate(
+      userId,
+      { 
+        $set: { 
+          logoutTime: parsedLogoutTime,
+          lastLogin: user.lastLogin // Preserve the last login time
+        } 
+      },
+      { new: true }
+    );
+
+    console.log('Successfully updated logout time for user:', userId);
+    console.log('Updated user:', {
+      id: updatedUser._id,
+      lastLogin: updatedUser.lastLogin,
+      logoutTime: updatedUser.logoutTime
+    });
+
+    res.status(200).json({ 
+      message: 'Logout time updated successfully',
+      user: {
+        id: updatedUser._id,
+        lastLogin: updatedUser.lastLogin,
+        logoutTime: updatedUser.logoutTime
+      }
+    });
   } catch (error) {
     console.error('Error updating logout time:', error);
-    res.status(500).json({ message: 'Error updating logout time' });
+    res.status(500).json({ 
+      message: 'Error updating logout time', 
+      error: error.message,
+      stack: error.stack 
+    });
   }
 });
 

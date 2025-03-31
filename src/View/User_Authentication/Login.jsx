@@ -18,23 +18,30 @@ export default function Login() {
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    const adminRegex = /^[a-zA-Z0-9._%+-]+\.explore\.nepal@gmail\.com$/;
     const userRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/; 
 
-    if (!adminRegex.test(email) && !userRegex.test(email)) {
-      toast.error("Invalid email format. Admin emails should end with '.explore.nepal@gmail.com' and user emails should end with '@gmail.com'");
+    if (!userRegex.test(email)) {
+      toast.error("Invalid email format. Please enter a valid email address.");
       return;
     }
 
     try {
       const response = await axios.post('http://localhost:4000/login', { email, password });
-      localStorage.setItem("token", response.data.token);
-      localStorage.setItem("user", JSON.stringify(response.data.user));
       
-      if (adminRegex.test(email)) {
+      // Add address field to user data if it doesn't exist
+      const userData = {
+        ...response.data.user,
+        address: response.data.user.address || 'Maitidevi Kathmandu' // Default address if not provided
+      };
+      
+      localStorage.setItem("token", response.data.token);
+      localStorage.setItem("user", JSON.stringify(userData));
+      
+      // Check user role and navigate accordingly
+      if (response.data.user.role === 'admin') {
         toast.success('Admin login successful! Redirecting to Admin Dashboard.');
         navigate('/AdminHome');
-      } else if (userRegex.test(email)) {
+      } else {
         toast.success('Login successful! Redirecting to shared content.');
         navigate(from, { replace: true });
       }
@@ -83,7 +90,7 @@ export default function Login() {
               </button>
             </div>
             <Link to="/forgot" className="link">Forgot Password</Link>
-            <button type="submit" className="button">Login</button>
+            <button type="submit" className="button00">Login</button>
           </form>
           <span className="divider">or</span>
           <p className="register">

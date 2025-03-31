@@ -5,7 +5,7 @@ class NotificationHub {
     constructor(server) {
         this.io = new Server(server, {
             cors: {
-                origin: ['http://localhost:3000', 'http://localhost:5173'],
+                origin: ['http://localhost:4000', 'http://localhost:5173'],
                 methods: ['GET', 'POST'],
                 allowedHeaders: ['Content-Type', 'Authorization'],
                 credentials: true
@@ -34,6 +34,35 @@ class NotificationHub {
                     timestamp: new Date(),
                     id: uuidv4()
                 });
+            });
+
+            // Handle notification read status
+            socket.on('notificationRead', (notificationId) => {
+                console.log('Notification marked as read:', notificationId);
+                // Broadcast to all clients in the admin room
+                this.io.to(this.adminRoom).emit('notificationRead', notificationId);
+            });
+
+            // Handle notification unread status
+            socket.on('notificationUnread', (notificationId) => {
+                console.log('Notification marked as unread:', notificationId);
+                // Broadcast to all clients in the admin room
+                this.io.to(this.adminRoom).emit('notificationUnread', notificationId);
+            });
+
+            // Handle clear all notifications
+            socket.on('clearAllNotifications', () => {
+                console.log('Clearing all notifications');
+                // Broadcast to all clients in the admin room
+                this.io.to(this.adminRoom).emit('clearAllNotifications');
+            });
+
+            // Handle notification delete
+            socket.on('notificationDelete', (notificationId) => {
+                console.log('Notification deleted:', notificationId);
+                // Broadcast to all clients in the admin room
+                this.io.to(this.adminRoom).emit('notificationDelete', notificationId);
+                console.log('Broadcasted notificationDelete event to admin room');
             });
 
             socket.on('disconnect', (reason) => {

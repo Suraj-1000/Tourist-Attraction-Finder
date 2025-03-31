@@ -4,6 +4,9 @@ import { CurrencyProvider } from './config/CurrencyContext';
 import { Toaster } from 'react-hot-toast';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import ProtectedRoute from './config/ProtectedRoute';
+import LinkPreview from './config/LinkPreview';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 import LandingPage from './View/Landing Page/LandingPage';
 import Login from './View/User_Authentication/Login';
@@ -35,8 +38,16 @@ import AdminNotificationPage from './View/Admin/Management/AdminNotification';
 import AdminEmergencyPage from './View/Admin/Management/AdminEmergency';
 import AdminCurrenciesPage from './View/Admin/Management/AdminCurrency';
 import AdminLanguagePage from './View/Admin/Management/AdminLanguage';
+import AdminBookingHistory from './View/Admin/Management/AdminBookingHistory';
+import AdminMapPage from './View/Admin/Explore Map/Map';
+import AdminEventPage from './View/Admin/Recommendation/AdminEvent';
+import AdminLocationPage from './View/Admin/Recommendation/AdminLocation';
+import EventView from './View/Admin/Recommendation/EventView';
 
 import UserHomepage from './View/User/Home Page/UserHomepage';
+
+import PaymentRedirect from './View/Payment/PaymentRedirect';
+
 
 export default function App() {
   const router = createBrowserRouter([
@@ -149,6 +160,10 @@ export default function App() {
       element: <AdminFavoritesPage />
     },
     {
+      path: '/AdminBookingHistory',
+      element: <AdminBookingHistory />
+    },
+    {
       path: '/AdminNotification',
       element: <AdminNotificationPage />
     },
@@ -165,8 +180,40 @@ export default function App() {
       element: <AdminLanguagePage />
     },
     {
+      path: '/AdminMap',
+      element: <AdminMapPage />
+    },
+    {
+      path: '/AdminEvent',
+      element: <AdminEventPage />
+    },
+    {
+      path: '/AdminLocation',
+      element: <AdminLocationPage />
+    },
+    {
+      path: '/AdminEventView/:id',
+      element: (
+        <ProtectedRoute>
+          <EventView />
+        </ProtectedRoute>
+      )
+    },
+    {
       path: '/Homepage',
       element: <UserHomepage />
+    },
+    {
+      path: '/payment-success',
+      element: <PaymentRedirect />
+    },
+    {
+      path: '/payment-failure',
+      element: <PaymentRedirect />
+    },
+    {
+      path: '/payment-cancelled',
+      element: <PaymentRedirect />
     }
   ]);
 
@@ -179,8 +226,19 @@ export default function App() {
           ))}
         </Routes>
         <Toaster position="top-right" />
+        <ToastContainer
+          position="top-right"
+          autoClose={5000}
+          hideProgressBar={false}
+          newestOnTop={false}
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+          theme="light"
+        />
       </Router>
     </CurrencyProvider>
   );
 }
-

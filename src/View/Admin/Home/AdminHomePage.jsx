@@ -4,11 +4,13 @@ import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { 
   FaSearch, FaUsers, FaUserShield, FaMale, FaFemale, FaEye, FaEdit, 
-  FaTrash, FaTachometerAlt, FaHistory, FaUserPlus, FaTimes 
+  FaTrash, FaTachometerAlt, FaHistory, FaUserPlus, FaTimes, FaUserCog 
 } from "react-icons/fa";
 import Header from "../../../Components/Admin Header/Admin-Header";
 import Footer from "../../../Components/Footer";
+import CreateAdminModal from "../Home/CreateAdminModal";
 import "./AdminHomePage.css";
+
 
 export default function AdminHomepage() {
   const [users, setUsers] = useState([]);
@@ -31,6 +33,16 @@ export default function AdminHomepage() {
   const [activeRole, setActiveRole] = useState("all");
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [userToDelete, setUserToDelete] = useState(null);
+  const [showCreateAdminModal, setShowCreateAdminModal] = useState(false);
+  const [newAdminData, setNewAdminData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    password: '',
+    confirmPassword: ''
+  });
+  const [createAdminError, setCreateAdminError] = useState('');
 
   useEffect(() => {
     // Initial fetch
@@ -463,16 +475,21 @@ export default function AdminHomepage() {
     return (currentTime - lastLoginTime) <= thirtyMinutes;
   };
 
-  // Update the user card display in the Active Logins section
+  // Update the formatDateTime function
   const formatDateTime = (date) => {
     if (!date) return 'Not available';
-    return new Date(date).toLocaleString('en-US', {
+    const dateObj = new Date(date);
+    const formattedDate = dateObj.toLocaleDateString('en-US', {
       year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+      month: 'numeric',
+      day: 'numeric'
     });
+    const formattedTime = dateObj.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true
+    });
+    return `${formattedDate} at ${formattedTime}`;
   };
 
   const DeleteConfirmationModal = ({ user, onClose, onConfirm }) => {
@@ -519,6 +536,40 @@ export default function AdminHomepage() {
         console.error("Error deleting user:", error);
         toast.error("Failed to delete user. Please try again.");
       });
+  };
+
+  const handleCreateAdmin = async (e) => {
+    e.preventDefault();
+    setCreateAdminError('');
+
+    if (newAdminData.password !== newAdminData.confirmPassword) {
+      setCreateAdminError('Passwords do not match');
+      return;
+    }
+
+    try {
+      const response = await axios.post('http://localhost:4000/signups/create-admin', {
+        ...newAdminData,
+        createdBy: users.find(user => user.role === 'admin')?._id // Get the current admin's ID
+      });
+
+      if (response.data) {
+        toast.success('New admin created successfully!');
+        setShowCreateAdminModal(false);
+        setNewAdminData({
+          firstName: '',
+          lastName: '',
+          email: '',
+          phone: '',
+          password: '',
+          confirmPassword: ''
+        });
+        fetchUsers(); // Refresh the user list
+      }
+    } catch (error) {
+      setCreateAdminError(error.response?.data?.message || 'Failed to create admin');
+      toast.error('Failed to create admin');
+    }
   };
 
   return (
@@ -579,6 +630,19 @@ export default function AdminHomepage() {
               >
                 <FaUsers className="nav-icon" />
                 Active Logins
+              </a>
+            </li>
+            <li>
+              <a
+                href="#"
+                className={activePage === "create-admin" ? "active" : ""}
+                onClick={() => {
+                  setActivePage("create-admin");
+                  setShowCreateAdminModal(true);
+                }}
+              >
+                <FaUserCog className="nav-icon" />
+                Create Admin
               </a>
             </li>
           </ul>
@@ -721,9 +785,6 @@ export default function AdminHomepage() {
                 </div>
               </div>
 
-            
-
-                  
               <div className="message-sort-container35">
                 <p className="message35">
                   {getRegistrationMessage(
@@ -772,12 +833,14 @@ export default function AdminHomepage() {
                         <p><strong>Role: </strong>{user.role}</p>
                         <p><strong>Gender: </strong>{user.gender}</p>
                         <p><strong>Registered: </strong>
-                          {new Date(user.createdAt).toLocaleString('en-US', {
+                          {new Date(user.createdAt).toLocaleDateString('en-US', {
                             year: 'numeric',
-                            month: 'long',
-                            day: 'numeric',
+                            month: 'numeric',
+                            day: 'numeric'
+                          })} at {new Date(user.createdAt).toLocaleTimeString('en-US', {
                             hour: '2-digit',
-                            minute: '2-digit'
+                            minute: '2-digit',
+                            hour12: true
                           })}
                         </p>
                       </div>
@@ -821,10 +884,6 @@ export default function AdminHomepage() {
                   </select>
                 </div>
               </div>
-
-              
-             
-
 
               <div className="message-sort-container35">
                 <p className="message35">
@@ -876,12 +935,14 @@ export default function AdminHomepage() {
                         <p><strong>Role: </strong>{user.role}</p>
                         <p><strong>Gender: </strong>{user.gender}</p>
                         <p><strong>Last Login: </strong>
-                          {new Date(user.lastLogin).toLocaleString('en-US', {
+                          {new Date(user.lastLogin).toLocaleDateString('en-US', {
                             year: 'numeric',
-                            month: 'long',
-                            day: 'numeric',
+                            month: 'numeric',
+                            day: 'numeric'
+                          })} at {new Date(user.lastLogin).toLocaleTimeString('en-US', {
                             hour: '2-digit',
-                            minute: '2-digit'
+                            minute: '2-digit',
+                            hour12: true
                           })}
                         </p>
                       </div>
@@ -974,22 +1035,17 @@ export default function AdminHomepage() {
                         <p><strong>Role: </strong>{user.role}</p>
                         <p><strong>Gender: </strong>{user.gender}</p>
                         
-                        <div className="activity-details35" style={{
-                          padding: '10px',
-                          margin: '10px 0',
-                          backgroundColor: 'rgba(236, 240, 241, 0.3)',
-                          borderRadius: '5px'
-                        }}>
+                        <div className="activity-details35">
                           <p><strong>Last Login: </strong>{formatDateTime(user.lastLogin)}</p>
                           
                           {user.logoutTime && (
-                            <p style={{ color: '#e74c3c' }}>
+                            <p className="logout-time">
                               <strong>Last Logout: </strong>{formatDateTime(user.logoutTime)}
                             </p>
                           )}
 
                           {user.lastLogin && user.logoutTime && new Date(user.logoutTime) > new Date(user.lastLogin) && (
-                            <p style={{ color: '#7f8c8d', fontSize: '0.9em' }}>
+                            <p className="session-duration">
                               <strong>Session Duration: </strong>
                               {(() => {
                                 const loginTime = new Date(user.lastLogin);
@@ -1004,19 +1060,15 @@ export default function AdminHomepage() {
                             </p>
                           )}
 
-                          <p className="active-status" style={{ 
-                            color: isUserActive(user) ? '#2ecc71' : '#e74c3c',
-                            fontWeight: 'bold',
-                            marginTop: '5px'
-                          }}>
+                          <p className="active-status">
                             <strong>Current Status: </strong>
                             {isUserActive(user) ? (
                               <>
-                                <span style={{ color: '#2ecc71' }}>●</span> Online
+                                <span className="status-dot online">●</span> Online
                               </>
                             ) : (
                               <>
-                                <span style={{ color: '#e74c3c' }}>●</span> Offline
+                                <span className="status-dot offline">●</span> Offline
                               </>
                             )}
                           </p>
@@ -1024,13 +1076,15 @@ export default function AdminHomepage() {
                       </div>
                     </div>
 
-                    <button 
-                      className="view-details-btn35" 
-                      title="View Details"
-                      onClick={() => handleViewDetails(user)}
-                    >
-                      <FaEye style={{ marginRight: '5px' }} /> View Details
-                    </button>
+                    <div className="card-actions35">
+                      <button 
+                        className="view-details-btn35" 
+                        title="View Details"
+                        onClick={() => handleViewDetails(user)}
+                      >
+                        <FaEye style={{ marginRight: '5px' }} /> View Details
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -1069,6 +1123,15 @@ export default function AdminHomepage() {
             setUserToDelete(null);
           }}
           onConfirm={confirmDelete}
+        />
+      )}
+      
+      {/* Update the Create Admin Modal */}
+      {showCreateAdminModal && (
+        <CreateAdminModal 
+          onClose={() => setShowCreateAdminModal(false)}
+          users={users}
+          onSuccess={fetchUsers}
         />
       )}
       

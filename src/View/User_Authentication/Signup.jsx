@@ -61,9 +61,9 @@ export default function Signup() {
 
     axios.post("http://localhost:4000/signups/verify-otp", { email, otp })
       .then((response) => {
-        toast.success("OTP verified successfully. Account created!");
-        // After successful signup, navigate to the shared link
-        navigate(from, { replace: true });
+        toast.success("Account created successfully! Please login to continue.");
+        // Navigate to login page after successful verification
+        navigate('/login');
       })
       .catch((error) => {
         toast.error(error.response?.data?.message || 'Invalid OTP or OTP expired');

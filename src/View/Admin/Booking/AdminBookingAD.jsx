@@ -7,6 +7,7 @@ import "./AdminBookingAD.css";
 import { CurrencyContext } from "../../../config/CurrencyContext";
 import Header from "../../../Components/Admin Header/Admin-Header";
 import Footer from "../../../Components/Footer";
+import socketService from "../../../services/socketService";
 
 export default function AdminBookingADPage() {
     const { currency, exchangeRates,  } = useContext(CurrencyContext);
@@ -84,7 +85,7 @@ export default function AdminBookingADPage() {
         setShowDetailsModal(true);
     };
 
-    // ✅ Update trip status
+    // Update trip status
     const updateTripStatus = async (tripName, status, message = "") => {
         if (status === "declined" && !message) {
             handleDeclineClick({ tripName });
@@ -114,6 +115,30 @@ export default function AdminBookingADPage() {
                         : trip
                 )
             );
+
+            // Initialize socket connection and emit notification
+            const socket = socketService.getSocket();
+            
+            // Ensure socket is connected
+            if (!socket.connected) {
+                socket.connect();
+            }
+
+            // Join admin room if not already joined
+            socket.emit('joinAdminRoom');
+
+            // Create notification with a consistent ID format
+            const notification = {
+                id: `${Date.now()}-${tripName.replace(/\s+/g, '-')}`,
+                type: status === 'approved' ? 'trip-approval' : 'trip-declined',
+                message: `Trip "${tripName}" has been ${status}`,
+                timestamp: new Date().toISOString(),
+                details: status === 'declined' ? message : 'Trip successfully approved',
+                read: false
+            };
+
+            console.log('Emitting notification:', notification);
+            socket.emit('notification', notification);
 
             // Show success toast based on status
             if (status === "approved") {

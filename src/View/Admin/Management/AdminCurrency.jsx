@@ -17,7 +17,7 @@ export default function AdminCurrencyPage() {
   const [conversionHistory, setConversionHistory] = useState([]);
   const { currency, updateCurrency } = useContext(CurrencyContext);
 
-  const apiKey = "b62d5df1597e71921544174d"; 
+  const apiKey = "6bac91f7f6bd76d591aec4f0"; 
 
   useEffect(() => {
     fetchExchangeRates();
