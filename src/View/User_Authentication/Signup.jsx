@@ -24,7 +24,7 @@ export default function Signup() {
   const location = useLocation();
   
   // Get the redirect path from location state, default to homepage if none exists
-  const from = location.state?.from || '/Homepage';
+  const from = location.state?.from || '/Home';
 
   // Handle form submission
   const handleSubmit = (e) => {

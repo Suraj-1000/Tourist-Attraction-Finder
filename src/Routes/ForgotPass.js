@@ -38,8 +38,8 @@ router.post('/', async (req, res) => {  // Updated route to /forgot
       const transporter = nodemailer.createTransport({
         service: 'Gmail',
         auth: {
-          user: 'explorenepal.it@gmail.com',
-          pass: 'ihsl rjso rpkd wrfn', 
+          user: process.env.EMAIL_USER,
+          pass: process.env.EMAIL_PASS,
         },
       });
   

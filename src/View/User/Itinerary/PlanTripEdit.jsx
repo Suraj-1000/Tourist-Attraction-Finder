@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import "./PlanTripEdit.css";
-import Header from "../../../Components/Admin Header/Admin-Header";
+import Header from "../../../Components/User Header/User-Header";
 import Footer from "../../../Components/Footer";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -14,93 +14,111 @@ export default function PlanTripUpdatePage() {
     tripName: "",
     startDate: "",
     endDate: "",
-    tripType: "", 
+    tripType: "",
     duration: "",
     destinations: "",
-    adventureActivities: "",
-    culturalExperiences: "",
-    relaxation: "",
-    foodCulinary: "",
-    nightlifeEntertainment: "",
-    customActivities: "", 
-    travelStyle: "", 
-    accommodationType: "", 
-    mealsPreferences: "", 
-    dietaryPreferences: "", 
-    customDietaryPreference: "", 
-    transportationType: "", 
+    adventureActivities: [],
+    culturalExperiences: [],
+    relaxation: [],
+    foodCulinary: [],
+    nightlifeEntertainment: [],
+    customActivities: "",
+    travelStyle: "",
+    accommodationType: "",
+    mealsPreferences: "",
+    dietaryPreferences: [],
+    customDietaryPreference: "",
+    transportationType: "",
     itinerary: [],
     personalizedExperiences: "",
-    travelInsurance: false, 
-    includeEvents: false, 
+    travelInsurance: false,
+    includeEvents: false,
     totalBudget: "",
     transportCost: "",
     accommodationCost: "",
     mealsCost: "",
-    activitiesCost: ""
+    activitiesCost: "",
+    userId: "",
+    userName: "",
+    userEmail: "",
+    userAddress: ""
   });
 
   const [isUpdating, setIsUpdating] = useState(false);
+  const { id } = useParams();
 
   const COST_RANGES = {
     transport: {
-        Flights: 50, // Updated to Nepal pricing
-        "Private Car/Van": 50,
-        Buses: 11, // Updated to Nepal pricing
+        Flights: 6650,
+        "Private Car/Van": 6650,
+        Buses: 1463,
         None: 0,
     },
     accommodation: {
-        Guesthouses: 25,
-        Hostels: 20,
-        "Mid-Range": 50,
-        "3-Star Hotels": 75,
-        Homestays: 30,
-        Luxury: 120,
-        "5-Star Hotels": 200,
-        Resorts: 250,
+        None: 0,
+        Guesthouses: 3325,
+        Hostels: 2660,
+        "Mid-Range": 6650,
+        "3-Star Hotels": 9975,
+        Homestays: 3990,
+        Luxury: 15960,
+        "5-Star Hotels": 26600,
+        Resorts: 33250,
     },
     meals: {
-        "All-Inclusive": 40,
-        "Self-Catering": 20,
+        None: 0,
+        "All-Inclusive": 5320,
+        "Self-Catering": 2660,
     },
     activities: {
         Adventure: {
-            "Hiking & Trekking": 40,
-            Paragliding: 100,
-            Rafting: 60,
+            "Hiking & Trekking": 5320,
+            Paragliding: 13300,
+            Rafting: 7980,
         },
         Cultural: {
-            Temples: 15,
-            Museums: 20,
-            Festivals: 25,
+            Temples: 1995,
+            Museums: 2660,
+            Festivals: 3325,
         },
         Relaxation: {
-            "Lakeside Strolls": 5,
-            "Hot Springs": 30,
-            Spas: 50,
+            "Lakeside Strolls": 665,
+            "Hot Springs": 3990,
+            Spas: 6650,
         },
         Culinary: {
-            "Food Tours": 40,
-            "Street Food": 15,
-            "Cooking Classes": 35,
+            "Food Tours": 5320,
+            "Street Food": 1995,
+            "Cooking Classes": 4655,
         },
         Nightlife: {
-            Clubs: 30,
-            "Live Music": 20,
+            Clubs: 3990,
+            "Live Music": 2660,
         },
+        Custom: {
+            "Custom Activity": 3990, // Default cost for custom activities
+        },
+        Dietary: {
+            "Vegetarian": 2660,
+            "Vegan": 3325,
+            "Gluten-Free": 3990,
+            "Nut-Free": 3325,
+            "Custom Dietary": 3990 // Default cost for custom dietary preferences
+        }
     },
     travelStyles: {
-        single: 0.9,  // Cheaper (10% discount)
-        couples: 1.39, // Adjusted to match calculation
-        family: 0.8,  // Discounted (20% discount)
-        groups: 0.8,  // Discounted (20% discount)
+        single: 1.2,    // Most expensive (20% more expensive)
+        couples: 0.9,   // Small discount (10% off)
+        family: 0.8,    // Larger discount (20% off)
+        groups: 0.7,    // Heaviest discount (30% off)
     },
-    travelInsurance: 50, // Cost of travel insurance per trip
+    travelInsurance: 6650,
     eventsFestivals: {
-        local: 20, // Cost for including local events/festivals
-        special: 30, // Cost for including special events
+        local: 2660,
+        special: 3990,
     }
 };
+
 
 const calculateCostBreakdown = (data) => {
   let {
@@ -114,6 +132,9 @@ const calculateCostBreakdown = (data) => {
       relaxation,
       foodCulinary,
       nightlifeEntertainment,
+      customActivities,
+      dietaryPreferences,
+      customDietaryPreference,
       travelInsurance: includeInsurance,
       includeEvents,
   } = data;
@@ -121,7 +142,6 @@ const calculateCostBreakdown = (data) => {
   let days = parseInt(duration) || 1;
   let totalBudget = 0;
 
-  // Read first value from arrays
   let accommodationTypeValue = Array.isArray(accommodationType) ? accommodationType[0] : accommodationType;
   let mealsPreferencesValue = Array.isArray(mealsPreferences) ? mealsPreferences[0] : mealsPreferences;
 
@@ -129,7 +149,7 @@ const calculateCostBreakdown = (data) => {
   let minAccommodation = COST_RANGES.accommodation[accommodationTypeValue] || 25;
   let minMeals = COST_RANGES.meals[mealsPreferencesValue] || 20;
 
-  // Calculate total activity costs
+  // Calculate total activity costs including custom activities
   let totalActivityCost = 0;
   [...adventureActivities, ...culturalExperiences, ...relaxation, ...foodCulinary, ...nightlifeEntertainment].forEach(activity => {
       for (let category in COST_RANGES.activities) {
@@ -139,12 +159,26 @@ const calculateCostBreakdown = (data) => {
       }
   });
 
+  // Add cost for custom activities if present
+  if (customActivities && customActivities.trim() !== "") {
+      totalActivityCost += COST_RANGES.activities.Custom["Custom Activity"];
+  }
+
+  // Add cost for dietary preferences
+  if (dietaryPreferences && COST_RANGES.activities.Dietary[dietaryPreferences]) {
+      totalActivityCost += COST_RANGES.activities.Dietary[dietaryPreferences];
+  }
+
+  // Add cost for custom dietary preferences if present
+  if (customDietaryPreference && customDietaryPreference.trim() !== "") {
+      totalActivityCost += COST_RANGES.activities.Dietary["Custom Dietary"];
+  }
+
   let insuranceCost = includeInsurance ? COST_RANGES.travelInsurance : 0;
   let eventsCost = includeEvents ? COST_RANGES.eventsFestivals.local : 0;
 
-  let travelStyleMultiplier = COST_RANGES.travelStyles[travelStyle] || 1.0;
+  let travelStyleMultiplier = COST_RANGES.travelStyles[travelStyle.toLowerCase()] || 1.0;
 
-  // Apply multiplier ONLY to transport, accommodation, meals, and activities
   let adjustedTransport = (minTransport * days * travelStyleMultiplier).toFixed(2);
   let adjustedAccommodation = (minAccommodation * days * travelStyleMultiplier).toFixed(2);
   let adjustedMeals = (minMeals * days * travelStyleMultiplier).toFixed(2);
@@ -193,9 +227,6 @@ const handleChange = (e) => {
   });
 };
 
-
- 
-
   const calculateDurationAndTripType = (field, value) => {
     let { startDate, endDate } = formData;
     if (field === "startDate") startDate = value;
@@ -205,26 +236,40 @@ const handleChange = (e) => {
       const start = new Date(startDate);
       const end = new Date(endDate);
       const timeDiff = end - start;
-      const days = timeDiff / (1000 * 60 * 60 * 24); // Convert milliseconds to days
+      const days = Math.ceil(timeDiff / (1000 * 60 * 60 * 24)) + 1; // Include both start and end days
 
-      if (days >= 0) {
-        const duration = `${days + 1} days`; // Include the last day
-        const tripType = days + 1 <= 3 ? "Short Trip" : "Long Trip";
+      if (days > 0) {
+        const duration = `${days} days`;
+        const tripType = days <= 3 ? "Short Trip" : "Long Trip";
 
         setFormData((prev) => ({
           ...prev,
           duration,
           tripType,
-          itinerary: generateItinerary(days + 1),
+          itinerary: generateItinerary(days),
         }));
       } else {
         setFormData((prev) => ({
           ...prev,
-          duration: "",
-          tripType: "",
-          itinerary: [],
+          duration: "1 day",
+          tripType: "Short Trip",
+          itinerary: generateItinerary(1),
         }));
       }
+    } else if (startDate) {
+      setFormData((prev) => ({
+        ...prev,
+        duration: "1 day",
+        tripType: "Short Trip",
+        itinerary: generateItinerary(1),
+      }));
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        duration: "",
+        tripType: "",
+        itinerary: [],
+      }));
     }
   };
 
@@ -258,108 +303,143 @@ const handleChange = (e) => {
     });
   };
 
-  const { tripName } = useParams(); 
-
-
-
   useEffect(() => {
-    if (tripName) {
-      fetchTripDetails(tripName);
+    if (id) {
+      fetchTripDetails(id);
     }
-  }, [tripName]);
+  }, [id]);
 
-
-  const fetchTripDetails = async (tripName) => {
+  const fetchTripDetails = async (id) => {
     try {
-      const encodedTripName = encodeURIComponent(tripName);
-      console.log(`Fetching details for package: ${encodedTripName}`);
+      console.log(`Fetching details for trip ID: ${id}`);
+      const token = localStorage.getItem("token");
 
-      const response = await axios.get(`http://localhost:4000/adminTrip/trip`, {
-        params: { tripName },
+      if (!token) {
+        toast.error("Please log in to edit trips");
+        return;
+      }
+
+      const response = await axios.get(`http://localhost:4000/adminTrip/trip/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
       });
 
-      if (response.status === 200) {
+      if (response.status === 200 && response.data) {
         console.log("Trip Data:", response.data);
+        const tripData = response.data;
+
+        // Format dates for input fields
+        const startDate = tripData.startDate ? new Date(tripData.startDate).toISOString().split('T')[0] : "";
+        const endDate = tripData.endDate ? new Date(tripData.endDate).toISOString().split('T')[0] : "";
+
+        // Calculate duration if dates are available
+        let duration = tripData.duration;
+        if (startDate && endDate) {
+          const start = new Date(startDate);
+          const end = new Date(endDate);
+          const timeDiff = end - start;
+          const days = Math.ceil(timeDiff / (1000 * 60 * 60 * 24)) + 1;
+          duration = `${days} days`;
+        }
+
+        // Handle dietary preferences properly
+        let dietaryPreferences = tripData.dietaryPreferences;
+        if (!dietaryPreferences) {
+          dietaryPreferences = "None";
+        } else if (Array.isArray(dietaryPreferences)) {
+          dietaryPreferences = dietaryPreferences[0] || "None";
+        }
 
         setFormData({
-          ...response.data,
-          startDate: response.data.startDate ? response.data.startDate.split("T")[0] : "",
-          endDate: response.data.endDate ? response.data.endDate.split("T")[0] : "",accommodationType: Array.isArray(response.data.accommodationType)
-          ? response.data.accommodationType[0] || ""
-          : response.data.accommodationType || "",
-        mealsPreferences: Array.isArray(response.data.mealsPreferences)
-          ? response.data.mealsPreferences[0] || ""
-          : response.data.mealsPreferences || "",
-        dietaryPreferences: Array.isArray(response.data.dietaryPreferences)
-          ? response.data.dietaryPreferences[0] || ""
-          : response.data.dietaryPreferences || "",
+          ...tripData,
+          startDate,
+          endDate,
+          duration,
+          adventureActivities: Array.isArray(tripData.adventureActivities) ? tripData.adventureActivities : [],
+          culturalExperiences: Array.isArray(tripData.culturalExperiences) ? tripData.culturalExperiences : [],
+          relaxation: Array.isArray(tripData.relaxation) ? tripData.relaxation : [],
+          foodCulinary: Array.isArray(tripData.foodCulinary) ? tripData.foodCulinary : [],
+          nightlifeEntertainment: Array.isArray(tripData.nightlifeEntertainment) ? tripData.nightlifeEntertainment : [],
+          dietaryPreferences,
+          customDietaryPreference: tripData.customDietaryPreference || "",
+          itinerary: Array.isArray(tripData.itinerary) ? tripData.itinerary : [],
+          travelInsurance: Boolean(tripData.travelInsurance),
+          includeEvents: Boolean(tripData.includeEvents)
         });
-        
       } else {
-        toast.error(`No Trip Found: "${tripName}"`, {
-          position: "top-right",
-          autoClose: 3000,
-          className: 'toast-message23'
-        });
+        toast.error(`No Trip Found with ID: "${id}"`);
       }
     } catch (error) {
       console.error("Error fetching trip details:", error);
-      toast.error(`Failed to load trip details for "${tripName}"`, {
-        position: "top-right",
-        autoClose: 3000,
-        className: 'toast-message23'
-      });
+      toast.error(`Failed to load trip details for ID "${id}"`);
     }
-};
+  };
 
+  const handleUpdate = async (e) => {
+    e.preventDefault();
+    setIsUpdating(true);
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        toast.error("Please login to update trip");
+        return;
+      }
 
-const handleUpdate = async (e) => {
-  e.preventDefault();
-  setIsUpdating(true);
+      // Calculate duration before sending
+      let duration = formData.duration;
+      if (formData.startDate && formData.endDate) {
+        const start = new Date(formData.startDate);
+        const end = new Date(formData.endDate);
+        const timeDiff = end - start;
+        const days = Math.ceil(timeDiff / (1000 * 60 * 60 * 24)) + 1;
+        duration = `${days} days`;
+      }
 
-  let updatedFormData = { ...formData };
+      // Format the data before sending
+      const formattedData = {
+        ...formData,
+        duration,
+        // Ensure dietary preferences is a single string value
+        dietaryPreferences: Array.isArray(formData.dietaryPreferences) 
+          ? formData.dietaryPreferences[0] || "None"
+          : formData.dietaryPreferences || "None",
+        // Ensure array fields are properly formatted
+        transportationType: Array.isArray(formData.transportationType) 
+          ? formData.transportationType[0] 
+          : formData.transportationType,
+        // Ensure boolean fields are properly set
+        travelInsurance: Boolean(formData.travelInsurance),
+        includeEvents: Boolean(formData.includeEvents),
+        // Ensure numeric fields are properly formatted
+        budget: Number(formData.budget),
+        groupSize: Number(formData.groupSize)
+      };
 
-  if (typeof updatedFormData.itinerary === "string") {
-    updatedFormData.itinerary = JSON.parse(updatedFormData.itinerary);
-  }
+      const response = await axios.put(
+        "http://localhost:4000/adminTrip/updateTrip",
+        formattedData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json"
+          }
+        }
+      );
 
-  try {
-    const response = await axios.put(
-      "http://localhost:4000/adminTrip/updateTrip",
-      updatedFormData,
-      { headers: { "Content-Type": "application/json" } }
-    );
-
-    if (response.status === 200) {
-      toast.success(`"${formData.tripName}" has been updated successfully!`, {
-        position: "top-right",
-        autoClose: 3000,
-        className: 'toast-message23'
-      });
-      setTimeout(() => {
-        navigate(-1);
-      }, 2000);
-    } else {
-      toast.error(`Failed to update "${formData.tripName}". Please try again.`, {
-        position: "top-right",
-        autoClose: 3000,
-        className: 'toast-message23'
-      });
+      if (response.status === 200) {
+        toast.success("Trip updated successfully!");
+        setTimeout(() => {
+          navigate(-1);
+        }, 2000);
+      }
+    } catch (error) {
+      console.error("Error updating trip:", error);
+      toast.error(error.response?.data?.message || "Error updating trip");
+    } finally {
+      setIsUpdating(false);
     }
-  } catch (error) {
-    console.error("Error updating trip:", error);
-    toast.error(`Error updating "${formData.tripName}". Please try again.`, {
-      position: "top-right",
-      autoClose: 3000,
-      className: 'toast-message23'
-    });
-  } finally {
-    setIsUpdating(false);
-  }
-};
-
-
-
+  };
 
   return (
     <>
@@ -388,8 +468,6 @@ const handleUpdate = async (e) => {
               </label>
           </div>
 
-
-          
           <h3 className="h3-23">Choose Your Trip Type</h3>
           <div className="radio-container23">
               <label className="radio-label23">
@@ -400,15 +478,12 @@ const handleUpdate = async (e) => {
               </label>
           </div>
 
-          
           <h3 className="h3-23">Select Your Destinations</h3>
           <div className="label-input-container23">
               <label className="label23">Destination:</label>
               <input className="input23" type="text" name="destinations" value={formData.destinations} onChange={handleChange} placeholder="Enter your destination" />
           </div>
 
-
-          
           <h2 className="h2-23">How Do You Want to Spend Your Time?</h2>
 
           <div className="activity-container23">
@@ -460,88 +535,181 @@ const handleUpdate = async (e) => {
           <h3 className="h3-23">Travel Style:</h3>
           <div className="travel-style-options23">
               <label className="travel-style-label23">
-                  <input className="travel-style-input23" type="radio" name="travelStyle" value="Solo" checked={formData.travelStyle === "Solo"} onChange={handleChange} />
+                  <input 
+                      className="travel-style-input23" 
+                      type="radio" 
+                      name="travelStyle" 
+                      value="Solo" 
+                      checked={formData.travelStyle === "Solo"}
+                      onChange={handleChange} 
+                  />
                   <span className="icon">👤</span> Solo
               </label>
               <label className="travel-style-label23">
-                  <input className="travel-style-input23" type="radio" name="travelStyle" value="Couples" checked={formData.travelStyle === "Couples"}  onChange={handleChange} />
+                  <input 
+                      className="travel-style-input23" 
+                      type="radio" 
+                      name="travelStyle" 
+                      value="Couples" 
+                      checked={formData.travelStyle === "Couples"}
+                      onChange={handleChange} 
+                  />
                   <span className="icon">❤️</span> Couples
               </label>
               <label className="travel-style-label23">
-                  <input className="travel-style-input23" type="radio" name="travelStyle" value="Groups" checked={formData.travelStyle === "Groups"}  onChange={handleChange} />
+                  <input 
+                      className="travel-style-input23" 
+                      type="radio" 
+                      name="travelStyle" 
+                      value="Groups" 
+                      checked={formData.travelStyle === "Groups"}
+                      onChange={handleChange} 
+                  />
                   <span className="icon">👥</span> Groups
               </label>
               <label className="travel-style-label23">
-                  <input className="travel-style-input23" type="radio" name="travelStyle" value="Family" checked={formData.travelStyle === "Family"}  onChange={handleChange} />
+                  <input 
+                      className="travel-style-input23" 
+                      type="radio" 
+                      name="travelStyle" 
+                      value="Family" 
+                      checked={formData.travelStyle === "Family"}
+                      onChange={handleChange} 
+                  />
                   <span className="icon">👨‍👩‍👧‍👦</span> Family
               </label>
           </div>
 
-
           <h2 className="h2-23">Select Your Accommodation Preferences</h2>
 
-<h3 className="h3-23">Accommodation Type:</h3>
-<div className="accommodation-options23">
-    {["Guesthouses", "Hostels", "Mid-Range", "3-Star Hotels", "Homestays", "Luxury", "5-Star Hotels", "Resorts"].map((type) => (
-        <label key={type} className="radio-label23">
-            <input
-                className="radio-input23"
-                type="radio"
-                name="accommodationType"
-                value={type}
-                checked={formData.accommodationType === type}  
-                onChange={handleChange}  
-            />
-            {type}
-        </label>
-    ))}
-</div>
+          <h3 className="h3-23">Accommodation Type:</h3>
+          <div className="accommodation-options23">
+              <label className="radio-label23">
+                  <input className="radio-input23" type="radio" name="accommodationType" value="Guesthouses" checked={formData.accommodationType === "Guesthouses"} onChange={handleChange} />
+                  Guesthouses
+              </label>
+              <label className="radio-label23">
+                  <input className="radio-input23" type="radio" name="accommodationType" value="Hostels" checked={formData.accommodationType === "Hostels"} onChange={handleChange} />
+                  Hostels
+              </label>
+              <label className="radio-label23">
+                  <input className="radio-input23" type="radio" name="accommodationType" value="Mid-Range" checked={formData.accommodationType === "Mid-Range"} onChange={handleChange} />
+                  Mid-Range
+              </label>
+              <label className="radio-label23">
+                  <input className="radio-input23" type="radio" name="accommodationType" value="3-Star Hotels" checked={formData.accommodationType === "3-Star Hotels"} onChange={handleChange} />
+                  3-Star Hotels
+              </label>
+              <label className="radio-label23">
+                  <input className="radio-input23" type="radio" name="accommodationType" value="Homestays" checked={formData.accommodationType === "Homestays"} onChange={handleChange} />
+                  Homestays
+              </label>
+              <label className="radio-label23">
+                  <input className="radio-input23" type="radio" name="accommodationType" value="Luxury" checked={formData.accommodationType === "Luxury"} onChange={handleChange} />
+                  Luxury
+              </label>
+              <label className="radio-label23">
+                  <input className="radio-input23" type="radio" name="accommodationType" value="5-Star Hotels" checked={formData.accommodationType === "5-Star Hotels"} onChange={handleChange} />
+                  5-Star Hotels
+              </label>
+              <label className="radio-label23">
+                  <input className="radio-input23" type="radio" name="accommodationType" value="Resorts" checked={formData.accommodationType === "Resorts"} onChange={handleChange} />
+                  Resorts
+              </label>
+              <label className="radio-label23">
+                  <input className="radio-input23" type="radio" name="accommodationType" value="None" checked={formData.accommodationType === "None"} onChange={handleChange} />
+                  None
+              </label>
+          </div>
 
-<h3 className="h3-23">Meals Preferences:</h3>
-<div className="meals-preferences-options23">
-    {["All-Inclusive", "Self-Catering"].map((type) => (
-        <label key={type} className="radio-label23">
-            <input
-                type="radio"
-                name="mealsPreferences"
-                value={type}
-                checked={formData.mealsPreferences === type}  // ✅ Fix: Compare as string
-                onChange={handleChange}
-            />
-            {type}
-        </label>
-    ))}
-</div>
+          <h3 className="h3-23">Meals Preferences:</h3>
+          <div className="meals-preferences-options23">
+              <label className="radio-label23">
+                  <input type="radio" name="mealsPreferences" value="All-Inclusive" checked={formData.mealsPreferences === "All-Inclusive"} onChange={handleChange} />
+                  All-Inclusive
+              </label>
+              <label className="radio-label23">
+                  <input type="radio" name="mealsPreferences" value="Self-Catering" checked={formData.mealsPreferences === "Self-Catering"} onChange={handleChange} />
+                  Self-Catering
+              </label>
+              <label className="radio-label23">
+                  <input type="radio" name="mealsPreferences" value="None" checked={formData.mealsPreferences === "None"} onChange={handleChange} />
+                  None
+              </label>
+          </div>
 
-<h3 className="h3-23">Dietary Preferences:</h3>
-<div className="dietary-preferences-options23">
-    {["Vegetarian", "Vegan", "Gluten-Free", "Nut-Free"].map((type) => (
-        <label key={type} className="radio-label23">
-            <input
-                className="radio-input23"
-                type="radio"
-                name="dietaryPreferences"
-                value={type}
-                checked={formData.dietaryPreferences === type}  // ✅ Fix: Compare as string
-                onChange={handleChange}
-            />
-            {type}
-        </label>
-    ))}
-</div>
+          <h3 className="h3-23">Dietary Preferences:</h3>
+          <div className="dietary-preferences-options23">
+              <label className="radio-label23">
+                  <input 
+                      className="radio-input23" 
+                      type="radio" 
+                      name="dietaryPreferences" 
+                      value="Vegetarian" 
+                      checked={formData.dietaryPreferences === "Vegetarian"}
+                      onChange={(e) => setFormData({ ...formData, dietaryPreferences: e.target.value })}
+                  />
+                  Vegetarian
+              </label>
+              <label className="radio-label23">
+                  <input 
+                      className="radio-input23" 
+                      type="radio" 
+                      name="dietaryPreferences" 
+                      value="Vegan" 
+                      checked={formData.dietaryPreferences === "Vegan"}
+                      onChange={(e) => setFormData({ ...formData, dietaryPreferences: e.target.value })}
+                  />
+                  Vegan
+              </label>
+              <label className="radio-label23">
+                  <input 
+                      className="radio-input23" 
+                      type="radio" 
+                      name="dietaryPreferences" 
+                      value="Gluten-Free" 
+                      checked={formData.dietaryPreferences === "Gluten-Free"}
+                      onChange={(e) => setFormData({ ...formData, dietaryPreferences: e.target.value })}
+                  />
+                  Gluten-Free
+              </label>
+              <label className="radio-label23">
+                  <input 
+                      className="radio-input23" 
+                      type="radio" 
+                      name="dietaryPreferences" 
+                      value="Nut-Free" 
+                      checked={formData.dietaryPreferences === "Nut-Free"}
+                      onChange={(e) => setFormData({ ...formData, dietaryPreferences: e.target.value })}
+                  />
+                  Nut-Free
+              </label>
+              <label className="radio-label23">
+                  <input 
+                      className="radio-input23" 
+                      type="radio" 
+                      name="dietaryPreferences" 
+                      value="None" 
+                      checked={formData.dietaryPreferences === "None"}
+                      onChange={(e) => setFormData({ ...formData, dietaryPreferences: e.target.value })}
+                  />
+                  None
+              </label>
+          </div>
 
-<label className="radio-label21">
-    Other (please specify):
-    <input
-        type="text"
-        name="customDietaryPreference"
-        value={formData.customDietaryPreference || ""}
-        onChange={handleChange}
-        className="other-dietary-input21"
-        placeholder="Enter your dietary preference here..."
-    />
-</label>
-
+          <div className="custom-dietary-preference23">
+              <label className="label23">
+                  Other Dietary Preferences:
+                  <input
+                      type="text"
+                      name="customDietaryPreference"
+                      value={formData.customDietaryPreference || ""}
+                      onChange={handleChange}
+                      placeholder="Enter any other dietary preferences"
+                      className="input23"
+                  />
+              </label>
+          </div>
 
           <h2 className="h2-23">Select Your Transportation Preferences</h2>
 
@@ -566,7 +734,6 @@ const handleUpdate = async (e) => {
               </label>
           </div>
 
-
           <h2 className="h2-23">Create your Day by Day Itinerary:</h2>
           <h3 className="h3-23">Day by Day Itinerary:</h3>
           {formData.itinerary.map((day, index) => (
@@ -589,7 +756,6 @@ const handleUpdate = async (e) => {
             </div>
           ))}
 
-
           <h2 className="h2-23">Add Extra Features to Your Trip</h2>
 
           <h3 className="h3-23">Personalized Experiences:</h3>
@@ -600,8 +766,6 @@ const handleUpdate = async (e) => {
           <h3 className="extra-features-subheader23">Events/Festivals:</h3>
           <label className="label-23"><input className="extra-features-checkbox23"type="checkbox"name="includeEvents"checked={formData.includeEvents}onChange={(e) => setFormData({ ...formData, includeEvents: e.target.checked })}/>Include local events/festivals during your travel dates?</label>
 
-
-                    
           <h2 className="h2-23">Set Your Trip Budget</h2>
           <label className="label23"> Total Budget: <input className="input23" type="text" name="totalBudget" value={formData.totalBudget || "N/A"} onChange={handleChange} placeholder="Enter your total trip budget" /></label>
           <h3 className="h3-23">Auto-Calculated Cost Breakdown:</h3>
@@ -615,9 +779,8 @@ const handleUpdate = async (e) => {
           </div>
         </div>
 
-          
           <div className="button-container23">
-            <Link to="/ViewTrip">
+            <Link to="/View-Trip">
               <button type="button" className="cancel-btn23" disabled={isUpdating}>
                 Cancel
               </button>

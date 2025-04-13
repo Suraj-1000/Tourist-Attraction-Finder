@@ -26,14 +26,21 @@ const EventBookingForm = ({ onSubmit, onCancel, eventDetails }) => {
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem('user'));
     if (user) {
+      // Set all user details including address
       setFormData(prev => ({
         ...prev,
         firstName: user.firstName || '',
         lastName: user.lastName || '',
         email: user.email || '',
         phone: user.phone || '',
-        address: user.address || ''
+        address: user.address || user.userAddress || '', // Check both address and userAddress fields
+        paymentPartner: prev.paymentPartner, // Preserve any selected payment method
+        vipTickets: prev.vipTickets,
+        generalTickets: prev.generalTickets
       }));
+
+      // Log the user data for debugging
+      console.log('User data loaded from localStorage:', user);
     }
   }, []);
 
@@ -107,6 +114,18 @@ const EventBookingForm = ({ onSubmit, onCancel, eventDetails }) => {
 
   const handlePayment = async (formData, eventDetails) => {
     try {
+      // Get user from localStorage
+      const userString = localStorage.getItem('user');
+      if (!userString) {
+        throw new Error('Please login to make a booking');
+      }
+
+      const user = JSON.parse(userString);
+      const userId = user.id || user._id;
+      if (!userId) {
+        throw new Error('Invalid user data. Please login again.');
+      }
+
       // Store the current path before initiating payment
       localStorage.setItem('returnPath', window.location.pathname);
 
@@ -115,16 +134,23 @@ const EventBookingForm = ({ onSubmit, onCancel, eventDetails }) => {
         name: formData.firstName + ' ' + formData.lastName,
         email: formData.email,
         phone: formData.phone,
-        address: formData.address
+        address: formData.address,
+        userId: userId
       }));
 
       // Format the dates properly
       const formattedStartDate = formatDate(eventDetails.startDate);
       const formattedEndDate = formatDate(eventDetails.endDate);
 
-      // Store event details
+      // Store event details with time and location
       localStorage.setItem('paymentDetails', JSON.stringify({
         title: eventDetails.name,
+        startDate: eventDetails.startDate,
+        endDate: eventDetails.endDate,
+        startTime: eventDetails.startTime,
+        endTime: eventDetails.endTime,
+        location: eventDetails.location,
+        category: eventDetails.category,
         vipPrice: eventDetails.ticketPrice.vip,
         generalPrice: eventDetails.ticketPrice.general,
         vipTickets: formData.vipTickets,
@@ -143,23 +169,43 @@ const EventBookingForm = ({ onSubmit, onCancel, eventDetails }) => {
         title: eventDetails.name,
         duration: `${formattedStartDate} to ${formattedEndDate}`,
         category: eventDetails.category,
-        price: totalAmount
+        price: totalAmount,
+        startTime: eventDetails.startTime,
+        endTime: eventDetails.endTime,
+        location: eventDetails.location,
+        ticketDetails: {
+          vipTickets: {
+            quantity: formData.vipTickets,
+            pricePerTicket: eventDetails.ticketPrice.vip,
+            totalPrice: formData.vipTickets * eventDetails.ticketPrice.vip
+          },
+          generalTickets: {
+            quantity: formData.generalTickets,
+            pricePerTicket: eventDetails.ticketPrice.general,
+            totalPrice: formData.generalTickets * eventDetails.ticketPrice.general
+          },
+          totalTickets: formData.vipTickets + formData.generalTickets,
+          totalTicketPrice: totalAmount
+        }
       };
+
+      const paymentRequestData = {
+        itemId: transactionId,
+        totalPrice: totalAmount,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        phone: formData.phone,
+        address: formData.address,
+        userId: userId,
+        packageDetails: packageDetails
+      };
+
+      console.log('Sending payment request with data:', paymentRequestData);
 
       if (formData.paymentPartner === 'esewa') {
         // Initialize eSewa payment
-        const requestData = {
-          itemId: transactionId,
-          totalPrice: totalAmount,
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          email: formData.email,
-          phone: formData.phone,
-          address: formData.address,
-          packageDetails: packageDetails
-        };
-
-        const response = await axios.post('http://localhost:4000/esewa/initialize-esewa', requestData);
+        const response = await axios.post('http://localhost:4000/esewa/initialize-esewa', paymentRequestData);
 
         if (response.data.success) {
           const form = document.createElement('form');
@@ -177,32 +223,27 @@ const EventBookingForm = ({ onSubmit, onCancel, eventDetails }) => {
           document.body.appendChild(form);
           form.submit();
           document.body.removeChild(form);
+        } else {
+          throw new Error(response.data.message || 'Failed to initialize eSewa payment');
         }
       } else if (formData.paymentPartner === 'khalti') {
         // Initialize Khalti payment
-        const requestData = {
-          itemId: transactionId,
-          totalPrice: totalAmount,
-          website_url: window.location.origin,
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          email: formData.email,
-          phone: formData.phone,
-          address: formData.address,
-          packageDetails: packageDetails
+        const khaltiRequestData = {
+          ...paymentRequestData,
+          website_url: window.location.origin
         };
 
-        const response = await axios.post('http://localhost:4000/khalti/initialize-khalti', requestData);
+        const response = await axios.post('http://localhost:4000/khalti/initialize-khalti', khaltiRequestData);
 
         if (response.data.success && response.data.payment?.payment_url) {
           window.location.href = response.data.payment.payment_url;
         } else {
-          throw new Error(response.data.message || 'Failed to get payment URL');
+          throw new Error(response.data.message || 'Failed to get Khalti payment URL');
         }
       }
     } catch (error) {
       console.error('Error initializing payment:', error);
-      toast.error('Failed to initialize payment. Please try again.');
+      toast.error(error.message || 'Failed to initialize payment. Please try again.');
       setFormErrors({
         submit: error.message || 'Failed to process payment. Please try again.'
       });

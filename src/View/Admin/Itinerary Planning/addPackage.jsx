@@ -103,39 +103,133 @@ export default function AddPackagePage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    const formDataToSubmit = new FormData();
-
-    // Handle itinerary data separately to ensure it's properly formatted
-    const itineraryData = formData.itinerary.map(day => ({
-      day: day.day,
-      mode: day.mode || '',
-      highlights: day.highlights || '',
-      stay: day.stay || '',
-      meals: day.meals || '',
-      costBreakdown: day.costBreakdown || ''
-    }));
-
-    // Append all form data
-    for (const key in formData) {
-      if (key === "itinerary") {
-        formDataToSubmit.append(key, JSON.stringify(itineraryData));
-      } else if (key === "image" && formData.image) {
-        formDataToSubmit.append("image", formData.image);
-      } else {
-        formDataToSubmit.append(key, formData[key].toString());
-      }
-    }
 
     try {
+      // Create FormData object
+      const formDataToSubmit = new FormData();
+      
+      // Append all form fields to FormData
+      Object.keys(formData).forEach(key => {
+        if (key === 'itinerary') {
+          // Stringify the itinerary array
+          formDataToSubmit.append(key, JSON.stringify(formData[key]));
+        } else if (key === 'image' && formData[key]) {
+          // Handle image file
+          formDataToSubmit.append(key, formData[key]);
+        } else {
+          // Handle other fields
+          formDataToSubmit.append(key, formData[key]);
+        }
+      });
+
+      // Log the form data for debugging
+      console.log('Submitting form data:', Object.fromEntries(formDataToSubmit));
+
+      // Make the API request
       const response = await axios.post(
-        "http://localhost:4000/adminPackage/Add-Package",
+        'http://localhost:4000/adminPackage/Add-Package',
         formDataToSubmit,
         {
-          headers: { "Content-Type": "multipart/form-data" },
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
         }
       );
 
-      // Show success toast
+      console.log('Package added successfully:', response.data);
+
+      // Fetch users and create notifications
+      try {
+        const usersResponse = await axios.get('http://localhost:4000/signups');
+        const users = usersResponse.data.filter(user => user.role === 'user');
+
+        // Create notifications for each user
+        const notificationPromises = users.map(async (user) => {
+          const notification = {
+            type: 'package-added',
+            message: `A new travel package "${formData.title}" has been added!`,
+            userEmail: user.email,
+            recipientType: 'user',
+            read: false,
+            details: {
+              title: formData.title,
+              category: formData.category,
+              duration: formData.duration,
+              price: formData.price,
+              highlight: formData.highlight,
+              image: response.data.imageUrl, // Use the image URL from the response
+              address: formData.address,
+              tripType: formData.tripType,
+              startDate: formData.startDate,
+              endDate: formData.endDate,
+              groupSize: formData.groupSize,
+              difficulty: formData.difficulty,
+              overview: formData.overview,
+              included: formData.included,
+              additionalInfo: formData.additionalInfo
+            }
+          };
+
+          // Save notification
+          await axios.post('http://localhost:4000/notifications', notification);
+
+          // Send email notification
+          const emailData = {
+            to: user.email,
+            subject: "New Travel Package Added!",
+            html: `
+              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <h2 style="color: #2c3e50;">New Package Alert: ${formData.title}</h2>
+                <p style="color: #34495e;">Dear ${user.firstName},</p>
+                <p style="color: #34495e;">We're excited to announce a new travel package that might interest you!</p>
+                
+                <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;">
+                  <h3 style="color: #2c3e50;">Package Details:</h3>
+                  <ul style="list-style: none; padding: 0;">
+                    <li style="margin-bottom: 8px;"><strong>Title:</strong> ${formData.title}</li>
+                    <li style="margin-bottom: 8px;"><strong>Category:</strong> ${formData.category}</li>
+                    <li style="margin-bottom: 8px;"><strong>Duration:</strong> ${formData.duration}</li>
+                    <li style="margin-bottom: 8px;"><strong>Trip Type:</strong> ${formData.tripType}</li>
+                    <li style="margin-bottom: 8px;"><strong>Price:</strong> ${formData.price}</li>
+                    <li style="margin-bottom: 8px;"><strong>Group Size:</strong> ${formData.groupSize}</li>
+                    <li style="margin-bottom: 8px;"><strong>Difficulty:</strong> ${formData.difficulty}</li>
+                  </ul>
+                </div>
+
+                <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;">
+                  <h3 style="color: #2c3e50;">Overview:</h3>
+                  <p style="color: #34495e;">${formData.overview}</p>
+                  
+                  <h4 style="color: #2c3e50; margin-top: 15px;">Highlights:</h4>
+                  <p style="color: #34495e;">${formData.highlight}</p>
+                </div>
+                
+                <div style="text-align: center; margin-top: 20px;">
+                  <a href="http://localhost:3000/ItineraryPackage" 
+                     style="background-color: #3498db; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
+                    View Package Details
+                  </a>
+                </div>
+
+                <p style="color: #7f8c8d; font-size: 0.9em; margin-top: 20px;">
+                  Best regards,<br>
+                  Explore Nepal Team
+                </p>
+              </div>
+            `
+          };
+
+          await axios.post('http://localhost:4000/send-email', emailData);
+        });
+
+        // Wait for all notifications and emails to be sent
+        await Promise.allSettled(notificationPromises);
+      } catch (notificationError) {
+        console.error('Error sending notifications:', notificationError);
+        // Don't fail the package creation if notifications fail
+      }
+
+      // Show success message
       toast.success("Package added successfully!", {
         position: "top-center",
         autoClose: 3000,
@@ -147,13 +241,18 @@ export default function AddPackagePage() {
         className: 'toast-message19',
       });
 
+      // Navigate back after a short delay
       setTimeout(() => {
         navigate(-1);
       }, 2000);
 
     } catch (error) {
-      // Show error toast
-      toast.error(error.response?.data?.message || "Error adding package. Please try again.", {
+      console.error("Error submitting form:", error);
+      console.error("Error response data:", error.response?.data);
+      console.error("Error response status:", error.response?.status);
+      console.error("Error response headers:", error.response?.headers);
+      
+      toast.error(error.response?.data?.message || "Failed to add package. Please try again.", {
         position: "top-center",
         autoClose: 3000,
         hideProgressBar: false,
@@ -163,7 +262,6 @@ export default function AddPackagePage() {
         progress: undefined,
         className: 'toast-message19',
       });
-      console.error("Error submitting form", error);
     } finally {
       setLoading(false);
     }

@@ -9,6 +9,16 @@ const PaymentRedirect = () => {
   const [paymentStatus, setPaymentStatus] = useState('');
   const [paymentDetails, setPaymentDetails] = useState(null);
 
+  const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+
   useEffect(() => {
     const fetchPaymentStatus = async () => {
       try {
@@ -18,19 +28,53 @@ const PaymentRedirect = () => {
         const userDetails = JSON.parse(localStorage.getItem('userDetails') || '{}');
         const returnPath = localStorage.getItem('returnPath') || '/';
 
-        // Set default payment details from stored data
+        console.log('Stored Details:', storedDetails); // Debug log
+        console.log('Return Path:', returnPath); // Debug log for return path
+
+        // Determine if this is an event booking based on stored details
+        const isEvent = storedDetails.startDate && storedDetails.endDate;
+
+        // Set default payment details with proper structure
         let details = {
           transactionId: params.get('transaction_id') || storedDetails.transactionId || 'N/A',
-          packageTitle: storedDetails.title || 'Package Booking',
-          amount: storedDetails.price || 0,
-          duration: storedDetails.duration || 'N/A',
-          category: storedDetails.category || 'N/A',
-          name: userDetails.name || 'N/A',
-          email: userDetails.email || 'N/A',
-          phone: userDetails.phone || 'N/A',
-          address: userDetails.address || 'N/A',
+          paymentGateway: gateway || 'N/A',
+          packageDetails: {
+            title: storedDetails.title || 'N/A',
+            duration: isEvent ? 
+              `${formatDate(storedDetails.startDate)} - ${formatDate(storedDetails.endDate)}` :
+              storedDetails.duration || 'N/A',
+            category: storedDetails.category || 'N/A',
+            price: storedDetails.totalAmount || storedDetails.price || 0,
+            startTime: storedDetails.startTime || 'N/A',
+            endTime: storedDetails.endTime || 'N/A',
+            location: storedDetails.location || 'N/A'
+          },
+          userDetails: {
+            name: userDetails.name || 'N/A',
+            email: userDetails.email || 'N/A',
+            phone: userDetails.phone || 'N/A',
+            address: userDetails.address || 'N/A'
+          },
           returnPath: returnPath
         };
+
+        // Add ticket details if they exist
+        if (storedDetails.vipTickets !== undefined || storedDetails.generalTickets !== undefined) {
+          details.ticketDetails = {
+            vipTickets: {
+              quantity: storedDetails.vipTickets || 0,
+              pricePerTicket: storedDetails.vipPrice || 0,
+              totalPrice: (storedDetails.vipTickets || 0) * (storedDetails.vipPrice || 0)
+            },
+            generalTickets: {
+              quantity: storedDetails.generalTickets || 0,
+              pricePerTicket: storedDetails.generalPrice || 0,
+              totalPrice: (storedDetails.generalTickets || 0) * (storedDetails.generalPrice || 0)
+            },
+            totalTickets: (storedDetails.vipTickets || 0) + (storedDetails.generalTickets || 0),
+            totalTicketPrice: storedDetails.totalAmount || 0
+          };
+        }
 
         // Check if we're on a success path
         const isSuccessPath = location.pathname.includes('success');
@@ -46,8 +90,7 @@ const PaymentRedirect = () => {
                 setPaymentStatus('success');
                 details = {
                   ...details,
-                  transactionId: decodedData.transaction_code,
-                  amount: parseFloat(decodedData.total_amount) || details.amount
+                  transactionId: decodedData.transaction_code
                 };
               } else {
                 setPaymentStatus('failure');
@@ -57,7 +100,6 @@ const PaymentRedirect = () => {
               setPaymentStatus('failure');
             }
           } else if (isSuccessPath) {
-            // If we're on success path but no data parameter, still show success
             setPaymentStatus('success');
           } else if (location.pathname.includes('cancelled')) {
             setPaymentStatus('cancelled');
@@ -75,7 +117,7 @@ const PaymentRedirect = () => {
               ...details,
               transactionId: pidx || transaction_id
             };
-          } else if (status === 'Cancelled' || location.pathname.includes('cancelled')) {
+          } else if (location.pathname.includes('cancelled')) {
             setPaymentStatus('cancelled');
           } else if (location.pathname.includes('failure')) {
             setPaymentStatus('failure');
@@ -91,6 +133,8 @@ const PaymentRedirect = () => {
           }
         }
 
+        // Log the final details for debugging
+        console.log('Final Payment Details:', details);
         setPaymentDetails(details);
 
         // Clear localStorage only after successful payment
@@ -104,44 +148,68 @@ const PaymentRedirect = () => {
       } catch (error) {
         console.error('Error processing payment:', error);
         setPaymentStatus('failure');
+        const returnPath = localStorage.getItem('returnPath') || '/';
+        const storedDetails = JSON.parse(localStorage.getItem('paymentDetails') || '{}');
+        const userDetails = JSON.parse(localStorage.getItem('userDetails') || '{}');
+        const isEvent = storedDetails.startDate && storedDetails.endDate;
+
         setPaymentDetails({
-          ...paymentDetails,
-          packageTitle: 'Package Booking',
-          amount: 0,
-          duration: 'N/A',
-          category: 'N/A',
-          name: 'N/A',
-          email: 'N/A',
-          phone: 'N/A',
-          address: 'N/A',
-          returnPath: '/'
+          transactionId: 'N/A',
+          paymentGateway: 'N/A',
+          packageDetails: {
+            title: storedDetails?.title || 'N/A',
+            duration: isEvent ? 
+              `${formatDate(storedDetails.startDate)} - ${formatDate(storedDetails.endDate)}` :
+              storedDetails?.duration || 'N/A',
+            category: storedDetails?.category || 'N/A',
+            price: storedDetails?.totalAmount || storedDetails?.price || 0,
+            startTime: storedDetails?.startTime || 'N/A',
+            endTime: storedDetails?.endTime || 'N/A',
+            location: storedDetails?.location || 'N/A'
+          },
+          userDetails: {
+            name: userDetails?.name || 'N/A',
+            email: userDetails?.email || 'N/A',
+            phone: userDetails?.phone || 'N/A',
+            address: userDetails?.address || 'N/A'
+          },
+          returnPath: returnPath
         });
       }
     };
 
     fetchPaymentStatus();
-  }, [location, paymentStatus]);
+  }, [location]);
 
   const handleClose = () => {
     setShowModal(false);
-    // Navigate to the original page where booking was initiated
-    navigate(paymentDetails?.returnPath || '/');
+    const returnPath = localStorage.getItem('returnPath');
+    // Clean up localStorage
+    localStorage.removeItem('returnPath');
+    // Navigate back to the original page
+    navigate(returnPath || '/');
   };
 
   const handleRetry = () => {
-    // Preserve the stored data and go back to the payment form
-    navigate(paymentDetails?.returnPath || '/');
+    const returnPath = localStorage.getItem('returnPath');
+    // Navigate back to the payment form while preserving the return path
+    navigate(returnPath || '/');
   };
 
   const handleGoHome = () => {
     if (paymentStatus === 'success') {
-      // Clear remaining localStorage data
+      // Clear all localStorage data
       localStorage.removeItem('returnPath');
+      localStorage.removeItem('paymentGateway');
+      localStorage.removeItem('paymentDetails');
+      localStorage.removeItem('userDetails');
       // On success, navigate to booking history
-      navigate('/AdminBookingHistory');
+      navigate('/Booking-History');
     } else {
       // On failure/cancel, return to the original booking page
-      navigate(paymentDetails?.returnPath || '/');
+      const returnPath = localStorage.getItem('returnPath');
+      localStorage.removeItem('returnPath');
+      navigate(returnPath || '/');
     }
   };
 

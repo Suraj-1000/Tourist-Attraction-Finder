@@ -5,7 +5,6 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { toast } from "react-hot-toast";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faUser, faHistory, faHeart, faLock, faExclamationTriangle, faTrash, faSignOutAlt, faBell, faGlobe, faDollarSign, faBookmark } from "@fortawesome/free-solid-svg-icons";
-import socketService from "../../services/socketService";
 
 export default function Header() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -14,7 +13,10 @@ export default function Header() {
   const [recommendationDropdownOpen, setRecommendationDropdownOpen] = useState(false);
   const [user, setUser] = useState(null);
   const [notifications, setNotifications] = useState([]);
-  const [unreadCount, setUnreadCount] = useState(0);
+  const [unreadCount, setUnreadCount] = useState(() => {
+    const storedCount = localStorage.getItem('adminUnreadNotificationCount');
+    return storedCount ? parseInt(storedCount, 10) : 0;
+  });
   const navigate = useNavigate();
   const location = useLocation();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
@@ -27,117 +29,41 @@ export default function Header() {
     setUnreadCount(unread);
   };
 
+  // Fetch notifications from database
+  const fetchNotifications = async () => {
+    try {
+      const response = await axios.get(`http://localhost:4000/notifications/admin`);
+      const dbNotifications = response.data;
+      setNotifications(dbNotifications);
+      updateUnreadCount(dbNotifications);
+      localStorage.setItem('adminUnreadNotificationCount', dbNotifications.filter(n => !n.read).length.toString());
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+    }
+  };
+
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
       setUser(JSON.parse(storedUser));
+      fetchNotifications();
     }
 
-    // Load notifications from localStorage
-    const savedNotifications = localStorage.getItem('adminNotifications');
-    if (savedNotifications) {
-      const parsedNotifications = JSON.parse(savedNotifications);
-      setNotifications(parsedNotifications);
-      updateUnreadCount(parsedNotifications);
-    }
+    // Set up notification refresh and event listeners
+    const intervalId = setInterval(fetchNotifications, 30000);
 
-    // Initialize socket connection
-    const socket = socketService.getSocket();
-
-    const handleNotification = (notification) => {
-      if (notification.type === 'system' && notification.message === 'Connected to notification system') {
-        return;
+    const handleNotificationUpdate = () => {
+      const storedCount = localStorage.getItem('adminUnreadNotificationCount');
+      if (storedCount !== null) {
+        setUnreadCount(parseInt(storedCount, 10));
       }
-
-      console.log('Received new notification:', notification);
-      setNotifications(prev => {
-        // Check if notification already exists
-        const exists = prev.some(n => n.id === notification.id);
-        if (exists) return prev;
-        
-        // Add new notification
-        const newNotification = {
-          ...notification,
-          timestamp: new Date(notification.timestamp).toISOString(),
-          read: false
-        };
-        
-        const updatedNotifications = [newNotification, ...prev];
-        // Keep only the last 50 notifications
-        const trimmedNotifications = updatedNotifications.slice(0, 50);
-        
-        // Update localStorage
-        localStorage.setItem('adminNotifications', JSON.stringify(trimmedNotifications));
-        
-        // Update unread count
-        const unreadCount = trimmedNotifications.filter(n => !n.read).length;
-        setUnreadCount(unreadCount);
-        
-        return trimmedNotifications;
-      });
     };
 
-    // Listen for notification read status changes
-    const handleNotificationRead = (notificationId) => {
-      console.log('Received notificationRead event:', notificationId);
-      setNotifications(prev => {
-        const updatedNotifications = prev.map(n => 
-          n.id === notificationId ? { ...n, read: true } : n
-        );
-        localStorage.setItem('adminNotifications', JSON.stringify(updatedNotifications));
-        updateUnreadCount(updatedNotifications);
-        return updatedNotifications;
-      });
-    };
+    window.addEventListener('adminNotificationUpdate', handleNotificationUpdate);
 
-    // Listen for notification unread status changes
-    const handleNotificationUnread = (notificationId) => {
-      console.log('Received notificationUnread event:', notificationId);
-      setNotifications(prev => {
-        const updatedNotifications = prev.map(n => 
-          n.id === notificationId ? { ...n, read: false } : n
-        );
-        localStorage.setItem('adminNotifications', JSON.stringify(updatedNotifications));
-        updateUnreadCount(updatedNotifications);
-        return updatedNotifications;
-      });
-    };
-
-    // Listen for clear all notifications event
-    const handleClearAllNotifications = () => {
-      console.log('Received clearAllNotifications event');
-      setNotifications([]);
-      setUnreadCount(0);
-      localStorage.setItem('adminNotifications', JSON.stringify([]));
-    };
-
-    // Listen for notification delete event
-    const handleNotificationDelete = (notificationId) => {
-      console.log('Received notificationDelete event:', notificationId);
-      setNotifications(prev => {
-        const updatedNotifications = prev.filter(n => n.id !== notificationId);
-        localStorage.setItem('adminNotifications', JSON.stringify(updatedNotifications));
-        // Update unread count based on the remaining notifications
-        const unreadCount = updatedNotifications.filter(n => !n.read).length;
-        setUnreadCount(unreadCount);
-        return updatedNotifications;
-      });
-    };
-
-    // Add event listeners
-    socket.on('notification', handleNotification);
-    socket.on('notificationRead', handleNotificationRead);
-    socket.on('notificationUnread', handleNotificationUnread);
-    socket.on('clearAllNotifications', handleClearAllNotifications);
-    socket.on('notificationDelete', handleNotificationDelete);
-
-    // Cleanup function
     return () => {
-      socket.off('notification', handleNotification);
-      socket.off('notificationRead', handleNotificationRead);
-      socket.off('notificationUnread', handleNotificationUnread);
-      socket.off('clearAllNotifications', handleClearAllNotifications);
-      socket.off('notificationDelete', handleNotificationDelete);
+      clearInterval(intervalId);
+      window.removeEventListener('adminNotificationUpdate', handleNotificationUpdate);
     };
   }, []);
 
@@ -148,23 +74,21 @@ export default function Header() {
   const confirmLogout = async () => {
     try {
       const storedUser = JSON.parse(localStorage.getItem("user"));
-      console.log('Stored user:', storedUser); // Debug log
+      console.log('Stored user:', storedUser);
 
-      // Check for both _id and id since the stored format might vary
       const userId = storedUser?._id || storedUser?.id;
       
       if (userId) {
         const currentTime = new Date().toISOString();
-        console.log('Attempting to update logout time for user:', userId); // Debug log
-        console.log('Logout time:', currentTime); // Debug log
+        console.log('Attempting to update logout time for user:', userId);
+        console.log('Logout time:', currentTime);
 
         const response = await axios.post(`http://localhost:4000/adminDashboard/logout/${userId}`, {
           logoutTime: currentTime
         });
         
-        console.log('Logout response:', response.data); // Debug log
+        console.log('Logout response:', response.data);
 
-        // Only proceed with logout if the update was successful
         localStorage.removeItem("user"); 
         setUser(null);
         toast.success("Logged out successfully!", {
@@ -175,11 +99,11 @@ export default function Header() {
         setShowLogoutModal(false);
         navigate("/"); 
       } else {
-        console.error('No valid user ID found in localStorage:', storedUser); // Debug log
+        console.error('No valid user ID found in localStorage:', storedUser);
         toast.error("Error: Could not find user ID");
       }
     } catch (error) {
-      console.error("Error during logout:", error.response?.data || error); // Enhanced error logging
+      console.error("Error during logout:", error.response?.data || error);
       toast.error(`Error updating logout time: ${error.response?.data?.message || error.message}`, {
         duration: 3000,
         position: 'top-center',
@@ -234,7 +158,7 @@ export default function Header() {
     return paths.some(path => location.pathname.startsWith(path));
   };
 
-  // Add this function to check if an icon is active
+  // Function to check if an icon is active
   const isIconActive = (path) => {
     return location.pathname === path;
   };
@@ -243,7 +167,7 @@ export default function Header() {
     <>
       <div className="header10">
         <div className="welcome10">
-          <span className="welcome-text10">Welcome!,</span>
+          <span className="welcome-text10">Welcome Admin!,</span>
           <span className="welcome-user"> {user ? user.firstName : "Guest"}</span>
         </div>
         <div className="iconcontainer10">
@@ -260,9 +184,9 @@ export default function Header() {
             <FontAwesomeIcon icon={faDollarSign} className="header-icon" />
           </Link>
           <div className={`icon1 icon_user10 dropdown10 ${userDropdownOpen ? 'active' : ''}`} onClick={() => setUserDropdownOpen((prev) => !prev)}>
-            <FontAwesomeIcon icon={faUser} className="header-icon" />
+              <FontAwesomeIcon icon={faUser} className="header-icon" />
             <div className={`dropdown-menu10 user-menu10 ${userDropdownOpen ? "show" : ""}`}>
-              <Link to="/AdminProfileManage"><div className="dropdown-item10"><FontAwesomeIcon icon={faUser} style={{ color: "#007bff" }}  className="icon-gap" /> Profile Management</div></Link>  
+              <Link to="/AdminProfileManage"><div className="dropdown-item10"><FontAwesomeIcon icon={faUser} style={{ color: "#007bff" }}  className="icon-gap" /> Profile-Management</div></Link>  
               <Link to="/AdminHistory"><div className="dropdown-item10"><FontAwesomeIcon icon={faHistory} style={{ color: "#28a745" }}  className="icon-gap" /> History</div></Link>
               <Link to="/AdminFavorites"><div className="dropdown-item10"><FontAwesomeIcon icon={faHeart} style={{ color: "red" }} className="icon-gap" /> Favorites</div></Link>
               <Link to="/AdminBookingHistory"><div className="dropdown-item10"><FontAwesomeIcon icon={faBookmark} style={{ color: "#6f42c1" }} className="icon-gap" /> Booking History</div></Link>
@@ -284,7 +208,7 @@ export default function Header() {
         </div>
         <div className="nav10">
           <div className="nav-bar10">
-            <div className="logo10"></div>
+            <div className="logo10"><Link to="/AdminHome"></Link></div>
             <Link 
               to="/AdminHome" 
               className={`nav-item10 ${isActive('/AdminHome') ? 'active' : ''}`}
@@ -292,43 +216,41 @@ export default function Header() {
               Home
             </Link>
             <div 
-              className={`nav-item10 dropdown10 ${isDropdownActive(['/AdminSearch', '/AdminSearchAttraction']) ? 'active' : ''}`}
+              className={`nav-item10 dropdown10 ${isDropdownActive(['/AdminUpload-Images', '/AdminSearch-Attraction']) ? 'active' : ''}`}
               onMouseEnter={() => setAttractionDropdownOpen(true)}
               onMouseLeave={() => setAttractionDropdownOpen(false)}
             >
               <span className="dropdown-toggle10">Search Attraction</span>
               <div className={`dropdown-menu10 ${attractionDropdownOpen ? "show" : ""}`}>
-                <Link to="/AdminSearch" className={`dropdown-item10 ${isActive('/AdminSearch') ? 'active' : ''}`}>Upload Images</Link>
-                <Link to="/AdminSearchAttraction" className={`dropdown-item10 ${isActive('/AdminSearchAttraction') ? 'active' : ''}`}>Search Places</Link>
+                <Link to="/AdminSearch" className={`dropdown-item10 ${isActive('/AdminUpload-Images') ? 'active' : ''}`}>Upload Images</Link>
+                <Link to="/AdminSearchAttraction" className={`dropdown-item10 ${isActive('/AdminSearch-Attraction') ? 'active' : ''}`}>Search Attraction</Link>
               </div>
             </div>
             <div 
-              className={`nav-item10 dropdown10 ${isDropdownActive(['/ItineraryPackage', '/PlanYourTrip', '/ViewTrip', '/AdminBookingAD']) ? 'active' : ''}`}
+              className={`nav-item10 dropdown10 ${isDropdownActive(['/ItineraryPackage', '/AdminBookingAD']) ? 'active' : ''}`}
               onMouseEnter={() => setDropdownOpen(true)}
               onMouseLeave={() => setDropdownOpen(false)}
             >
               <span className="dropdown-toggle10">Itinerary Planner</span>
               <div className={`dropdown-menu10 ${dropdownOpen ? "show" : ""}`}>
                 <Link to="/ItineraryPackage" className={`dropdown-item10 ${isActive('/ItineraryPackage') ? 'active' : ''}`}>Package</Link>
-                <Link to="/PlanYourTrip" className={`dropdown-item10 ${isActive('/PlanYourTrip') ? 'active' : ''}`}>Plan Your Trip</Link>
-                <Link to="/ViewTrip" className={`dropdown-item10 ${isActive('/ViewTrip') ? 'active' : ''}`}>View Planned Trip</Link>
-                <Link to="/AdminBookingAD" className={`dropdown-item10 ${isActive('/AdminBookingAD') ? 'active' : ''}`}>Aprroval Planned Trip</Link>
+                <Link to="/AdminBookingAD" className={`dropdown-item10 ${isActive('/AdminBookingAD') ? 'active' : ''}`}>Booking Approval</Link>
               </div>
             </div>
            
             <div 
-              className={`nav-item10 dropdown10 ${isDropdownActive(['/AdminLocation', '/AdminEvent']) ? 'active' : ''}`}
+              className={`nav-item10 dropdown10 ${isDropdownActive(['/AdminLocation-Based', '/AdminEvent-Based']) ? 'active' : ''}`}
               onMouseEnter={() => setRecommendationDropdownOpen(true)}
               onMouseLeave={() => setRecommendationDropdownOpen(false)}
             >
               <span className="dropdown-toggle10">Recommendation</span>
               <div className={`dropdown-menu10 ${recommendationDropdownOpen ? "show" : ""}`}>
-                <Link to="/AdminLocation" className={`dropdown-item10 ${isActive('/AdminLocation') ? 'active' : ''}`}>Location Based</Link>
-                <Link to="/AdminEvent" className={`dropdown-item10 ${isActive('/AdminEvent') ? 'active' : ''}`}>Event Based</Link>
+                <Link to="/AdminLocation" className={`dropdown-item10 ${isActive('/AdminLocation-Based') ? 'active' : ''}`}>Location-Based</Link>
+                <Link to="/AdminEvent" className={`dropdown-item10 ${isActive('/AdminEvent-Based') ? 'active' : ''}`}>Event-Based</Link>
               </div>
             </div>
             <Link to="/AdminMap" className={`nav-item10 ${isActive('/AdminMap') ? 'active' : ''}`}>Explore Map</Link>
-            <Link to="" className={`nav-item10 ${isActive('/AdminReview') ? 'active' : ''}`}>Review</Link>
+            <Link to="/AdminReview" className={`nav-item10 ${isActive('/AdminReview') ? 'active' : ''}`}>Review</Link>
           </div>
         </div>
       </div>

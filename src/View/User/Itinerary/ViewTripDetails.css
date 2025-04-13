@@ -449,4 +449,44 @@
     }
 }
 
+.user-details-container24 {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin: 1rem 0;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.user-details-grid24 {
+    display: grid;
+    gap: 1rem;
+}
+
+.user-detail-item24 {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    background: white;
+    border-radius: 6px;
+    border: 1px solid #e9ecef;
+}
+
+.detail-label24 {
+    font-weight: 600;
+    color: #495057;
+    font-size: 0.9rem;
+}
+
+.detail-value24 {
+    color: #212529;
+    font-size: 1rem;
+}
+
+@media (max-width: 768px) {
+    .user-details-grid24 {
+        grid-template-columns: 1fr;
+    }
+}
+
   

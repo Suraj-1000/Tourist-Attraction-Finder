@@ -3,7 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import axios from "axios";
 import "./ViewTripDetails.css";
 import { CurrencyContext } from "../../../config/CurrencyContext";
-import Header from "../../../Components/Admin Header/Admin-Header";
+import Header from "../../../Components/User Header/User-Header";
 import Footer from "../../../Components/Footer";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -150,8 +150,10 @@ const convertPrice = (priceString) => {
         <h3 className="section-heading24">Accommodation Preferences</h3>
         <p className="info-item24"><strong>Type:</strong> {tripDetails.accommodationType || "Not Specified"}</p>
         <p className="info-item24"><strong>Meals Preferences:</strong> {tripDetails.mealsPreferences || "Not Specified"}</p>
-        <p className="info-item24"><strong>Dietary Preferences:</strong> {tripDetails.dietaryPreferences || "Not Specified"}</p>
-        <p className="info-item24"><strong>Other Dietary Preferences:</strong> {tripDetails.customDietaryPreference || "Not Specified"}</p>
+        <p className="info-item24"><strong>Dietary Preferences:</strong> {tripDetails.dietaryPreferences === "None" ? "No specific dietary preferences" : tripDetails.dietaryPreferences}</p>
+        {tripDetails.customDietaryPreference && (
+          <p className="info-item24"><strong>Other Dietary Preferences:</strong> {tripDetails.customDietaryPreference}</p>
+        )}
         
         <h3 className="section-heading24">Transportation Preferences</h3>
         <p className="info-item24"><strong>Type:</strong> {tripDetails.transportationType || "Not Specified"}</p>
@@ -240,9 +242,28 @@ const convertPrice = (priceString) => {
             </div>
         </div>
 
+        {/* Add User Details Section */}
+        <div className="section-heading24">User Details</div>
+        <div className="user-details-container24">
+            <div className="user-details-grid24">
+                <div className="user-detail-item24">
+                    <span className="detail-label24">Name:</span>
+                    <span className="detail-value24">{tripDetails.userName || "Not Available"}</span>
+                </div>
+                <div className="user-detail-item24">
+                    <span className="detail-label24">Email:</span>
+                    <span className="detail-value24">{tripDetails.userEmail || "Not Available"}</span>
+                </div>
+                <div className="user-detail-item24">
+                    <span className="detail-label24">Address:</span>
+                    <span className="detail-value24">{tripDetails.userAddress || "Not Available"}</span>
+                </div>
+            </div>
+        </div>
+
         <div className="button-container24">
             <div className="button-wrapper24">
-                <Link to="/ViewTrip">
+                <Link to="/View-Trip">
                     <button className="back-btn24">Back</button>
                 </Link>
                 {tripDetails.status?.toLowerCase() === "approved" ? (

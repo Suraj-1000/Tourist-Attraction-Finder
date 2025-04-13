@@ -5,6 +5,7 @@ import { CloudinaryStorage } from 'multer-storage-cloudinary';
 import cloudinary from '../config/cloudinaryConfig.js';
 import Signup from '../Models/Signup.js';
 import nodemailer from "nodemailer";
+import jwt from 'jsonwebtoken';
 
 const router = express.Router();
 
@@ -214,6 +215,82 @@ router.post('/create-admin', async (req, res) => {
 
   } catch (err) {
     console.error(err);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// Middleware to verify token
+const verifyToken = async (req, res, next) => {
+  try {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) {
+      return res.status(401).json({ message: 'No token provided' });
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.userId = decoded.userId;
+    next();
+  } catch (error) {
+    return res.status(401).json({ message: 'Invalid token' });
+  }
+};
+
+// Update user preferences
+router.put('/update-preferences', verifyToken, async (req, res) => {
+  try {
+    const { preferences } = req.body;
+    const userId = req.userId;
+
+    if (!Array.isArray(preferences)) {
+      return res.status(400).json({ message: 'Preferences must be an array' });
+    }
+
+    const validCategories = ['Cultural', 'Festival', 'Sports', 'Music', 'Food', 'Religious'];
+    const invalidCategories = preferences.filter(pref => !validCategories.includes(pref));
+    
+    if (invalidCategories.length > 0) {
+      return res.status(400).json({ 
+        message: `Invalid categories: ${invalidCategories.join(', ')}` 
+      });
+    }
+
+    const updatedUser = await Signup.findByIdAndUpdate(
+      userId,
+      { eventPreferences: preferences },
+      { new: true }
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Preferences updated successfully',
+      preferences: updatedUser.eventPreferences
+    });
+  } catch (error) {
+    console.error('Error updating preferences:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// Get user preferences
+router.get('/get-preferences', verifyToken, async (req, res) => {
+  try {
+    const userId = req.userId;
+    const user = await Signup.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    res.status(200).json({
+      success: true,
+      preferences: user.eventPreferences
+    });
+  } catch (error) {
+    console.error('Error fetching preferences:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 });

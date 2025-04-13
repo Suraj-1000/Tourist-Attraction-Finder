@@ -4,7 +4,7 @@ import Header from "../../../Components/User Header/User-Header";
 import Footer from "../../../Components/Footer";
 
 
-export default function UserHomepage() {
+export default function Homepage() {
 
   const [greeting, setGreeting] = useState("");
   const [user, setUser] = useState(null);

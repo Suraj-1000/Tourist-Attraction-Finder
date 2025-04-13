@@ -7,7 +7,7 @@ import Footer from "../../../Components/Footer";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
-const emergencyContacts = [
+const defaultEmergencyContacts = [
   { icon: "🚔", type: "Police", phone: "+977 1 100" },
   { icon: "🚒", type: "Fire Department", phone: "+977 1 101" },
   { icon: "🕵️‍♂️", type: "Tourist Police", phone: "+977 01-4247041" },
@@ -16,69 +16,103 @@ const emergencyContacts = [
 ];
 
 export default function AdminEmergencyPage() {
-  const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [type, setType] = useState("");
-  const [userContacts, setUserContacts] = useState([]);
-  const [editingContactId, setEditingContactId] = useState(null); // New state for tracking editing contact
+  const [icon, setIcon] = useState("");
+  const [officialContacts, setOfficialContacts] = useState(defaultEmergencyContacts);
+  const [editingContactId, setEditingContactId] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [contactToDelete, setContactToDelete] = useState(null);
+  const [isOfficial, setIsOfficial] = useState(true);
 
-  const fetchUserContacts = async () => {
+  const fetchContacts = async () => {
     try {
       const response = await axios.get("http://localhost:4000/adminEmergency/View");
-      setUserContacts(response.data); // Assuming the response data is an array of contacts
+      if (response.data.success) {
+        setOfficialContacts(response.data.data);
+      } else {
+        throw new Error(response.data.message || 'Failed to fetch contacts');
+      }
     } catch (error) {
       console.error("Error fetching contacts:", error);
+      toast.error(error.response?.data?.message || 'Failed to load emergency contacts', {
+        className: 'toast-message31',
+      });
     }
   };
 
   useEffect(() => {
-    fetchUserContacts();
+    fetchContacts();
   }, []);
 
   const addOrUpdateContact = async () => {
-    if (name && phone && type) {
+    if (phone && type) {
       try {
+        const contactData = {
+          phone,
+          type,
+          icon: icon || "📞"
+        };
+
         if (editingContactId) {
           // Update existing contact
-          const response = await axios.put(`http://localhost:4000/adminEmergency/${editingContactId}`, { name, phone, type });
-          setUserContacts((prevContacts) =>
-            prevContacts.map((contact) =>
-              contact._id === editingContactId ? response.data.updatedEmergency : contact
-            )
+          const response = await axios.put(
+            `http://localhost:4000/adminEmergency/${editingContactId}`,
+            contactData
           );
-          toast.success('Emergency Contact updated successfully!', {
-            className: 'toast-message31',
-          });
+          
+          if (response.data.success) {
+            setOfficialContacts(prevContacts =>
+              prevContacts.map(contact =>
+                contact._id === editingContactId ? response.data.updatedEmergency : contact
+              )
+            );
+            toast.success('Emergency Contact updated successfully!', {
+              className: 'toast-message31',
+            });
+          } else {
+            throw new Error(response.data.message || 'Failed to update contact');
+          }
         } else {
           // Add new contact
-          const response = await axios.post("http://localhost:4000/adminEmergency", { name, phone, type });
-          setUserContacts([...userContacts, response.data.newEmergency]);
-          toast.success('New Emergency contact added successfully!', {
-            className: 'toast-message31',
-          });
+          const response = await axios.post(
+            "http://localhost:4000/adminEmergency",
+            contactData
+          );
+          
+          if (response.data.success) {
+            setOfficialContacts(prev => [...prev, response.data.newEmergency]);
+            toast.success('New Emergency contact added successfully!', {
+              className: 'toast-message31',
+            });
+          } else {
+            throw new Error(response.data.message || 'Failed to add contact');
+          }
         }
 
-        // Reset the form fields
-        setName("");
+        // Reset form
         setPhone("");
         setType("");
+        setIcon("");
         setEditingContactId(null);
       } catch (error) {
         console.error("Error adding/updating contact:", error);
-        toast.error('An error occurred. Please try again.', {
+        toast.error(error.response?.data?.message || 'An error occurred. Please try again.', {
           className: 'toast-message31',
         });
       }
+    } else {
+      toast.error('Please fill in all required fields', {
+        className: 'toast-message31',
+      });
     }
   };
 
   const handleEdit = (contact) => {
-    setName(contact.name);
     setPhone(contact.phone);
     setType(contact.type);
-    setEditingContactId(contact._id); // Set the ID of the contact being edited
+    setIcon(contact.icon || "");
+    setEditingContactId(contact._id);
   };
 
   const handleDelete = async (contact) => {
@@ -89,8 +123,10 @@ export default function AdminEmergencyPage() {
   const confirmDelete = async () => {
     try {
       await axios.delete(`http://localhost:4000/adminEmergency/${contactToDelete._id}`);
-      setUserContacts((prevContacts) => prevContacts.filter((c) => c._id !== contactToDelete._id));
-      toast.success(`Emergency Contact "${contactToDelete.name}" deleted successfully.`, {
+      setOfficialContacts(prevContacts => 
+        prevContacts.filter(c => c._id !== contactToDelete._id)
+      );
+      toast.success(`Emergency Contact "${contactToDelete.phone}" deleted successfully.`, {
         className: 'toast-message31',
       });
     } catch (error) {
@@ -116,12 +152,11 @@ export default function AdminEmergencyPage() {
         draggable
       />
       
-      {/* Delete Confirmation Modal */}
       {showDeleteModal && (
         <div className="modal-overlay31">
           <div className="modal-content31">
             <h2>Confirm Delete</h2>
-            <p>Are you sure you want to delete "{contactToDelete?.name}"?</p>
+            <p>Are you sure you want to delete this emergency contact?</p>
             <div className="modal-buttons31">
               <button 
                 className="modal-cancel-btn31" 
@@ -142,70 +177,83 @@ export default function AdminEmergencyPage() {
 
       <div className="main-container31">
         <div className="heading31">
-          <h1 className="title-heading31">Emergency Events & Resources</h1>
-          <p className="title-para31">Quick Access to Key Events & Resources!</p>
+          <h1 className="title-heading31">Emergency Contacts Management</h1>
+          <p className="title-para31">Manage Official Emergency Contacts</p>
         </div>
 
         <h2 className="h2-31">Official Emergency Contacts</h2>
         <div className="emergency-grid31">
-          {emergencyContacts.map((contact, index) => (
-            <div key={index} className="emergency-card31">
+          {officialContacts.map((contact, index) => (
+            <div key={index} className="emergency-card31" style={{ position: 'relative' }}>
               <div className="emergency-icon31">{contact.icon}</div>
-              <h2>{contact.type}</h2>
-              <p>{contact.phone}</p>
+              <p className="contact-phone31">{contact.phone}</p>
+              <p className="contact-type31" style={{ 
+                color: contact.type === 'Medical' ? '#e74c3c' : 
+                       contact.type === 'Police' ? '#3498db' : 
+                       contact.type === 'Fire' ? '#f39c12' : 
+                       '#2ecc71',
+                fontWeight: 'bold',
+                margin: '5px 0'
+              }}>{contact.type}</p>
               <button className="quick-dial31" onClick={() => window.location.href = `tel:${contact.phone}`}>Quick Dial 📞</button>
+
+              <div className="overlay31">
+                <img
+                  src="/images/edit.png"
+                  alt="Edit"
+                  className="edit-icon31"
+                  onClick={() => handleEdit(contact)}
+                />
+                <img
+                  src="/images/dlete.png"
+                  alt="Delete"
+                  className="delete-icon31"
+                  onClick={() => handleDelete(contact)}
+                />
+              </div>
             </div>
           ))}
         </div>
 
-        {userContacts.length > 0 && (
-          <>
-            <h2 className="h2-31">Your Personal Emergency Contacts</h2>
-            <div className="emergency-grid31">
-              {userContacts.map((contact, index) => (
-                <div key={index} className="emergency-card31" style={{ position: 'relative' }}>
-                  <div className="emergency-icon31">{contact.icon}</div>
-                  <h3>{contact.name}</h3>
-                  <h2>{contact.type}</h2>
-                  <p>{contact.phone}</p>
-                  <button className="quick-dial31" onClick={() => window.location.href = `tel:${contact.phone}`}>Quick Dial 📞</button>
-
-                  {/* Overlay for edit and delete icons */}
-                  <div className="overlay31">
-                    <img
-                      src="/images/edit.png"
-                      alt="Edit"
-                      className="edit-icon31"
-                      onClick={() => handleEdit(contact)} // Call handleEdit on click
-                    />
-                    <img
-                      src="/images/dlete.png"
-                      alt="Delete"
-                      className="delete-icon31"
-                      onClick={() => handleDelete(contact)}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </>
-        )}
-
-        <h2 className="form-heading31">Add/Edit Personal Emergency Contact</h2>
+        <h2 className="form-heading31">Add/Edit Official Emergency Contact</h2>
         <div className="form-group31">
-          <input type="text" placeholder="Full Name" value={name} onChange={(e) => setName(e.target.value)} />
-          <input type="text" placeholder="Phone" value={phone} onChange={(e) => setPhone(e.target.value)} />
-          <input type="text" placeholder="Type (e.g., Medical, Police, Fire, Other)" value={type} onChange={(e) => setType(e.target.value)} />
+          <input 
+            type="text" 
+            placeholder="Phone" 
+            value={phone} 
+            onChange={(e) => setPhone(e.target.value)} 
+          />
+          <input 
+            type="text" 
+            placeholder="Type (e.g., Medical, Police, Fire, Other)" 
+            value={type} 
+            onChange={(e) => setType(e.target.value)} 
+          />
+          <input 
+            type="text" 
+            placeholder="Icon (emoji)" 
+            value={icon} 
+            onChange={(e) => setIcon(e.target.value)} 
+          />
         </div>
         <div className="form-buttons31">
-          <button className="cancel-btn31" onClick={() => { setName(""); setPhone(""); setType(""); setEditingContactId(null); }}>Cancel</button>
-          <button className="save-btn31" onClick={addOrUpdateContact}>{editingContactId ? "Update" : "Save"}</button>
-        </div>
-
-        <div className="additional-resources31">
-          <h2 className="resources-heading31">Additional Emergency Resources</h2>
-          <p className="resources-para31">Stay informed with emergency updates and safety guidelines.</p>
-          <button className="resource-btn31">View Resources</button>
+          <button 
+            className="cancel-btn31" 
+            onClick={() => { 
+              setPhone(""); 
+              setType(""); 
+              setIcon(""); 
+              setEditingContactId(null); 
+            }}
+          >
+            Cancel
+          </button>
+          <button 
+            className="save-btn31" 
+            onClick={addOrUpdateContact}
+          >
+            {editingContactId ? "Update" : "Save"}
+          </button>
         </div>
       </div>
       <Footer />

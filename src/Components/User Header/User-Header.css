@@ -25,13 +25,12 @@
   font-weight: bold;
 }
 
-
 .iconcontainer1000 {
   position: relative;
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 20px;
+  gap: 25px;
   margin: auto;
   width: 212px; 
   height: 49px;
@@ -41,42 +40,96 @@
   background: #ffff;
   border-radius: 30px;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  z-index: 1001;
 }
 
 .icon1000 {
   cursor: pointer;
-  background-repeat: no-repeat;
-  background-position: center;
-  background-size: 70%;
-  transition: transform 0.3s ease-in-out;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  transition: all 0.3s ease-in-out;
+  position: relative;
 }
 
 .icon1000:hover {
   transform: scale(1.2);
 }
 
-.icon_notification1000 {
-  background-image: url('/images/icon_bell.png');
-  width: 21px;
-  height: 21px;
+.icon1000:hover .header-icon1000 {
+  color: #e63946 !important;
 }
 
-.icon_language1000 {
-  background-image: url('/images/icon_language.png');
-  width: 21px;
-  height: 21px;
+/* Active states for icons */
+.icon1000.active {
+  background-color: rgba(230, 57, 70, 0.1);
 }
 
+.icon1000.active .header-icon1000 {
+  color: #e63946 !important;
+}
+
+.icon1000.active::after {
+  content: '';
+  position: absolute;
+  bottom: -5px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 5px;
+  height: 5px;
+  background-color: #e63946;
+  border-radius: 50%;
+}
+
+.header-icon1000 {
+  font-size: 18px;
+  transition: all 0.3s ease;
+}
+
+/* Default colors for specific icons */
+  .icon1000[href="/Notification"] .header-icon1000 {
+  color: #dc3545; /* Red color for notification bell */
+}
+
+.icon1000[href="/Language"] .header-icon1000 {
+  color: #28a745; /* Green color for language globe */
+}
+
+.icon1000[href="/Currencies"] .header-icon1000 {
+  color: #ffc107; /* Yellow/gold color for currency */
+}
+
+.icon_user1000 .header-icon1000 {
+  color: #007bff; /* Blue color for user icon */
+}
+
+/* User icon specific active state */
+.icon_user1000.active {
+  background-color: rgba(230, 57, 70, 0.1);
+}
+
+.icon_user1000.active .header-icon1000 {
+  color: #e63946 !important;
+}
+
+/* Remove old image-based icon styles */
+.icon_notification1000,
+.icon_language1000,
 .icon_currency1000 {
-  background-image: url('/images/icon_currency.png');
-  width: 32px;
-  height: 19px;
+  width: auto;
+  height: auto;
+  background-image: none;
 }
 
 .icon_user1000 {
-  background-image: url('/images/icon_user.png');
-  width: 30px;
-  height: 30px;
+  position: relative;
+  width: auto;
+  height: auto;
+  background-image: none;
+  z-index: 1001;
 }
 
 .logo1000 {
@@ -91,16 +144,13 @@
   cursor: pointer;
   }
 
-
-.nav1000{
+.nav1000 {
   display: flex;
   justify-content: flex-end;
   align-items: center;
   padding: 30px 40px;
-  margin-top: -30px;
+  margin-top: -20px;
 }
-
-
 
 .nav-bar1000 {
   display: flex;
@@ -113,10 +163,11 @@
   color: #000;
   text-transform: capitalize;
   cursor: pointer;
-  padding: 5px 10px;
+  padding: 8px 15px;
   border-radius: 5px;
-  transition: background-color 0.3s, color 0.3s;
+  transition: all 0.3s ease;
   text-decoration: none;
+  position: relative;
 }
 
 .nav-item1000:hover {
@@ -124,76 +175,152 @@
   color: #fff;
 }
 
+/* Active state for all nav items including dropdowns */
+.nav-item1000.active,
+.nav-item1000.dropdown1000.active {
+  background-color: #e63946;
+  color: #fff;
+  font-weight: 500;
+  box-shadow: 0 2px 4px rgba(230, 57, 70, 0.3);
+}
+
+/* Specific styles for dropdown toggle when active */
+.dropdown1000.active .dropdown-toggle1000 {
+  color: #fff;
+  font-weight: 500;
+}
+
+/* Dropdown menu styling */
+.dropdown-menu1000 {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: fit-content;
+  min-width: 180px;
+  background-color: white;
+  border: 1px solid #e1e1e1;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  visibility: hidden;
+  opacity: 0;
+  transition: visibility 0s, opacity 0.2s ease-in-out;
+  z-index: 1000;
+  overflow: hidden;
+  padding: 5px 0;
+}
+
 .dropdown1000 {
   position: relative;
 }
 
-
-.dropdown-toggle1000 {
-  display: block;
-  padding: 10px 15px;
-  cursor: pointer;
-}
-
-
-.dropdown-menu1000 {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  width: 100%;
-  background-color: white;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-  display: none;
-  min-width: 150px;
-  z-index: 10;
-}
-
 .dropdown1000:hover .dropdown-menu1000,
 .dropdown-menu1000.show {
-  display: block;
+  visibility: visible;
+  opacity: 1;
 }
 
+/* Add hover area for dropdowns */
+.dropdown1000::after {
+  content: '';
+  position: absolute;
+  bottom: -20px;
+  left: 0;
+  width: 100%;
+  height: 20px;
+  background: transparent;
+}
 
+.dropdown-menu1000::before {
+  content: '';
+  position: absolute;
+  top: -20px;
+  left: 0;
+  width: 100%;
+  height: 20px;
+  background: transparent;
+}
+
+/* Dropdown items styling */
 .dropdown-item1000 {
-  padding: 10px;
+  padding: 12px 20px;
   display: block;
   color: #333;
   text-decoration: none;
   font-size: 14px;
+  transition: all 0.2s ease;
+  position: relative;
+  border-left: 4px solid transparent;
 }
 
 .dropdown-item1000:hover {
-background-color: rgba(0, 87, 255, 0.15);
-transition: background-color 0.3s ease-in-out;
+  background-color: rgba(230, 57, 70, 0.08);
+  color: #e63946;
+  border-left-color: #e63946;
 }
 
+.dropdown-item1000.active {
+  background-color: rgba(230, 57, 70, 0.1);
+  color: #e63946;
+  font-weight: 500;
+  border-left: 4px solid #e63946;
+}
+
+/* Add a subtle separator between dropdown items */
+.dropdown-item1000:not(:last-child) {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+/* Dropdown toggle arrow */
+.dropdown-toggle1000::after {
+  content: '▼';
+  font-size: 10px;
+  margin-left: 6px;
+  display: inline-block;
+  vertical-align: middle;
+  transition: transform 0.2s ease;
+}
+
+.dropdown1000:hover .dropdown-toggle1000::after,
+.dropdown1000.active .dropdown-toggle1000::after {
+  transform: rotate(180deg);
+}
 
 .user-menu1000 {
-position: absolute;
-top: 125%; 
-left: -170px; 
-background: white;
-border-radius: 12px;
-box-shadow: 0px 6px 15px rgba(0, 0, 0, 0.2); 
-width: 260px;
-z-index: 1000;
-padding: 10px 0;
-overflow: hidden;
-border: 1px solid #ddd;
+  position: absolute;
+  top: 130%; 
+  left: -70px; 
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0px 6px 15px rgba(0, 0, 0, 0.2); 
+  width: 260px;
+  z-index: 1000;
+  padding: 10px 0;
+  overflow: hidden;
+  border: 1px solid #ddd;
+  visibility: hidden;
+  opacity: 0;
+  transition: visibility 0s, opacity 0.2s ease-in-out;
 }
 
+.user-menu1000.show {
+  visibility: visible;
+  opacity: 1;
+}
 
-.user-menu1000::before {
-content: "";
-position: absolute;
-top: -6px; 
-right: 15px; 
-border-width: 10px;
-border-style: solid;
-border-color: transparent transparent white transparent; 
-z-index: 1;
+/* Add arrow for user menu */
+.user-menu1000::after {
+  content: "";
+  position: absolute;
+  top: -10px;
+  right: 90px;
+  width: 20px;
+  height: 20px;
+  background: white;
+  border-left: 1px solid #ddd;
+  border-top: 1px solid #ddd;
+  transform: rotate(45deg);
+  z-index: -1;
 }
 
 .user-menu1000 .dropdown-item1000 {
@@ -235,17 +362,6 @@ margin-top: 30px;
 margin-right: 12px;
 }
 
-.user-menu1000 {
-opacity: 0;
-transform: translateY(-10px);
-transition: opacity 0.3s ease, transform 0.3s ease;
-}
-
-.user-menu1000.show {
-opacity: 1;
-transform: translateY(0);
-}
-
 .user-email1000{
 font-size: 11px;
 color: #808080;
@@ -270,9 +386,144 @@ height: 100%;
 object-fit: cover; 
 }
 
-
 .icon-gap1000 {
   margin-right: 30px;
+}
+
+/* Toast Styles */
+.toast-success1000 {
+  background: #333 !important;
+  color: #fff !important;
+  padding: 15px !important;
+  border-radius: 8px !important;
+}
+
+.toast-error1000 {
+  background: #333 !important;
+  color: #fff !important;
+  padding: 15px !important;
+  border-radius: 8px !important;
+}
+
+.modal-overlay1000 {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content1000 {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  width: 400px;
+  position: relative;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.modal-header1000 {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-bottom: 15px;
+  color: #333;
+}
+
+.modal-body1000 {
+  margin-bottom: 20px;
+  color: #666;
+}
+
+.modal-buttons1000 {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.modal-button1000 {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.3s;
+}
+
+.confirm-button1000 {
+  background-color: #AE0808;
+  color: white;
+}
+
+.confirm-button1000:hover {
+  background-color: #8B0000;
+}
+
+.cancel-button1000 {
+  background-color: #008000;
+  color: white;
+}
+
+.cancel-button1000:hover {
+  background-color: #006400;
+}
+
+.delete-input1000 {
+  width: 100%;
+  padding: 8px;
+  margin: 10px 0;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+/* Notification Badge Styles */
+.notification-badge1000 {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background-color: #e63946;
+  color: white;
+  font-size: 12px;
+  font-weight: bold;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 5px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Update icon1 to handle badge positioning */
+.icon1000 {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  transition: all 0.3s ease-in-out;
+  position: relative;
 }
 
 

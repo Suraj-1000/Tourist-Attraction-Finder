@@ -5,7 +5,7 @@ import Header from '../../../Components/Admin Header/Admin-Header';
 import Footer from '../../../Components/Footer';
 import './AdminBookingHistory.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSearch, faDownload, faCalendarAlt, faCreditCard, faUser, faEnvelope, faPhone, faMapMarkerAlt, faTrash, faEdit, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
+import { faSearch, faDownload, faCalendarAlt, faCreditCard, faUser, faEnvelope, faPhone, faMapMarkerAlt, faTrash, faEdit, faExclamationTriangle, faTicketAlt, faHashtag, faListUl, faCrown, faUsers } from '@fortawesome/free-solid-svg-icons';
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 import { QRCodeSVG } from 'qrcode.react';
@@ -23,6 +23,7 @@ export default function AdminBookingHistory() {
   const ticketRefs = useRef({});
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteBookingId, setDeleteBookingId] = useState(null);
+  const [activeTab, setActiveTab] = useState('all');
 
   useEffect(() => {
     fetchBookings();
@@ -31,7 +32,7 @@ export default function AdminBookingHistory() {
   // Apply filters and sorting whenever dependencies change
   useEffect(() => {
     filterAndSortBookings();
-  }, [query, filterStatus, sortOrder, bookings]);
+  }, [query, filterStatus, sortOrder, bookings, activeTab]);
 
   const fetchBookings = async () => {
     try {
@@ -79,6 +80,60 @@ export default function AdminBookingHistory() {
       );
     }
 
+    // Apply tab filter
+    switch(activeTab) {
+      case 'packages':
+        results = results.filter(booking => {
+          const packageDetails = booking.paymentDetails?.packageDetails || {};
+          const duration = formatDuration(packageDetails);
+          const category = (booking.category || '').toLowerCase();
+          const packageCategory = (packageDetails.category || '').toLowerCase();
+          
+          // If it's an event (has date range format) or a trip, exclude it
+          if (duration.includes(' to ') && 
+              /[A-Za-z]+ \d{1,2}, \d{4} to [A-Za-z]+ \d{1,2}, \d{4}/.test(duration)) {
+            return false;
+          }
+          
+          // Check if it's a trip in either category
+          if (category.includes('long trip') || 
+              category.includes('short trip') ||
+              packageCategory.includes('long trip') ||
+              packageCategory.includes('short trip')) {
+            return false;
+          }
+          
+          // Everything else is a package
+          return true;
+        });
+        break;
+      case 'trips':
+        results = results.filter(booking => {
+          const category = (booking.category || '').toLowerCase();
+          const packageDetails = booking.paymentDetails?.packageDetails || {};
+          const packageCategory = (packageDetails.category || '').toLowerCase();
+          
+          // Check both booking category and package category for trip types
+          return category.includes('long trip') || 
+                 category.includes('short trip') ||
+                 packageCategory.includes('long trip') ||
+                 packageCategory.includes('short trip');
+        });
+        break;
+      case 'events':
+        results = results.filter(booking => {
+          const packageDetails = booking.paymentDetails?.packageDetails || {};
+          const duration = formatDuration(packageDetails);
+          // Check if duration is in the format "Month DD, YYYY to Month DD, YYYY"
+          return duration.includes(' to ') && 
+                 /[A-Za-z]+ \d{1,2}, \d{4} to [A-Za-z]+ \d{1,2}, \d{4}/.test(duration);
+        });
+        break;
+      default:
+        // 'all' tab - no additional filtering needed
+        break;
+    }
+
     // Apply sorting
     results.sort((a, b) => {
       if (sortOrder === "newest") {
@@ -89,10 +144,13 @@ export default function AdminBookingHistory() {
     });
 
     setFilteredBookings(results);
+    
+    // Update heading with category-specific count
+    const categoryName = activeTab !== 'all' ? activeTab.charAt(0).toUpperCase() + activeTab.slice(1) : '';
     setHeading(
       results.length > 0
-        ? `${results.length} Results${query ? ` for "${query}"` : ''}`
-        : "No results found."
+        ? `${results.length} ${categoryName} Booking${results.length !== 1 ? 's' : ''} Found`
+        : `No ${categoryName} Bookings Found`
     );
   };
 
@@ -205,11 +263,248 @@ export default function AdminBookingHistory() {
     const paymentDetails = booking.paymentDetails || {};
     const userDetails = paymentDetails.userDetails || {};
     const packageDetails = paymentDetails.packageDetails || {};
+    const ticketDetails = booking.ticketDetails || {};
+
+    // Check if this is an event booking
+    const isEvent = packageDetails.duration?.includes(' to ') && 
+                   /[A-Za-z]+ \d{1,2}, \d{4} to [A-Za-z]+ \d{1,2}, \d{4}/.test(packageDetails.duration);
 
     let container = null;
     let qrRoot = null;
 
     try {
+      // Create separate containers for each page
+      const page1Content = document.createElement('div');
+      const page2Content = document.createElement('div');
+      
+      // First page content
+      page1Content.innerHTML = `
+        <div style="width: 100%; background: white; margin: 40px 40px 30px; padding: 0 20px;">
+          <!-- Header with Logo -->
+          <div style="text-align: center; margin-bottom: 20px; padding-top: 20px;">
+            <div style="display: inline-block; padding: 8px; border: 2px solid #000; border-radius: 50%; width: 80px; height: 80px; background: white;">
+              <img src="/images/Logo.png" alt="Explore Nepal Logo" style="width: 64px; height: 64px; object-fit: contain;" onerror="this.onerror=null; this.src='/images/logo.png';" />
+            </div>
+            <p style="color: #666; font-size: 11px; margin: 8px 0;">
+              Your Gateway to Adventure in Nepal - Discover, Experience, and Explore the Beauty of Nepal
+            </p>
+          </div>
+
+          <!-- Package Title and Status -->
+          <div style="text-align: center; margin-bottom: 20px;">
+            <h1 style="color: #4a69bd; font-size: 20px; margin: 0 0 8px 0; font-weight: bold;">
+              ${packageDetails.title || booking.packageName}
+            </h1>
+            <div style="display: inline-block; padding: 4px 12px; border-radius: 12px; background-color: ${
+              booking.status.toLowerCase() === 'completed' ? '#28a745' :
+              booking.status.toLowerCase() === 'cancelled' ? '#dc3545' : '#ffc107'
+            }; color: white; font-weight: bold; font-size: 11px; text-transform: capitalize;">
+              ${booking.status}
+            </div>
+          </div>
+
+          <!-- Main Content Wrapper -->
+          <div style="padding: 0 15px;">
+            <!-- Booking Details -->
+            <div style="margin-bottom: 15px;">
+              <h2 style="color: #4a69bd; font-size: 16px; margin: 0 0 8px 0; padding-bottom: 4px; border-bottom: 2px solid #4a69bd;">
+                Booking Details
+              </h2>
+              <div style="background-color: #f8f9fa; padding: 10px; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
+                  <tr>
+                    <td style="padding: 4px 0; width: 40%;"><strong>Booking ID:</strong></td>
+                    <td style="padding: 4px 0;">${booking.bookingId}</td>
+                  </tr>
+                  ${isEvent ? `
+                    <tr>
+                      <td style="padding: 4px 0;"><strong>Event Date:</strong></td>
+                      <td style="padding: 4px 0;">${packageDetails.duration}</td>
+                    </tr>
+                    <tr>
+                      <td style="padding: 4px 0;"><strong>Event Time:</strong></td>
+                      <td style="padding: 4px 0;">${packageDetails.startTime || 'N/A'} - ${packageDetails.endTime || 'N/A'}</td>
+                    </tr>
+                    <tr>
+                      <td style="padding: 4px 0;"><strong>Location:</strong></td>
+                      <td style="padding: 4px 0;">${packageDetails.location || 'N/A'}</td>
+                    </tr>
+                    <tr>
+                      <td style="padding: 4px 0;"><strong>Category:</strong></td>
+                      <td style="padding: 4px 0;">${packageDetails.category || 'N/A'}</td>
+                    </tr>
+                  ` : `
+                  <tr>
+                    <td style="padding: 4px 0;"><strong>Travel Date:</strong></td>
+                    <td style="padding: 4px 0;">${formatDate(booking.bookingDate)}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 4px 0;"><strong>Duration:</strong></td>
+                    <td style="padding: 4px 0;">${packageDetails.duration || 'N/A'}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 4px 0;"><strong>Category:</strong></td>
+                    <td style="padding: 4px 0;">${packageDetails.category || 'N/A'}</td>
+                  </tr>
+                  `}
+                </table>
+              </div>
+            </div>
+
+            <!-- Customer Details -->
+            <div style="margin-bottom: 15px;">
+              <h2 style="color: #4a69bd; font-size: 16px; margin: 0 0 8px 0; padding-bottom: 4px; border-bottom: 2px solid #4a69bd;">
+                Customer Details
+              </h2>
+              <div style="background-color: #f8f9fa; padding: 10px; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
+                  <tr>
+                    <td style="padding: 4px 0; width: 40%;"><strong>Full Name:</strong></td>
+                    <td style="padding: 4px 0;">${userDetails.name || 'N/A'}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 4px 0;"><strong>Email:</strong></td>
+                    <td style="padding: 4px 0;">${userDetails.email || 'N/A'}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 4px 0;"><strong>Phone:</strong></td>
+                    <td style="padding: 4px 0;">${userDetails.phone || 'N/A'}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 4px 0;"><strong>Address:</strong></td>
+                    <td style="padding: 4px 0;">${userDetails.address || 'N/A'}</td>
+                  </tr>
+                </table>
+              </div>
+            </div>
+
+            ${isEvent ? `
+              <!-- Event Ticket Details -->
+              <div style="margin-bottom: 15px;">
+                <h2 style="color: #4a69bd; font-size: 16px; margin: 0 0 8px 0; padding-bottom: 4px; border-bottom: 2px solid #4a69bd;">
+                  Ticket Details
+                </h2>
+                <div style="background-color: #f8f9fa; padding: 10px; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                  <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
+                    ${ticketDetails.vipTickets?.quantity > 0 ? `
+                      <tr>
+                        <td style="padding: 4px 0; width: 40%;"><strong>VIP Tickets:</strong></td>
+                        <td style="padding: 4px 0;">${ticketDetails.vipTickets.quantity} x NPR ${ticketDetails.vipTickets.pricePerTicket} = NPR ${ticketDetails.vipTickets.totalPrice}</td>
+                      </tr>
+                    ` : ''}
+                    ${ticketDetails.generalTickets?.quantity > 0 ? `
+                      <tr>
+                        <td style="padding: 4px 0; width: 40%;"><strong>General Tickets:</strong></td>
+                        <td style="padding: 4px 0;">${ticketDetails.generalTickets.quantity} x NPR ${ticketDetails.generalTickets.pricePerTicket} = NPR ${ticketDetails.generalTickets.totalPrice}</td>
+                      </tr>
+                    ` : ''}
+                    <tr>
+                      <td style="padding: 4px 0;"><strong>Total Tickets:</strong></td>
+                      <td style="padding: 4px 0;">${ticketDetails.totalTickets || 0}</td>
+                    </tr>
+                    <tr>
+                      <td style="padding: 4px 0;"><strong>Total Amount:</strong></td>
+                      <td style="padding: 4px 0;">NPR ${ticketDetails.totalTicketPrice || 0}</td>
+                    </tr>
+                  </table>
+                </div>
+              </div>
+            ` : `
+            <!-- Package Details -->
+            <div style="margin-bottom: 15px;">
+              <h2 style="color: #4a69bd; font-size: 16px; margin: 0 0 8px 0; padding-bottom: 4px; border-bottom: 2px solid #4a69bd;">
+                Package Details
+              </h2>
+              <div style="background-color: #f8f9fa; padding: 10px; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
+                  <tr>
+                    <td style="padding: 4px 0; width: 40%;"><strong>Package Name:</strong></td>
+                    <td style="padding: 4px 0;">${booking.packageName}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 4px 0;"><strong>Base Price:</strong></td>
+                    <td style="padding: 4px 0;">${formatAmount(packageDetails.price || 0)}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 4px 0;"><strong>Description:</strong></td>
+                    <td style="padding: 4px 0;">${packageDetails.description || 'Experience the beauty and adventure of Nepal.'}</td>
+                  </tr>
+                </table>
+              </div>
+            </div>
+            `}
+          </div>
+        </div>
+      `;
+
+      // Second page content
+      page2Content.innerHTML = `
+        <div style="width: 100%; background: white; margin: 40px 40px 30px; padding: 0 20px;">
+          <!-- Payment Details -->
+          <div style="margin-top: 20px;">
+            <div style="padding: 0 15px;">
+              <h2 style="color: #4a69bd; font-size: 16px; margin: 0 0 8px 0; padding-bottom: 4px; border-bottom: 2px solid #4a69bd;">
+                Payment Details
+              </h2>
+              <div style="background-color: #f8f9fa; padding: 10px; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
+                  <tr>
+                    <td style="padding: 4px 0; width: 40%;"><strong>Total Amount:</strong></td>
+                    <td style="padding: 4px 0;">${formatAmount(booking.amount)}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 4px 0;"><strong>Payment Gateway:</strong></td>
+                    <td style="padding: 4px 0; text-transform: capitalize;">${paymentDetails.paymentGateway || booking.paymentMethod || 'N/A'}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 4px 0;"><strong>Transaction ID:</strong></td>
+                    <td style="padding: 4px 0;">${paymentDetails.transactionId || 'N/A'}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 4px 0;"><strong>Payment Status:</strong></td>
+                    <td style="padding: 4px 0;">
+                      <span style="display: inline-block; padding: 2px 6px; border-radius: 10px; background-color: ${
+                        paymentDetails.status === 'success' ? '#28a745' :
+                        paymentDetails.status === 'failed' ? '#dc3545' : '#ffc107'
+                      }; color: white; font-weight: bold; font-size: 11px; text-transform: capitalize;">
+                        ${paymentDetails.status || 'Pending'}
+                      </span>
+                    </td>
+                  </tr>
+                  ${paymentDetails.paymentDate ? `
+                    <tr>
+                      <td style="padding: 4px 0;"><strong>Payment Date:</strong></td>
+                      <td style="padding: 4px 0;">${formatDate(paymentDetails.paymentDate)}</td>
+                    </tr>
+                  ` : ''}
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- QR Code -->
+          <div style="text-align: center; margin: 40px 0;">
+            <div id="qr-code" style="display: inline-block; padding: 0; margin-bottom: 10px;">
+              <!-- QR code will be rendered here -->
+            </div>
+            <p style="color: #666; font-size: 11px; font-weight: 500; margin: 0;">Scan QR code to verify ticket</p>
+          </div>
+
+          <!-- Signature -->
+          <div style="text-align: right; margin: 40px 15px 30px; padding-right: 15px;">
+            <img src="/images/sign.png" alt="Authorized Signature" style="height: 50px; margin-bottom: 3px; display: inline-block;" />
+            <p style="margin: 2px 0; font-size: 10px; font-weight: bold;">Authorized Signature</p>
+          </div>
+
+          <!-- Footer -->
+          <div style="margin: 30px 15px 0; text-align: center; color: #666; font-size: 10px; padding: 10px 0; border-top: 1px solid #eee;">
+            <p style="margin: 2px 0;">Thank you for choosing Explore Nepal</p>
+            <p style="margin: 2px 0;">For any queries, please contact us at: support@explorenepal.com</p>
+            <p style="margin: 2px 0;">© ${new Date().getFullYear()} Explore Nepal. All rights reserved.</p>
+          </div>
+        </div>
+      `;
+
       // Create container element
       container = document.createElement('div');
       container.style.cssText = `
@@ -223,174 +518,9 @@ export default function AdminBookingHistory() {
       `;
       document.body.appendChild(container);
 
-      // Create ticket content
-      const ticketContent = document.createElement('div');
-      ticketContent.innerHTML = `
-        <div style="width: 100%; background: white;">
-          <!-- Header with Logo -->
-          <div style="text-align: center; margin-bottom: 30px;">
-            <div style="display: inline-block; padding: 15px; border: 2px solid #000; border-radius: 50%; width: 120px; height: 120px;">
-              <img src="/images/Logo.png" alt="Explore Nepal Logo" style="width: 90px; height: 90px; object-fit: contain;" onerror="this.onerror=null; this.src='/images/logo.png';" />
-            </div>
-            <p style="color: #666; font-size: 18px; margin: 15px 0;">
-              Your Gateway to Adventure in Nepal - Discover, Experience, and Explore the Beauty of Nepal
-            </p>
-          </div>
-
-          <!-- Package Title and Status -->
-          <div style="text-align: center; margin-bottom: 30px;">
-            <h1 style="color: #4a69bd; font-size: 32px; margin: 0 0 15px 0; font-weight: bold;">
-              ${booking.packageName}
-            </h1>
-            <div style="display: inline-block; padding: 8px 20px; border-radius: 20px; background-color: ${
-              booking.status.toLowerCase() === 'completed' ? '#28a745' :
-              booking.status.toLowerCase() === 'cancelled' ? '#dc3545' : '#ffc107'
-            }; color: white; font-weight: bold; font-size: 20px; text-transform: capitalize;">
-              ${booking.status}
-            </div>
-          </div>
-
-          <!-- Booking Details -->
-          <div style="margin-bottom: 25px;">
-            <h2 style="color: #4a69bd; font-size: 24px; margin: 0 0 15px 0; padding-bottom: 8px; border-bottom: 2px solid #4a69bd;">
-              Booking Details
-            </h2>
-            <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-              <table style="width: 100%; border-collapse: collapse; font-size: 16px;">
-                <tr>
-                  <td style="padding: 10px 0; width: 40%;"><strong>Booking ID:</strong></td>
-                  <td style="padding: 10px 0;">${booking.bookingId}</td>
-                </tr>
-                <tr>
-                  <td style="padding: 10px 0;"><strong>Travel Date:</strong></td>
-                  <td style="padding: 10px 0;">${formatDate(booking.bookingDate)}</td>
-                </tr>
-                <tr>
-                  <td style="padding: 10px 0;"><strong>Duration:</strong></td>
-                  <td style="padding: 10px 0;">${formatDuration(packageDetails)}</td>
-                </tr>
-                <tr>
-                  <td style="padding: 10px 0;"><strong>Category:</strong></td>
-                  <td style="padding: 10px 0;">${packageDetails.category || 'N/A'}</td>
-                </tr>
-              </table>
-            </div>
-          </div>
-
-          <!-- Customer Details -->
-          <div style="margin-bottom: 25px;">
-            <h2 style="color: #4a69bd; font-size: 24px; margin: 0 0 15px 0; padding-bottom: 8px; border-bottom: 2px solid #4a69bd;">
-              Customer Details
-            </h2>
-            <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-              <table style="width: 100%; border-collapse: collapse; font-size: 16px;">
-                <tr>
-                  <td style="padding: 10px 0; width: 40%;"><strong>Full Name:</strong></td>
-                  <td style="padding: 10px 0;">${userDetails.name || 'N/A'}</td>
-                </tr>
-                <tr>
-                  <td style="padding: 10px 0;"><strong>Email:</strong></td>
-                  <td style="padding: 10px 0;">${userDetails.email || 'N/A'}</td>
-                </tr>
-                <tr>
-                  <td style="padding: 10px 0;"><strong>Phone:</strong></td>
-                  <td style="padding: 10px 0;">${userDetails.phone || 'N/A'}</td>
-                </tr>
-                <tr>
-                  <td style="padding: 10px 0;"><strong>Address:</strong></td>
-                  <td style="padding: 10px 0;">${userDetails.address || 'N/A'}</td>
-                </tr>
-              </table>
-            </div>
-          </div>
-
-          <!-- Package Details -->
-          <div style="margin-bottom: 25px;">
-            <h2 style="color: #4a69bd; font-size: 24px; margin: 0 0 15px 0; padding-bottom: 8px; border-bottom: 2px solid #4a69bd;">
-              Package Details
-            </h2>
-            <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-              <table style="width: 100%; border-collapse: collapse; font-size: 16px;">
-                <tr>
-                  <td style="padding: 10px 0; width: 40%;"><strong>Package Name:</strong></td>
-                  <td style="padding: 10px 0;">${booking.packageName}</td>
-                </tr>
-                <tr>
-                  <td style="padding: 10px 0;"><strong>Base Price:</strong></td>
-                  <td style="padding: 10px 0;">${formatAmount(packageDetails.price || 0)}</td>
-                </tr>
-                <tr>
-                  <td style="padding: 10px 0;"><strong>Description:</strong></td>
-                  <td style="padding: 10px 0;">${packageDetails.description || 'Experience the beauty and adventure of Nepal.'}</td>
-                </tr>
-              </table>
-            </div>
-          </div>
-
-          <!-- Payment Details -->
-          <div style="margin-bottom: 25px;">
-            <h2 style="color: #4a69bd; font-size: 24px; margin: 0 0 15px 0; padding-bottom: 8px; border-bottom: 2px solid #4a69bd;">
-              Payment Details
-            </h2>
-            <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-              <table style="width: 100%; border-collapse: collapse; font-size: 16px;">
-                <tr>
-                  <td style="padding: 10px 0; width: 40%;"><strong>Total Amount:</strong></td>
-                  <td style="padding: 10px 0;">${formatAmount(booking.amount)}</td>
-                </tr>
-                <tr>
-                  <td style="padding: 10px 0;"><strong>Payment Gateway:</strong></td>
-                  <td style="padding: 10px 0; text-transform: capitalize;">${paymentDetails.paymentGateway || booking.paymentMethod || 'N/A'}</td>
-                </tr>
-                <tr>
-                  <td style="padding: 10px 0;"><strong>Transaction ID:</strong></td>
-                  <td style="padding: 10px 0;">${paymentDetails.transactionId || 'N/A'}</td>
-                </tr>
-                <tr>
-                  <td style="padding: 10px 0;"><strong>Payment Status:</strong></td>
-                  <td style="padding: 10px 0;">
-                    <span style="display: inline-block; padding: 4px 12px; border-radius: 15px; background-color: ${
-                      paymentDetails.status === 'success' ? '#28a745' :
-                      paymentDetails.status === 'failed' ? '#dc3545' : '#ffc107'
-                    }; color: white; font-weight: bold; font-size: 16px; text-transform: capitalize;">
-                      ${paymentDetails.status || 'Pending'}
-                    </span>
-                  </td>
-                </tr>
-                ${paymentDetails.paymentDate ? `
-                  <tr>
-                    <td style="padding: 10px 0;"><strong>Payment Date:</strong></td>
-                    <td style="padding: 10px 0;">${formatDate(paymentDetails.paymentDate)}</td>
-                  </tr>
-                ` : ''}
-              </table>
-            </div>
-          </div>
-
-          <!-- QR Code -->
-          <div style="text-align: center; margin: 50px 0;">
-            <div id="qr-code" style="display: inline-block; padding: 0; margin-bottom: 20px;">
-              <!-- QR code will be rendered here -->
-            </div>
-            <p style="color: #666; font-size: 18px; font-weight: 500; margin: 0;">Scan QR code to verify ticket</p>
-          </div>
-
-          <!-- Signature -->
-          <div style="text-align: right; margin: 30px 0; padding-right: 30px;">
-            <img src="/images/sign.png" alt="Authorized Signature" style="height: 80px; margin-bottom: 10px; display: inline-block;" />
-            <p style="margin: 5px 0; font-size: 16px; font-weight: bold;">Authorized Signature</p>
-          </div>
-
-          <!-- Footer -->
-          <div style="margin-top: 30px; text-align: center; color: #666; font-size: 16px; padding-top: 20px; border-top: 1px solid #eee;">
-            <p style="margin: 5px 0;">Thank you for choosing Explore Nepal</p>
-            <p style="margin: 5px 0;">For any queries, please contact us at: support@explorenepal.com</p>
-            <p style="margin: 5px 0;">© ${new Date().getFullYear()} Explore Nepal. All rights reserved.</p>
-          </div>
-        </div>
-      `;
-
-      container.appendChild(ticketContent);
+      // Add pages to container
+      container.appendChild(page1Content);
+      container.appendChild(page2Content);
 
       // Add QR code
       const qrContainer = container.querySelector('#qr-code');
@@ -451,46 +581,43 @@ export default function AdminBookingHistory() {
       // Wait for QR code and images to render
       await new Promise(resolve => setTimeout(resolve, 1000));
 
-      // Create PDF
+      // Create PDF with A4 dimensions
       const pdf = new jsPDF('p', 'pt', 'a4');
       
-      // Convert the container to canvas with better settings
-      const canvas = await html2canvas(container, {
+      // Convert first page to canvas
+      const canvas1 = await html2canvas(page1Content, {
         scale: 2,
         useCORS: true,
         logging: false,
         width: 595,
         windowWidth: 595,
-        height: container.offsetHeight,
+        height: page1Content.offsetHeight,
         scrollY: -window.pageYOffset,
-        imageTimeout: 15000,
-        onclone: function(clonedDoc) {
-          const clonedContainer = clonedDoc.querySelector('div');
-          if (clonedContainer) {
-            clonedContainer.style.position = 'static';
-            clonedContainer.style.left = '0';
-          }
-        }
+        imageTimeout: 15000
       });
 
-      // Add the canvas to PDF with better quality
-      const imgData = canvas.toDataURL('image/jpeg', 1.0);
-      const pageHeight = 842; // A4 height in points
-      const imgHeight = (canvas.height * 595) / canvas.width;
-      let heightLeft = imgHeight;
-      let position = 0;
+      // Add first page to PDF
+      const imgData1 = canvas1.toDataURL('image/jpeg', 1.0);
+      pdf.addImage(imgData1, 'JPEG', 0, 0, 595, (canvas1.height * 595) / canvas1.width);
 
-      // First page
-      pdf.addImage(imgData, 'JPEG', 0, position, 595, imgHeight);
-      heightLeft -= pageHeight;
+      // Add new page
+      pdf.addPage();
 
-      // Add subsequent pages if needed
-      while (heightLeft >= 0) {
-        position = heightLeft - imgHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, 'JPEG', 0, position, 595, imgHeight);
-        heightLeft -= pageHeight;
-      }
+      // Convert second page to canvas
+      const canvas2 = await html2canvas(page2Content, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        width: 595,
+        windowWidth: 595,
+        height: page2Content.offsetHeight,
+        scrollY: -window.pageYOffset,
+        imageTimeout: 15000
+      });
+
+      // Add second page to PDF
+      const imgData2 = canvas2.toDataURL('image/jpeg', 1.0);
+      pdf.addImage(imgData2, 'JPEG', 0, 0, 595, (canvas2.height * 595) / canvas2.width);
 
       // Save the PDF
       pdf.save(`ticket-${bookingId}.pdf`);
@@ -585,6 +712,229 @@ export default function AdminBookingHistory() {
     }
   };
 
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    // The filterAndSortBookings function will be called automatically through useEffect
+  };
+
+  const renderBookingCard = (booking) => {
+    const paymentDetails = booking.paymentDetails || {};
+    const userDetails = paymentDetails.userDetails || {};
+    const packageDetails = paymentDetails.packageDetails || {};
+    const ticketDetails = booking.ticketDetails || {};
+    const duration = formatDuration(packageDetails);
+    const isEvent = duration.includes(' to ') && 
+                    /[A-Za-z]+ \d{1,2}, \d{4} to [A-Za-z]+ \d{1,2}, \d{4}/.test(duration);
+
+    if (isEvent) {
+      return (
+        <div key={booking.bookingId} className="result-card38" ref={el => ticketRefs.current[booking.bookingId] = el}>
+          <div className="ticket-header38">
+            <h3 className="title38">{booking.packageName}</h3>
+            {editingBooking === booking.bookingId ? (
+              <div className="status-edit38">
+            <select
+                  value={booking.status}
+                  onChange={(e) => updateBookingStatus(booking.bookingId, e.target.value)}
+                  className="status-select38"
+                >
+              <option value="pending">Pending</option>
+              <option value="completed">Completed</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+                <button onClick={() => setEditingBooking(null)} className="cancel-edit38">
+                  Cancel
+                </button>
+              </div>
+            ) : (
+              <span className={`status-badge38 ${booking.status.toLowerCase()}`}>
+                {booking.status}
+              </span>
+            )}
+          </div>
+
+          <div className="card-details38">
+            <div className="booking-info38">
+              <div className="detail-group38">
+                <label>Booking Details</label>
+                <span>
+                  <FontAwesomeIcon icon={faHashtag} className="icon-margin" />
+                  Ticket No: {booking.bookingId}
+                </span>
+                <span>
+                  <FontAwesomeIcon icon={faCalendarAlt} className="icon-margin" />
+                  Duration: {duration}
+                </span>
+                <span>
+                  <FontAwesomeIcon icon={faListUl} className="icon-margin" />
+                  Category: {packageDetails.category || 'N/A'}
+                </span>
+          </div>
+
+              <div className="detail-group38">
+                <label>Event Details</label>
+                <span>
+                  <FontAwesomeIcon icon={faCrown} className="icon-margin" />
+                  VIP Tickets: {ticketDetails.vipTickets?.quantity || 0} x NPR {ticketDetails.vipTickets?.pricePerTicket || 0} = NPR {ticketDetails.vipTickets?.totalPrice || 0}
+                </span>
+                <span>
+                  <FontAwesomeIcon icon={faTicketAlt} className="icon-margin" />
+                  General Tickets: {ticketDetails.generalTickets?.quantity || 0} x NPR {ticketDetails.generalTickets?.pricePerTicket || 0} = NPR {ticketDetails.generalTickets?.totalPrice || 0}
+                </span>
+                <span>
+                  <FontAwesomeIcon icon={faUsers} className="icon-margin" />
+                  Total Tickets: {ticketDetails.totalTickets || 0}
+                </span>
+        </div>
+
+              <div className="detail-group38">
+                <label>Customer Details</label>
+                <span>
+                  <FontAwesomeIcon icon={faUser} className="icon-margin" />
+                  {userDetails.name || `${booking.userDetails.firstName} ${booking.userDetails.lastName}` || 'N/A'}
+                </span>
+                <span>
+                  <FontAwesomeIcon icon={faEnvelope} className="icon-margin" />
+                  {userDetails.email || booking.userDetails.email || 'N/A'}
+                </span>
+                <span>
+                  <FontAwesomeIcon icon={faPhone} className="icon-margin" />
+                  {userDetails.phone || booking.userDetails.phone || 'N/A'}
+                </span>
+                <span>
+                  <FontAwesomeIcon icon={faMapMarkerAlt} className="icon-margin" />
+                  {userDetails.address || booking.userDetails.address || 'N/A'}
+                </span>
+              </div>
+
+              <div className="detail-group38">
+                <label>Ticket Details</label>
+                
+                <span>
+                  <FontAwesomeIcon icon={faCreditCard} className="icon-margin" />
+                  Total Amount: NPR {ticketDetails.totalTicketPrice || booking.totalPrice || 0}
+                </span>
+                <span className={`payment-status38 ${(paymentDetails.status || 'pending').toLowerCase()}`}>
+                  Payment Status: {paymentDetails.status || booking.status || 'Pending'}
+                </span>
+                <span>Gateway: {paymentDetails.paymentGateway || 'N/A'}</span>
+              {paymentDetails.paymentDate && (
+                <span>Paid on: {formatDate(paymentDetails.paymentDate)}</span>
+              )}
+              </div>
+            </div>
+          </div>
+
+          <div className="ticket-actions38">
+            <button 
+                onClick={() => setEditingBooking(booking.bookingId)}
+                className="action-btn38 edit-btn38"
+            >
+                <FontAwesomeIcon icon={faEdit} /> Edit Status
+            </button>
+            <button 
+                onClick={() => handleDeleteClick(booking.bookingId)}
+                className="action-btn38 delete-btn38"
+            >
+                <FontAwesomeIcon icon={faTrash} /> Delete
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    // Return regular booking card for non-events
+                return (
+                  <div key={booking.bookingId} className="result-card38" ref={el => ticketRefs.current[booking.bookingId] = el}>
+                    <div className="ticket-header38">
+                      <h3 className="title38">{booking.packageName}</h3>
+                      {editingBooking === booking.bookingId ? (
+                        <div className="status-edit38">
+                          <select
+                            value={booking.status}
+                            onChange={(e) => updateBookingStatus(booking.bookingId, e.target.value)}
+                            className="status-select38"
+                          >
+                            <option value="all">All Status</option>
+                            <option value="pending">Pending</option>
+                            <option value="completed">Completed</option>
+                            <option value="cancelled">Cancelled</option>
+                          </select>
+                          <button onClick={() => setEditingBooking(null)} className="cancel-edit38">
+                            Cancel
+                          </button>
+                        </div>
+                      ) : (
+                        <span className={`status-badge38 ${booking.status.toLowerCase()}`}>
+                          {booking.status}
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="card-details38">
+                      <div className="booking-info38">
+                        <div className="detail-group38">
+                          <label>Booking Details</label>
+                          <span>Ticket No: {booking.bookingId}</span>
+              <span>Duration: {duration}</span>
+                          <span>Category: {packageDetails.category || 'N/A'}</span>
+                        </div>
+
+                        <div className="detail-group38">
+                          <label>Customer Details</label>
+                          <span>
+                            <FontAwesomeIcon icon={faUser} className="icon-margin" />
+                            {userDetails.name || 'N/A'}
+                          </span>
+                          <span>
+                            <FontAwesomeIcon icon={faEnvelope} className="icon-margin" />
+                            {userDetails.email || 'N/A'}
+                          </span>
+                          <span>
+                            <FontAwesomeIcon icon={faPhone} className="icon-margin" />
+                            {userDetails.phone || 'N/A'}
+                          </span>
+                          <span>
+                            <FontAwesomeIcon icon={faMapMarkerAlt} className="icon-margin" />
+                            {userDetails.address || 'N/A'}
+                          </span>
+                        </div>
+
+                        <div className="detail-group38">
+                          <label>Payment Details</label>
+                          <span>
+                            <FontAwesomeIcon icon={faCreditCard} className="icon-margin" />
+                            Total Price: {formatAmount(booking.amount)}
+                          </span>
+                          <span>Gateway: {paymentDetails.paymentGateway || 'N/A'}</span>
+                          <span className={`payment-status38 ${(paymentDetails.status || 'pending').toLowerCase()}`}>
+                            Payment Status: {paymentDetails.status || 'Pending'}
+                          </span>
+                          {paymentDetails.paymentDate && (
+                            <span>Paid on: {formatDate(paymentDetails.paymentDate)}</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="ticket-actions38">
+                      <button 
+                        onClick={() => setEditingBooking(booking.bookingId)}
+                        className="action-btn38 edit-btn38"
+                      >
+                        <FontAwesomeIcon icon={faEdit} /> Edit Status
+                      </button>
+                      <button 
+                        onClick={() => handleDeleteClick(booking.bookingId)}
+                        className="action-btn38 delete-btn38"
+                      >
+                        <FontAwesomeIcon icon={faTrash} /> Delete
+                      </button>
+                    </div>
+                  </div>
+                );
+  };
+
   return (
     <>
       <Header />
@@ -634,6 +984,33 @@ export default function AdminBookingHistory() {
           </div>
         </div>
 
+        <div className="booking-nav38">
+          <button 
+            className={`booking-nav-item38 ${activeTab === 'all' ? 'active' : ''}`}
+            onClick={() => handleTabChange('all')}
+          >
+            <span>All Bookings</span>
+          </button>
+          <button 
+            className={`booking-nav-item38 ${activeTab === 'packages' ? 'active' : ''}`}
+            onClick={() => handleTabChange('packages')}
+          >
+            <span>Packages</span>
+          </button>
+          <button 
+            className={`booking-nav-item38 ${activeTab === 'trips' ? 'active' : ''}`}
+            onClick={() => handleTabChange('trips')}
+          >
+            <span>Trips</span>
+          </button>
+          <button 
+            className={`booking-nav-item38 ${activeTab === 'events' ? 'active' : ''}`}
+            onClick={() => handleTabChange('events')}
+          >
+            <span>Events</span>
+          </button>
+        </div>
+
         <div className="search-results-container38">
           <div className="search-tabs38">
             <span style={{ textDecoration: "underline" }}>Available Bookings</span>
@@ -648,108 +1025,7 @@ export default function AdminBookingHistory() {
             <div className="loading-spinner38">Loading...</div>
           ) : filteredBookings.length > 0 ? (
             <div className="bookings-list38">
-              {filteredBookings.map((booking) => {
-                const paymentDetails = booking.paymentDetails || {};
-                const userDetails = paymentDetails.userDetails || {};
-                const packageDetails = paymentDetails.packageDetails || {};
-
-                return (
-                  <div key={booking.bookingId} className="result-card38" ref={el => ticketRefs.current[booking.bookingId] = el}>
-                    <div className="ticket-header38">
-                      <h3 className="title38">{booking.packageName}</h3>
-                      {editingBooking === booking.bookingId ? (
-                        <div className="status-edit38">
-                          <select
-                            value={booking.status}
-                            onChange={(e) => updateBookingStatus(booking.bookingId, e.target.value)}
-                            className="status-select38"
-                          >
-                            <option value="all">All Status</option>
-                            <option value="pending">Pending</option>
-                            <option value="completed">Completed</option>
-                            <option value="cancelled">Cancelled</option>
-                          </select>
-                          <button onClick={() => setEditingBooking(null)} className="cancel-edit38">
-                            Cancel
-                          </button>
-                        </div>
-                      ) : (
-                        <span className={`status-badge38 ${booking.status.toLowerCase()}`}>
-                          {booking.status}
-                        </span>
-                      )}
-                    </div>
-
-                    <div className="card-details38">
-                      <div className="booking-info38">
-                        <div className="detail-group38">
-                          <label>Booking Details</label>
-                          <span>Ticket No: {booking.bookingId}</span>
-                          <span>Duration: {formatDuration(packageDetails)}</span>
-                          <span>Category: {packageDetails.category || 'N/A'}</span>
-                        </div>
-
-                        <div className="detail-group38">
-                          <label>Customer Details</label>
-                          <span>
-                            <FontAwesomeIcon icon={faUser} className="icon-margin" />
-                            {userDetails.name || 'N/A'}
-                          </span>
-                          <span>
-                            <FontAwesomeIcon icon={faEnvelope} className="icon-margin" />
-                            {userDetails.email || 'N/A'}
-                          </span>
-                          <span>
-                            <FontAwesomeIcon icon={faPhone} className="icon-margin" />
-                            {userDetails.phone || 'N/A'}
-                          </span>
-                          <span>
-                            <FontAwesomeIcon icon={faMapMarkerAlt} className="icon-margin" />
-                            {userDetails.address || 'N/A'}
-                          </span>
-                        </div>
-
-                        <div className="detail-group38">
-                          <label>Payment Details</label>
-                          <span>
-                            <FontAwesomeIcon icon={faCreditCard} className="icon-margin" />
-                            Total Price: {formatAmount(booking.amount)}
-                          </span>
-                        
-                          <span>Gateway: {paymentDetails.paymentGateway || 'N/A'}</span>
-                          <span className={`payment-status38 ${(paymentDetails.status || 'pending').toLowerCase()}`}>
-                            Payment Status: {paymentDetails.status || 'Pending'}
-                          </span>
-                          {paymentDetails.paymentDate && (
-                            <span>Paid on: {formatDate(paymentDetails.paymentDate)}</span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="ticket-actions38">
-                      <button 
-                        onClick={() => downloadTicket(booking.bookingId)}
-                        className="action-btn38 download-btn38"
-                      >
-                        <FontAwesomeIcon icon={faDownload} /> Download Ticket
-                      </button>
-                      <button 
-                        onClick={() => setEditingBooking(booking.bookingId)}
-                        className="action-btn38 edit-btn38"
-                      >
-                        <FontAwesomeIcon icon={faEdit} /> Edit Status
-                      </button>
-                      <button 
-                        onClick={() => handleDeleteClick(booking.bookingId)}
-                        className="action-btn38 delete-btn38"
-                      >
-                        <FontAwesomeIcon icon={faTrash} /> Delete
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
+              {filteredBookings.map(booking => renderBookingCard(booking))}
             </div>
           ) : (
             <div className="no-results38">

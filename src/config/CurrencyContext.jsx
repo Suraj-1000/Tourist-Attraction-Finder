@@ -31,11 +31,12 @@ export function CurrencyProvider({ children }) {
                 }
             } catch (error) {
                 console.error("Error fetching exchange rates:", error);
-                // If API fails, use the last known rates from localStorage
+                // If API fails, use the last known rates from localStorage or fallback to default rates
                 const storedRates = localStorage.getItem("exchangeRates");
                 if (storedRates) {
                     setExchangeRates(JSON.parse(storedRates));
                 }
+                // If no stored rates, keep using the default rates
             }
         };
 

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { toast } from 'react-toastify';
+import { toast, ToastContainer } from 'react-toastify';
 import { CurrencyContext } from "../../../config/CurrencyContext";
 import { 
   FaMapMarkerAlt, FaCalendarAlt, FaUserTie, FaTicketAlt, 
@@ -39,26 +39,10 @@ export default function EventView() {
     }
   };
 
-  const getStatusClass = (startDate, endDate) => {
-    const now = new Date();
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    const endWithTime = new Date(endDate);
-    endWithTime.setHours(parseInt(event.endTime.split(':')[0]), parseInt(event.endTime.split(':')[1]));
-
-    if (now < start) {
-      return 'status-upcoming37';
-    } else if (now >= start && now <= endWithTime) {
-      return 'status-ongoing37';
-    } else {
-      return 'status-past37';
-    }
-  };
 
   const getEventStatus = () => {
     const now = new Date();
     const start = new Date(event.startDate);
-    const end = new Date(event.endDate);
     const endWithTime = new Date(event.endDate);
     endWithTime.setHours(parseInt(event.endTime.split(':')[0]), parseInt(event.endTime.split(':')[1]));
 
@@ -81,15 +65,11 @@ export default function EventView() {
   };
 
   const handleBooking = () => {
-    if (!user) {
-      toast.error("Please log in to book tickets", {
-        position: "top-right",
-        autoClose: 3000,
-        className: 'toast-message37'
-      });
-      return;
-    }
-    setShowBookingForm(true);
+    toast.info("Booking functionality is disabled in admin view", {
+      position: "top-right",
+      autoClose: 3000,
+      className: 'toast-message37'
+    });
   };
 
   const handleBookingSubmit = async (formData) => {
@@ -149,7 +129,6 @@ export default function EventView() {
 
   const isEventBookable = () => {
     const now = new Date();
-    const end = new Date(event.endDate);
     const endWithTime = new Date(event.endDate);
     endWithTime.setHours(parseInt(event.endTime.split(':')[0]), parseInt(event.endTime.split(':')[1]));
     
@@ -177,8 +156,6 @@ export default function EventView() {
     return <div>Event not found</div>;
   }
 
-  const isEventActive = event.status === 'upcoming' || event.status === 'ongoing';
-  const hasAvailableTickets = event.capacity.vip > 0 || event.capacity.general > 0;
 
   return (
     <>
@@ -403,6 +380,7 @@ export default function EventView() {
         )}
       </div>
       <Footer />
+      <ToastContainer />
     </>
   );
 } 

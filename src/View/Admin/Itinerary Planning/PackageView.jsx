@@ -81,15 +81,11 @@ export default function ItineraryPackageViewPage() {
   
 
   const handleBookNow = () => {
-    if (!user) {
-        toast.error("Please log in to book a package", {
-            position: "top-right",
-            autoClose: 3000,
-            className: 'toast-message17'
-        });
-        return;
-    }
-    setShowUserForm(true);
+    toast.info("Booking functionality is disabled in admin view", {
+        position: "top-right",
+        autoClose: 3000,
+        className: 'toast-message18'
+    });
   };
 
   const handlePaymentSubmit = async (formData) => {

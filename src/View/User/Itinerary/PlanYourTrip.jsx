@@ -1,11 +1,23 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import "./PlanYourTrip.css";
-import Header from "../../../Components/Admin Header/Admin-Header";
+import Header from "../../../Components/User Header/User-Header";
 import Footer from "../../../Components/Footer";
+
+// Add toast configuration at the top after imports
+const toastConfig = {
+  position: "top-right",
+  autoClose: 3000,
+  hideProgressBar: false,
+  closeOnClick: true,
+  pauseOnHover: true,
+  draggable: true,
+  progress: undefined,
+  theme: "light"
+};
 
 export default function PlanYourTripPage() {
   const navigate = useNavigate();
@@ -22,10 +34,10 @@ export default function PlanYourTripPage() {
     foodCulinary: [],
     nightlifeEntertainment: [],
     customActivities: "", 
-    travelStyle: "Solo",
+    travelStyle: "",
     accommodationType: "", 
     mealsPreferences: "", 
-    dietaryPreferences: "", 
+    dietaryPreferences: "",
     customDietaryPreference: "", 
     transportationType: "", 
     itinerary: [],
@@ -36,66 +48,123 @@ export default function PlanYourTripPage() {
     transportCost: "",
     accommodationCost: "",
     mealsCost: "",
-    activitiesCost: ""
+    activitiesCost: "",
+    userName: "",
+    userEmail: "",
+    userAddress: ""
   });
+
+  const [user, setUser] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          toast.error("Please log in to create a trip");
+          return;
+        }
+
+        const response = await axios.get(
+          "http://localhost:4000/adminUpdateProfile/getProfile",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (response.data) {
+          // Update localStorage with complete user data
+          localStorage.setItem("user", JSON.stringify(response.data));
+          setUser(response.data);
+          setFormData(prev => ({
+            ...prev,
+            userName: `${response.data.firstName} ${response.data.lastName}`,
+            userEmail: response.data.email,
+            userAddress: response.data.address,
+            userId: response.data._id
+          }));
+        }
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+        toast.error("Failed to load user data. Please try again.");
+      }
+    };
+
+    fetchUserData();
+  }, []);
 
   const COST_RANGES = {
     transport: {
-        Flights: 50, // Updated to Nepal pricing
-        "Private Car/Van": 50,
-        Buses: 11, // Updated to Nepal pricing
+        Flights: 6650,
+        "Private Car/Van": 6650,
+        Buses: 1463,
         None: 0,
     },
     accommodation: {
-        Guesthouses: 25,
-        Hostels: 20,
-        "Mid-Range": 50,
-        "3-Star Hotels": 75,
-        Homestays: 30,
-        Luxury: 120,
-        "5-Star Hotels": 200,
-        Resorts: 250,
+        None: 0,
+        Guesthouses: 3325,
+        Hostels: 2660,
+        "Mid-Range": 6650,
+        "3-Star Hotels": 9975,
+        Homestays: 3990,
+        Luxury: 15960,
+        "5-Star Hotels": 26600,
+        Resorts: 33250,
     },
     meals: {
-        "All-Inclusive": 40,
-        "Self-Catering": 20,
+        None: 0,
+        "All-Inclusive": 5320,
+        "Self-Catering": 2660,
     },
     activities: {
         Adventure: {
-            "Hiking & Trekking": 40,
-            Paragliding: 100,
-            Rafting: 60,
+            "Hiking & Trekking": 5320,
+            Paragliding: 13300,
+            Rafting: 7980,
         },
         Cultural: {
-            Temples: 15,
-            Museums: 20,
-            Festivals: 25,
+            Temples: 1995,
+            Museums: 2660,
+            Festivals: 3325,
         },
         Relaxation: {
-            "Lakeside Strolls": 5,
-            "Hot Springs": 30,
-            Spas: 50,
+            "Lakeside Strolls": 665,
+            "Hot Springs": 3990,
+            Spas: 6650,
         },
         Culinary: {
-            "Food Tours": 40,
-            "Street Food": 15,
-            "Cooking Classes": 35,
+            "Food Tours": 5320,
+            "Street Food": 1995,
+            "Cooking Classes": 4655,
         },
         Nightlife: {
-            Clubs: 30,
-            "Live Music": 20,
+            Clubs: 3990,
+            "Live Music": 2660,
         },
+        Custom: {
+            "Custom Activity": 3990, // Default cost for custom activities
+        },
+        Dietary: {
+            "Vegetarian": 2660,
+            "Vegan": 3325,
+            "Gluten-Free": 3990,
+            "Nut-Free": 3325,
+            "Custom Dietary": 3990 // Default cost for custom dietary preferences
+        }
     },
     travelStyles: {
-        single: 0.9,  // Cheaper (10% discount)
-        couples: 1.39, // Adjusted to match calculation
-        family: 0.8,  // Discounted (20% discount)
-        groups: 0.8,  // Discounted (20% discount)
+        single: 1.2,    // Most expensive (20% more expensive)
+        couples: 0.9,   // Small discount (10% off)
+        family: 0.8,    // Larger discount (20% off)
+        groups: 0.7,    // Heaviest discount (30% off)
     },
-    travelInsurance: 50, // Cost of travel insurance per trip
+    travelInsurance: 6650,
     eventsFestivals: {
-        local: 20, // Cost for including local events/festivals
-        special: 30, // Cost for including special events
+        local: 2660,
+        special: 3990,
     }
 };
 
@@ -111,6 +180,9 @@ const calculateCostBreakdown = (data) => {
       relaxation,
       foodCulinary,
       nightlifeEntertainment,
+      customActivities,
+      dietaryPreferences,
+      customDietaryPreference,
       travelInsurance: includeInsurance,
       includeEvents,
   } = data;
@@ -118,7 +190,6 @@ const calculateCostBreakdown = (data) => {
   let days = parseInt(duration) || 1;
   let totalBudget = 0;
 
-  // Read first value from arrays
   let accommodationTypeValue = Array.isArray(accommodationType) ? accommodationType[0] : accommodationType;
   let mealsPreferencesValue = Array.isArray(mealsPreferences) ? mealsPreferences[0] : mealsPreferences;
 
@@ -126,7 +197,7 @@ const calculateCostBreakdown = (data) => {
   let minAccommodation = COST_RANGES.accommodation[accommodationTypeValue] || 25;
   let minMeals = COST_RANGES.meals[mealsPreferencesValue] || 20;
 
-  // Calculate total activity costs
+  // Calculate total activity costs including custom activities
   let totalActivityCost = 0;
   [...adventureActivities, ...culturalExperiences, ...relaxation, ...foodCulinary, ...nightlifeEntertainment].forEach(activity => {
       for (let category in COST_RANGES.activities) {
@@ -136,12 +207,26 @@ const calculateCostBreakdown = (data) => {
       }
   });
 
+  // Add cost for custom activities if present
+  if (customActivities && customActivities.trim() !== "") {
+      totalActivityCost += COST_RANGES.activities.Custom["Custom Activity"];
+  }
+
+  // Add cost for dietary preferences
+  if (dietaryPreferences && COST_RANGES.activities.Dietary[dietaryPreferences]) {
+      totalActivityCost += COST_RANGES.activities.Dietary[dietaryPreferences];
+  }
+
+  // Add cost for custom dietary preferences if present
+  if (customDietaryPreference && customDietaryPreference.trim() !== "") {
+      totalActivityCost += COST_RANGES.activities.Dietary["Custom Dietary"];
+  }
+
   let insuranceCost = includeInsurance ? COST_RANGES.travelInsurance : 0;
   let eventsCost = includeEvents ? COST_RANGES.eventsFestivals.local : 0;
 
-  let travelStyleMultiplier = COST_RANGES.travelStyles[travelStyle] || 1.0;
+  let travelStyleMultiplier = COST_RANGES.travelStyles[travelStyle.toLowerCase()] || 1.0;
 
-  // Apply multiplier ONLY to transport, accommodation, meals, and activities
   let adjustedTransport = (minTransport * days * travelStyleMultiplier).toFixed(2);
   let adjustedAccommodation = (minAccommodation * days * travelStyleMultiplier).toFixed(2);
   let adjustedMeals = (minMeals * days * travelStyleMultiplier).toFixed(2);
@@ -171,26 +256,30 @@ const calculateCostBreakdown = (data) => {
 const handleChange = (e) => {
     const { name, value } = e.target;
     
-    // For radio buttons, ensure we're setting a valid value
-    if (name === "travelStyle" && value === "") {
-        return; // Don't set empty values for travelStyle
-    }
-    
     setFormData((prev) => {
-        const updatedData = { ...prev, [name]: value };
+      const updatedData = { ...prev, [name]: value };
 
-        if (name === "startDate" || name === "endDate") {
-            calculateDurationAndTripType(name, value);
-        }
+      if (name === "startDate" || name === "endDate") {
+        calculateDurationAndTripType(name, value);
+      }
 
-        if (["duration", "accommodationType", "transportationType", "mealsPreferences",
-            "adventureActivities", "culturalExperiences", "relaxation", "foodCulinary", 
-            "nightlifeEntertainment", "travelInsurance", "includeEvents"].includes(name)) {
+      // Special handling for dietary preferences
+      if (name === "dietaryPreferences") {
+        return {
+          ...prev,
+          dietaryPreferences: value
+        };
+      }
 
-            return calculateCostBreakdown(updatedData);
-        }
+      if ([
+        "duration", "accommodationType", "transportationType", "mealsPreferences",
+        "adventureActivities", "culturalExperiences", "relaxation", "foodCulinary",
+        "nightlifeEntertainment", "travelInsurance", "includeEvents"
+      ].includes(name)) {
+        return calculateCostBreakdown(updatedData);
+      }
 
-        return updatedData;
+      return updatedData;
     });
 };
   
@@ -251,6 +340,15 @@ const handleChange = (e) => {
     const { name, value, checked } = e.target;
   
     setFormData((prev) => {
+      // For dietary preferences, treat as radio buttons
+      if (name === 'dietaryPreferences') {
+        return {
+          ...prev,
+          [name]: value
+        };
+      }
+      
+      // Default handling for other checkboxes
       const currentValues = prev[name] || []; 
       return {
         ...prev,
@@ -259,59 +357,107 @@ const handleChange = (e) => {
     });
   };
 
+  // Add a dedicated handler for dietary preferences
+  const handleDietaryPreferenceChange = (e) => {
+    const { value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      dietaryPreferences: value
+    }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsSubmitting(true);
 
-    const formDataToSubmit = { ...formData };
+    // Validate required fields
+    const requiredFields = {
+      tripName: "Trip Name",
+      startDate: "Start Date",
+      endDate: "End Date",
+      destinations: "Destinations",
+      travelStyle: "Travel Style",
+      accommodationType: "Accommodation Type",
+      mealsPreferences: "Meals Preferences",
+      transportationType: "Transportation Type"
+    };
 
-    // Convert arrays to strings
-    formDataToSubmit.accommodationType = Array.isArray(formData.accommodationType) 
-      ? formData.accommodationType.join(", ") 
-      : formData.accommodationType;
-    formDataToSubmit.mealsPreferences = Array.isArray(formData.mealsPreferences) 
-      ? formData.mealsPreferences.join(", ") 
-      : formData.mealsPreferences;
-    formDataToSubmit.dietaryPreferences = Array.isArray(formData.dietaryPreferences) 
-      ? formData.dietaryPreferences.join(", ") 
-      : formData.dietaryPreferences;
+    const missingFields = [];
+    for (const [field, label] of Object.entries(requiredFields)) {
+      if (!formData[field]) {
+        missingFields.push(label);
+      }
+    }
 
-    if (formDataToSubmit.itinerary) {
-      formDataToSubmit.itinerary = JSON.stringify(formDataToSubmit.itinerary);
+    if (missingFields.length > 0) {
+      toast.error(`Please fill in the following required fields: ${missingFields.join(", ")}`, toastConfig);
+      setIsSubmitting(false);
+      return;
     }
 
     try {
+      const user = JSON.parse(localStorage.getItem("user"));
+      if (!user) {
+        toast.error("Please log in to create a trip", toastConfig);
+        return;
+      }
+
+      // Prepare form data with updated user details
+      const formDataToSubmit = {
+        ...formData,
+        userId: user._id,
+        userName: formData.userName || `${user.firstName} ${user.lastName}`,
+        userEmail: formData.userEmail || user.email,
+        userAddress: formData.userAddress || user.address,
+        status: "pending",
+        // Ensure dietary preferences is a string
+        dietaryPreferences: formData.dietaryPreferences || "None"
+      };
+
+      // Convert arrays to proper format
+      if (Array.isArray(formDataToSubmit.accommodationType)) {
+        formDataToSubmit.accommodationType = formDataToSubmit.accommodationType[0];
+      }
+      if (Array.isArray(formDataToSubmit.mealsPreferences)) {
+        formDataToSubmit.mealsPreferences = formDataToSubmit.mealsPreferences[0];
+      }
+
+      // Ensure itinerary is properly formatted
+      if (formDataToSubmit.itinerary) {
+        formDataToSubmit.itinerary = JSON.stringify(formDataToSubmit.itinerary);
+      }
+
+      const token = localStorage.getItem('token');
+      if (!token) {
+        toast.error("Authentication token not found. Please log in again.", toastConfig);
+        return;
+      }
+
       const response = await axios.post(
         "http://localhost:4000/adminAddTrip",
         formDataToSubmit,
         {
-          headers: { "Content-Type": "application/json" },
+          headers: { 
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`
+          },
         }
       );
 
-      toast.success("Trip added successfully!", {
-        position: "top-right",
-        autoClose: 3000,
-        className: 'toast-message21'
-      });
-
-      // Navigate after a short delay to allow the toast to be visible
-      setTimeout(() => {
-        navigate(-1);
-      }, 2000);
-
+      if (response.data && response.data.message === "Trip added successfully!") {
+        toast.success("Trip added successfully!", toastConfig);
+        setTimeout(() => {
+          navigate(-1);
+        }, 2000);
+      }
     } catch (error) {
-      console.error("Error submitting form", error);
-      toast.error("Error adding trip. Please try again.", {
-        position: "top-right",
-        autoClose: 3000,
-        className: 'toast-message21'
-      });
+      console.error("Error submitting form:", error);
+      const errorMessage = error.response?.data?.message || "Error adding trip. Please try again.";
+      toast.error(errorMessage, toastConfig);
+    } finally {
+      setIsSubmitting(false);
     }
   };
-
-  
-
-
 
   return (
     <>
@@ -326,14 +472,38 @@ const handleChange = (e) => {
         <form onSubmit={handleSubmit} className="form21">
           <h2 className="h2-21">Trip Details</h2>
           <div className="label-container21">
-              <label className="label21">Trip Name:
-                  <input className="input21" type="text" name="tripName" value={formData.tripName} onChange={handleChange} />
+              <label className="label21">
+                Trip Name: <span className="required">*</span>
+                <input 
+                  className="input21" 
+                  type="text" 
+                  name="tripName" 
+                  value={formData.tripName} 
+                  onChange={handleChange}
+                  required 
+                />
               </label>
-              <label className="label21">Start Date:
-                  <input className="input21" type="date" name="startDate" value={formData.startDate} onChange={handleChange} />
+              <label className="label21">
+                Start Date: <span className="required">*</span>
+                <input 
+                  className="input21" 
+                  type="date" 
+                  name="startDate" 
+                  value={formData.startDate} 
+                  onChange={handleChange}
+                  required 
+                />
               </label>
-              <label className="label21">End Date:
-                  <input className="input21" type="date" name="endDate" value={formData.endDate} onChange={handleChange} />
+              <label className="label21">
+                End Date: <span className="required">*</span>
+                <input 
+                  className="input21" 
+                  type="date" 
+                  name="endDate" 
+                  value={formData.endDate} 
+                  onChange={handleChange}
+                  required 
+                />
               </label>
               <label className="label21">Days:
                   <input className="input21" type="text" name="duration" value={formData.duration} readOnly />
@@ -494,6 +664,10 @@ const handleChange = (e) => {
                   <input className="radio-input21" type="radio" name="accommodationType" value="Resorts" onChange={handleCheckboxChange} />
                   Resorts
               </label>
+              <label className="radio-label21">
+                  <input className="radio-input21" type="radio" name="accommodationType" value="None" onChange={handleCheckboxChange} />
+                  None
+              </label>
           </div>
 
           <h3 className="h3-21">Meals Preferences:</h3>
@@ -506,40 +680,84 @@ const handleChange = (e) => {
                   <input type="radio" name="mealsPreferences" value="Self-Catering" onChange={handleCheckboxChange} />
                   Self-Catering
               </label>
+              <label className="radio-label21">
+                  <input type="radio" name="mealsPreferences" value="None" onChange={handleCheckboxChange} />
+                  None
+              </label>
           </div>
 
           <h3 className="h3-21">Dietary Preferences:</h3>
           <div className="dietary-preferences-options21">
               <label className="radio-label21">
-                  <input className="radio-input21" type="radio" name="dietaryPreferences" value="Vegetarian" onChange={handleCheckboxChange} />
+                  <input 
+                      className="radio-input21" 
+                      type="radio" 
+                      name="dietaryPreferences" 
+                      value="Vegetarian" 
+                      checked={formData.dietaryPreferences === "Vegetarian"}
+                      onChange={(e) => setFormData({ ...formData, dietaryPreferences: e.target.value })}
+                  />
                   Vegetarian
               </label>
               <label className="radio-label21">
-                  <input className="radio-input21" type="radio" name="dietaryPreferences" value="Vegan" onChange={handleCheckboxChange} />
+                  <input 
+                      className="radio-input21" 
+                      type="radio" 
+                      name="dietaryPreferences" 
+                      value="Vegan" 
+                      checked={formData.dietaryPreferences === "Vegan"}
+                      onChange={(e) => setFormData({ ...formData, dietaryPreferences: e.target.value })}
+                  />
                   Vegan
               </label>
               <label className="radio-label21">
-                  <input className="radio-input21" type="radio" name="dietaryPreferences" value="Gluten-Free" onChange={handleCheckboxChange} />
+                  <input 
+                      className="radio-input21" 
+                      type="radio" 
+                      name="dietaryPreferences" 
+                      value="Gluten-Free" 
+                      checked={formData.dietaryPreferences === "Gluten-Free"}
+                      onChange={(e) => setFormData({ ...formData, dietaryPreferences: e.target.value })}
+                  />
                   Gluten-Free
               </label>
               <label className="radio-label21">
-                  <input className="radio-input21" type="radio" name="dietaryPreferences" value="Nut-Free" onChange={handleCheckboxChange} />
+                  <input 
+                      className="radio-input21" 
+                      type="radio" 
+                      name="dietaryPreferences" 
+                      value="Nut-Free" 
+                      checked={formData.dietaryPreferences === "Nut-Free"}
+                      onChange={(e) => setFormData({ ...formData, dietaryPreferences: e.target.value })}
+                  />
                   Nut-Free
               </label>
               <label className="radio-label21">
-                Other (please specify):
-                <input
-                  type="text"
-                  name="otherDietaryPreference"
-                  onChange={handleChange}
-                  className="other-dietary-input21"
-                  placeholder="Enter your dietary preference here..."
-                />
+                  <input 
+                      className="radio-input21" 
+                      type="radio" 
+                      name="dietaryPreferences" 
+                      value="None" 
+                      checked={formData.dietaryPreferences === "None"}
+                      onChange={(e) => setFormData({ ...formData, dietaryPreferences: e.target.value })}
+                  />
+                  None
               </label>
-
-
           </div>
 
+          <div className="custom-dietary-preference21">
+              <label className="label21">
+                  Other Dietary Preferences:
+                  <input
+                      type="text"
+                      name="customDietaryPreference"
+                      value={formData.customDietaryPreference || ""}
+                      onChange={handleChange}
+                      placeholder="Enter any other dietary preferences"
+                      className="input21"
+                  />
+              </label>
+          </div>
 
           <h2 className="h2-21">Select Your Transportation Preferences</h2>
 
@@ -614,10 +832,51 @@ const handleChange = (e) => {
           </div>
         </div>
 
-          
+          <h2 className="h2-21">Your Details</h2>
+          <div className="user-details-container21">
+            <div className="user-details-grid21">
+              <div className="user-detail-item21">
+                <label className="label21">Full Name:
+                  <input 
+                    className="input21" 
+                    type="text" 
+                    name="userName" 
+                    value={formData.userName} 
+                    onChange={handleChange}
+                    required 
+                  />
+                </label>
+              </div>
+              <div className="user-detail-item21">
+                <label className="label21">Email:
+                  <input 
+                    className="input21" 
+                    type="email" 
+                    name="userEmail" 
+                    value={formData.userEmail} 
+                    onChange={handleChange}
+                    required 
+                  />
+                </label>
+              </div>
+              <div className="user-detail-item21">
+                <label className="label21">Address:
+                  <input 
+                    className="input21" 
+                    type="text" 
+                    name="userAddress" 
+                    value={formData.userAddress} 
+                    onChange={handleChange}
+                    required 
+                  />
+                </label>
+              </div>
+            </div>
+          </div>
+
           <div className="button-container21">
-            <Link to="/ItineraryPackage"><button type="button" className="cancel-btn21">Cancel</button></Link>
-            <button type="submit" className="create-btn21">Create</button>
+            <Link to="/View-Trip"><button type="button" className="cancel-btn21">Cancel</button></Link>
+            <button type="submit" className="create-btn21" disabled={isSubmitting}>Create</button>
           </div>
         </form>
       </div>

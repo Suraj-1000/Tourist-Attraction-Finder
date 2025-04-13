@@ -255,16 +255,12 @@ export default function AdminEventPage() {
   };
 
   const handleBooking = (event) => {
-    if (!user) {
-      toast.error("Please log in to book tickets", {
-        position: "top-right",
-        autoClose: 3000,
-        className: 'toast-message36'
-      });
-      return;
-    }
-    setSelectedEvent(event);
-    setShowBookingForm(true);
+    // Removed booking functionality
+    toast.info("Booking functionality is disabled in admin view", {
+      position: "top-right",
+      autoClose: 3000,
+      className: 'toast-message36'
+    });
   };
 
   const handleBookingSubmit = async (formData) => {

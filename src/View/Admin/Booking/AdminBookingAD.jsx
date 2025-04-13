@@ -7,7 +7,19 @@ import "./AdminBookingAD.css";
 import { CurrencyContext } from "../../../config/CurrencyContext";
 import Header from "../../../Components/Admin Header/Admin-Header";
 import Footer from "../../../Components/Footer";
-import socketService from "../../../services/socketService";
+
+// Update the toast configuration
+const toastConfig = {
+    position: "top-right",
+    autoClose: 3000,
+    hideProgressBar: false,
+    closeOnClick: true,
+    pauseOnHover: true,
+    draggable: true,
+    progress: undefined,
+    theme: "light",
+    className: "toast-message"
+};
 
 export default function AdminBookingADPage() {
     const { currency, exchangeRates,  } = useContext(CurrencyContext);
@@ -96,60 +108,98 @@ export default function AdminBookingADPage() {
         try {
             const encodedTripName = encodeURIComponent(tripName);
             
-            const requestBody = {
-                status,
-                declineMessage: message
-            };
+            const trip = trips.find(t => t.tripName === tripName);
+            if (!trip) {
+                throw new Error("Trip not found");
+            }
 
+            // First update the trip status
             const response = await axios.put(
                 `http://localhost:4000/adminBookingApprove/trips/${encodedTripName}`,
-                requestBody,
+                {
+                    status,
+                    declineMessage: message,
+                    userEmail: trip.userEmail
+                },
                 { headers: { "Content-Type": "application/json" } }
             );
 
-            // Update state in React
+            if (!response.data) {
+                throw new Error("Failed to update trip status");
+            }
+
+            // Create notification for user
+            const userNotification = {
+                type: status === 'approved' ? 'trip-approval' : 'trip-declined',
+                message: status === 'approved' 
+                    ? `Your trip "${tripName}" has been approved!` 
+                    : `Your trip "${tripName}" has been declined. ${message ? `Reason: ${message}` : ''}`,
+                userEmail: trip.userEmail,
+                recipientType: 'user',
+                details: {
+                    tripName,
+                    status,
+                    declineMessage: message
+                }
+            };
+
+            // Create notification for admin
+            const adminNotification = {
+                type: status === 'approved' ? 'trip-approval' : 'trip-declined',
+                message: status === 'approved'
+                    ? `Trip "${tripName}" has been approved`
+                    : `Trip "${tripName}" has been declined. ${message ? `Reason: ${message}` : ''}`,
+                recipientType: 'admin',
+                details: {
+                    tripName,
+                    status,
+                    declineMessage: message,
+                    userEmail: trip.userEmail
+                }
+            };
+
+            // Save notifications to database
+            const [userNotifResponse, adminNotifResponse] = await Promise.all([
+                axios.post('http://localhost:4000/notifications', userNotification),
+                axios.post('http://localhost:4000/notifications', adminNotification)
+            ]);
+
+            if (!userNotifResponse.data || !adminNotifResponse.data) {
+                throw new Error("Failed to create notifications");
+            }
+
+            // Update local state
             setTrips((prevTrips) =>
-                prevTrips.map((trip) =>
-                    trip.tripName === tripName 
-                        ? { ...trip, status, declineMessage: message }
-                        : trip
+                prevTrips.map((t) =>
+                    t.tripName === tripName 
+                        ? { ...t, status, declineMessage: message }
+                        : t
                 )
             );
 
-            // Initialize socket connection and emit notification
-            const socket = socketService.getSocket();
-            
-            // Ensure socket is connected
-            if (!socket.connected) {
-                socket.connect();
-            }
+            // Trigger notification update for the user
+            const notificationEvent = new CustomEvent('tripStatusUpdate', {
+                detail: {
+                    userEmail: trip.userEmail,
+                    status: status
+                }
+            });
+            window.dispatchEvent(notificationEvent);
 
-            // Join admin room if not already joined
-            socket.emit('joinAdminRoom');
-
-            // Create notification with a consistent ID format
-            const notification = {
-                id: `${Date.now()}-${tripName.replace(/\s+/g, '-')}`,
-                type: status === 'approved' ? 'trip-approval' : 'trip-declined',
-                message: `Trip "${tripName}" has been ${status}`,
-                timestamp: new Date().toISOString(),
-                details: status === 'declined' ? message : 'Trip successfully approved',
-                read: false
-            };
-
-            console.log('Emitting notification:', notification);
-            socket.emit('notification', notification);
-
-            // Show success toast based on status
-            if (status === "approved") {
-                toast.success(`Trip "${tripName}" has been approved successfully!`);
-            } else {
-                toast.error(`Trip "${tripName}" has been declined.`);
-            }
+            // Show success toast
+            toast.success(
+                status === 'approved' 
+                    ? `Trip "${tripName}" has been approved successfully!` 
+                    : `Trip "${tripName}" has been declined.`,
+                toastConfig
+            );
 
         } catch (error) {
-            console.error("Update failed:", error.response?.data || error);
-            toast.error(`Failed to ${status} "${tripName}". Please try again.`);
+            console.error("Error updating trip status:", error);
+            toast.error(
+                `Failed to ${status} trip "${tripName}". Please try again.`,
+                toastConfig
+            );
         } finally {
             setIsUpdating(false);
             setShowDeclineModal(false);
@@ -169,7 +219,19 @@ export default function AdminBookingADPage() {
     return (
         <>
             <Header />
-            <ToastContainer />
+            <ToastContainer
+                position="top-right"
+                autoClose={3000}
+                hideProgressBar={false}
+                newestOnTop={false}
+                closeOnClick
+                rtl={false}
+                pauseOnFocusLoss
+                draggable
+                pauseOnHover
+                theme="light"
+                className="toast-container"
+            />
             <div className="main-container25">
                 <div className="heading-container25">
                     <h1 className="title-heading25">Admin Trip Management</h1>
@@ -527,6 +589,26 @@ export default function AdminBookingADPage() {
                                     </div>
                                 )}
 
+<div className="modal-section25">
+                                    <h3>User Information</h3>
+                                    <div className="user-info-container25">
+                                        <div className="user-details-grid25">
+                                            <div className="detail-item25">
+                                                <span className="detail-label25">Full Name:</span>
+                                                <span className="detail-value25">{selectedTrip.userName}</span>
+                                            </div>
+                                            <div className="detail-item25">
+                                                <span className="detail-label25">Email:</span>
+                                                <span className="detail-value25">{selectedTrip.userEmail}</span>
+                                            </div>
+                                            <div className="detail-item25">
+                                                <span className="detail-label25">Address:</span>
+                                                <span className="detail-value25">{selectedTrip.userAddress}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <div className="modal-section25">
                                     <h3>Trip Budget</h3>
                                     <div className="budget-info25">
@@ -552,6 +634,8 @@ export default function AdminBookingADPage() {
                                         </div>
                                     </div>
                                 </div>
+
+                                
 
                                 {/* Add decline message section if status is declined */}
                                 {selectedTrip.status === "declined" && selectedTrip.declineMessage && (
@@ -581,6 +665,8 @@ export default function AdminBookingADPage() {
                                         </button>
                                     </div>
                                 )}
+
+                                
                             </div>
                         </div>
                     </div>

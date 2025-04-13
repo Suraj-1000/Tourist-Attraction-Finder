@@ -526,3 +526,25 @@ body {
     margin-left: 4px;
 }
 
+.user-info30 {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  font-size: 13px;
+  color: #666;
+}
+
+.user-label30 {
+  font-weight: 600;
+  color: #333;
+  margin-right: 4px;
+}
+
+.notification-card30.trip-approval {
+  border-left-color: #28a745;
+}
+
+.notification-card30.trip-declined {
+  border-left-color: #dc3545;
+}
+

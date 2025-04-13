@@ -3,6 +3,8 @@ import multer from 'multer';
 import { CloudinaryStorage } from 'multer-storage-cloudinary';
 import cloudinary from '../config/cloudinaryConfig.js';
 import Package from '../Models/Package.js';
+import Signup from '../Models/Signup.js';
+import nodemailer from 'nodemailer';
 
 const router = express.Router();
 
@@ -17,6 +19,44 @@ const storage = new CloudinaryStorage({
 });
 
 const upload = multer({ storage: storage });
+
+// Setup Nodemailer Transporter
+const transporter = nodemailer.createTransport({
+  service: "Gmail",
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
+});
+
+// Function to send email notification about new package
+const sendNewPackageEmail = async (userEmail, packageDetails) => {
+  const mailOptions = {
+    from: process.env.EMAIL_USER,
+    to: userEmail,
+    subject: "🎉 New Travel Package Added!",
+    html: `
+      <h2>New Package Alert: ${packageDetails.title}</h2>
+      <p>We're excited to announce a new travel package that might interest you!</p>
+      <h3>Package Details:</h3>
+      <ul>
+        <li><strong>Title:</strong> ${packageDetails.title}</li>
+        <li><strong>Category:</strong> ${packageDetails.category}</li>
+        <li><strong>Duration:</strong> ${packageDetails.duration}</li>
+        <li><strong>Price:</strong> ${packageDetails.price}</li>
+      </ul>
+      <p>Visit our website to learn more about this exciting new package!</p>
+      <p>Best regards,<br>Explore Nepal Team</p>
+    `
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+    console.log(`✅ Email notification sent to ${userEmail}`);
+  } catch (error) {
+    console.error(`❌ Error sending email to ${userEmail}:`, error);
+  }
+};
 
 // Route to Add a New Itinerary Package
 router.post("/Add-Package", upload.single("image"), async (req, res) => {
@@ -39,7 +79,7 @@ router.post("/Add-Package", upload.single("image"), async (req, res) => {
     const newPackage = new Package(packageData);
     await newPackage.save();
 
-    // Send notification
+    // Send notification through socket
     const notificationHub = req.app.get('notificationHub');
     if (notificationHub) {
       notificationHub.sendPackageAddedNotification({
@@ -48,6 +88,12 @@ router.post("/Add-Package", upload.single("image"), async (req, res) => {
         price: packageData.price,
         duration: packageData.duration
       });
+    }
+
+    // Get all users and send email notifications
+    const users = await Signup.find({}, 'email');
+    for (const user of users) {
+      await sendNewPackageEmail(user.email, packageData);
     }
 
     res.status(201).json({

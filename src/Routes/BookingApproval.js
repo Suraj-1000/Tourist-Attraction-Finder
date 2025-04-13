@@ -1,6 +1,7 @@
 import express from "express";
 import PlanTrip from "../Models/PlanTrip.js"; // ✅ Correct model import
 import nodemailer from "nodemailer";
+import Notification from "../Models/Notification.js";
 
 const router = express.Router();
 
@@ -8,8 +9,8 @@ const router = express.Router();
 const transporter = nodemailer.createTransport({
   service: "Gmail",
   auth: {
-    user: "explorenepal.it@gmail.com", // Your email
-    pass: "ihsl rjso rpkd wrfn", // Your app password (DO NOT SHARE PUBLICLY)
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
   },
 });
 
@@ -35,6 +36,38 @@ const sendEmailNotification = async (email, status, tripName, declineMessage) =>
     console.log("✅ Email notification sent successfully");
   } catch (error) {
     console.error("❌ Error sending email:", error);
+  }
+};
+
+// Function to create and save notification
+const createNotification = async (tripData, status, declineMessage = "") => {
+  const notificationId = `trip-${tripData.tripName}-${Date.now()}`;
+  
+  const notification = new Notification({
+    id: notificationId,
+    type: status === 'approved' ? 'trip-approval' : 'trip-declined',
+    message: status === 'approved' 
+      ? `Your trip "${tripData.tripName}" has been approved!` 
+      : `Your trip "${tripData.tripName}" has been declined. ${declineMessage ? `Reason: ${declineMessage}` : ''}`,
+    details: {
+      tripName: tripData.tripName,
+      status,
+      declineMessage: declineMessage || null
+    },
+    timestamp: new Date(),
+    read: false,
+    userId: tripData.userId,
+    userEmail: tripData.userEmail,
+    recipientType: 'user'
+  });
+
+  try {
+    await notification.save();
+    console.log('✅ Notification saved to database:', notificationId);
+    return notification;
+  } catch (error) {
+    console.error('❌ Error saving notification:', error);
+    throw error;
   }
 };
 
@@ -75,14 +108,14 @@ router.get("/trips", async (req, res) => {
 router.put('/trips/:tripName', async (req, res) => {
     try {
         const { tripName } = req.params;
-        const { status, declineMessage } = req.body;  // Add declineMessage to destructuring
+        const { status, declineMessage, userEmail } = req.body;
 
         const trip = await PlanTrip.findOne({ tripName });
         if (!trip) {
             return res.status(404).json({ message: 'Trip not found' });
         }
 
-        // Update both status and declineMessage
+        // Update trip fields
         trip.status = status;
         if (status === 'declined' && declineMessage) {
             trip.declineMessage = declineMessage;
@@ -91,28 +124,10 @@ router.put('/trips/:tripName', async (req, res) => {
         await trip.save();
 
         // Send email notification
-        if (trip.userEmail) {
-            await sendEmailNotification(trip.userEmail, status, tripName, declineMessage);
-        }
+        await sendEmailNotification(userEmail, status, tripName, declineMessage);
 
-        // Send real-time notification
-        const notificationHub = req.app.get('notificationHub');
-        if (notificationHub) {
-            if (status === 'approved') {
-                notificationHub.sendTripApprovalNotification({
-                    tripName: trip.tripName,
-                    userName: trip.userName,
-                    userEmail: trip.userEmail
-                });
-            } else {
-                notificationHub.sendTripDeclinedNotification({
-                    tripName: trip.tripName,
-                    userName: trip.userName,
-                    userEmail: trip.userEmail,
-                    declineMessage: declineMessage  // Include decline message in notification
-                });
-            }
-        }
+        // Create and save notification in database
+        const notification = await createNotification(trip, status, declineMessage);
 
         res.json({ message: 'Trip status updated successfully', trip });
     } catch (error) {

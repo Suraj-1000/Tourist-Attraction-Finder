@@ -18,6 +18,7 @@ body {
     display: block;
     text-align: center;
     background-color: #f8f9fa;
+    padding: 20px;
 }
 
 .heading31 {
@@ -38,7 +39,7 @@ body {
 }
 
 .title-para31 {
-    font-size: 31px;
+    font-size: 28px;
     font-weight: 500;
     color: #000;
     margin: 0;
@@ -66,7 +67,13 @@ body {
     border-radius: 10px;
     box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
     text-align: center;
-    transition: transform 0.3s ease; 
+    transition: transform 0.3s ease;
+    position: relative;
+    min-height: 180px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
   }
   
   .emergency-card31:hover {
@@ -80,7 +87,7 @@ body {
   }
   
   .emergency-icon31 {
-    font-size: 3rem; 
+    font-size: 2.5rem; 
     margin-bottom: 10px; 
   }
   
@@ -92,23 +99,24 @@ body {
   .quick-dial31 {
     background-color: #008000;
     color: white;
-    padding: 10px 20px;
+    padding: 8px 16px;
     border: none;
     border-radius: 5px;
     cursor: pointer;
-    margin-top: 20px;
+    margin-top: auto;
+    font-size: 14px;
+    transition: transform 0.3s ease, background-color 0.3s ease;
   }
   
   .quick-dial31:hover {
-    background-color: #008000;
-    transform: scale(1.1); 
-    transition: transform 0.3s ease;
+    transform: scale(1.05); 
   }
   /* Form Styling */
 .form-heading31 {
-    font-size: 22px;
+    font-size: 20px;
     font-weight: bold;
-    margin-top: 30px;
+    margin-top: 25px;
+    margin-bottom: 15px;
 }
 
 .form-group31 {
@@ -117,49 +125,52 @@ body {
     align-items: center;
     gap: 10px;
     margin-top: 20px;
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
-.form-group31 input, .form-group31 select {
-    width: 300px;
-    padding: 10px;
+.form-group31 input {
+    width: 100%;
+    max-width: 300px;
+    padding: 8px;
     border: 1px solid #ccc;
     border-radius: 5px;
+    font-size: 14px;
+}
+
+.form-group31 input:focus {
+    outline: none;
+    border-color: #3498db;
 }
 
 /* Buttons */
 .form-buttons31 {
-    margin-top: 20px;
+    margin-top: 15px;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
 }
 
 .cancel-btn31, .save-btn31 {
-    padding: 10px 20px;
+    padding: 8px 16px;
     border: none;
-    border-radius: 5px;
+    border-radius: 4px;
     cursor: pointer;
-    font-size: 16px;
-    width: 100px;
-    margin-bottom: 20px;
+    font-size: 14px;
+    width: 80px;
+    margin-bottom: 15px;
 }
 
 .cancel-btn31 {
     background-color: #AE0808;
     color: white;
-    margin-right: 10px;
-}
-
-.cancel-btn31:hover {
-    background-color: #AE0808;
 }
 
 .save-btn31 {
     background-color: #008000;
     color: white;
 }
-
-.save-btn31:hover {
-    background-color: #008000;
-}
-
 
 .additional-resources31 {
     background-color: white;
@@ -285,6 +296,7 @@ body {
   display: flex;
   justify-content: center;
   gap: 15px;
+  margin-top: 20px;
 }
 
 .modal-cancel-btn31,
@@ -310,5 +322,17 @@ body {
 .modal-cancel-btn31:hover,
 .modal-delete-btn31:hover {
   transform: scale(1.05);
+}
+
+.contact-phone31 {
+  font-size: 18px;
+  color: #666;
+  margin-bottom: 5px;
+}
+
+.contact-type31 {
+  font-size: 16px;
+  margin: 5px 0;
+  font-weight: bold;
 }
 

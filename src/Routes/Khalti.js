@@ -1,6 +1,7 @@
 import { initializeKhaltiPayment, verifyKhaltiPayment } from "../config/khalti.js";
 import Payment from "../Models/paymentModel.js";
 import PurchasedItem from "../Models/purchasedItemModel.js";
+import Signup from "../Models/Signup.js";
 import express from "express";
 const router = express.Router();
 
@@ -16,7 +17,8 @@ router.post("/initialize-khalti", async (req, res) => {
       lastName, 
       email, 
       phone, 
-      address 
+      address,
+      userId  // Add userId to the destructured parameters
     } = req.body;
 
     console.log('Received Khalti initialization request:', { 
@@ -28,15 +30,16 @@ router.post("/initialize-khalti", async (req, res) => {
       lastName,
       email,
       phone,
-      address
+      address,
+      userId
     });
 
     // Validate input
-    if (!itemId || !totalPrice) {
-      console.error('Missing required fields:', { itemId, totalPrice });
+    if (!itemId || !totalPrice || !userId) {
+      console.error('Missing required fields:', { itemId, totalPrice, userId });
       return res.status(400).json({
         success: false,
-        message: "Missing required fields: itemId and totalPrice are required"
+        message: "Missing required fields: itemId, totalPrice, and userId are required"
       });
     }
 
@@ -55,14 +58,18 @@ router.post("/initialize-khalti", async (req, res) => {
 
     // Create a purchase record with original NPR amount
     const purchasedItemData = await PurchasedItem.create({
+      userId, // Add userId to the created record
       item: itemId,
       paymentMethod: "khalti",
-      totalPrice: priceInNPR, // Store original price in NPR
+      totalPrice: priceInNPR,
       packageDetails: {
         title: packageDetails?.title,
         duration: packageDetails?.duration,
         category: packageDetails?.category,
-        price: priceInNPR
+        price: priceInNPR,
+        startTime: packageDetails?.startTime,
+        endTime: packageDetails?.endTime,
+        location: packageDetails?.location
       },
       userDetails: {
         firstName,
@@ -70,6 +77,20 @@ router.post("/initialize-khalti", async (req, res) => {
         email,
         phone,
         address
+      },
+      ticketDetails: packageDetails?.ticketDetails || {
+        vipTickets: {
+          quantity: 0,
+          pricePerTicket: 0,
+          totalPrice: 0
+        },
+        generalTickets: {
+          quantity: 0,
+          pricePerTicket: 0,
+          totalPrice: 0
+        },
+        totalTickets: 0,
+        totalTicketPrice: 0
       }
     });
 
@@ -193,6 +214,56 @@ router.get("/complete-khalti-payment", async (req, res) => {
   } catch (error) {
     console.error("Error processing Khalti payment completion:", error);
     res.redirect(`${process.env.FRONTEND_URI}/payment-failure?error=${encodeURIComponent(error.message)}`);
+  }
+});
+
+// Route to get user-specific bookings
+router.get("/user-bookings/:userId", async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const user = await Signup.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found"
+      });
+    }
+
+    // Find all purchased items for this user using both userId and email
+    const purchasedItems = await PurchasedItem.find({
+      $or: [
+        { 'userDetails.email': user.email },
+        { userId: userId }
+      ]
+    }).sort({ purchaseDate: -1 });
+
+    // Get payment details for each purchased item
+    const bookings = await Promise.all(
+      purchasedItems.map(async (item) => {
+        const payment = await Payment.findOne({ productId: item._id });
+        return {
+          ...item.toObject(),
+          paymentDetails: payment ? payment.toObject() : null,
+          userDetails: {
+            ...item.userDetails,
+            userId: userId // Include userId in the response
+          }
+        };
+      })
+    );
+
+    res.json({
+      success: true,
+      bookings
+    });
+  } catch (error) {
+    console.error('Error fetching user bookings:', error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch user bookings",
+      error: error.message
+    });
   }
 });
 

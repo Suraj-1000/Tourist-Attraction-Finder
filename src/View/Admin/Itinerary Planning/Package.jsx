@@ -227,17 +227,12 @@ const convertPrice = (priceString) => {
     setResults(sortedData); 
   }, [sortBy]); 
   
-  const handleBookNow = (packageDetails) => {
-    if (!user) {
-      toast.error("Please log in to book a package", {
-        position: "top-right",
-        autoClose: 3000,
-        className: 'toast-message17'
-      });
-      return;
-    }
-    setSelectedPackage(packageDetails);
-    setShowUserForm(true);
+  const handleBookNow = () => {
+    toast.info("Booking functionality is disabled in admin view", {
+      position: "top-right",
+      autoClose: 3000,
+      className: 'toast-message17'
+    });
   };
 
   const handlePaymentSubmit = async (formData) => {
@@ -482,15 +477,7 @@ const handleShare = (card) => {
 
                     <button 
                       className="book-now17"
-                      onClick={() => handleBookNow({
-                        title: result.title,
-                        duration: result.duration,
-                        tripType: result.tripType,
-                        price: result.price ? result.price.replace(/[^0-9.-]+/g, "") : "0",
-                        category: result.category,
-                        groupSize: result.groupSize,
-                        difficulty: result.difficulty
-                      })}
+                      onClick={handleBookNow}
                     >
                       Book Now
                     </button>
@@ -500,7 +487,7 @@ const handleShare = (card) => {
 
               ))
             ) : (
-              <p className="no-results17">No attractions found for "{query}".</p>
+              <p className="no-results17">No packages found for "{query}".</p>
             )}
           </div>
 
@@ -508,7 +495,8 @@ const handleShare = (card) => {
          {showShareModal && (
           <div className="share-modal17">
             <div className="share-content17">
-              <h3>Share Attraction</h3>
+              <h3>Share Package</h3>
+              <p>Share this link with your friends:</p>
               <input type="text" value={shareLink} readOnly className="share-input17" />
               <button onClick={copyToClipboard} className="copy-button17">Copy Link 🔗</button>
               <button onClick={() => setShowShareModal(false)} className="close-button17">Close</button>

@@ -1,8 +1,88 @@
 import express from "express";
 import Payment from "../Models/paymentModel.js";
 import PurchasedItem from "../Models/purchasedItemModel.js";
+import Signup from "../Models/Signup.js";
 
 const router = express.Router();
+
+// Get user-specific bookings
+router.get("/user-bookings/:userId", async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const user = await Signup.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found"
+      });
+    }
+
+    // Find all purchased items for this user using userId
+    const purchasedItems = await PurchasedItem.find({
+      userId: userId  // Only filter by userId to ensure strict matching
+    }).sort({ purchaseDate: -1 });
+
+    // Get payment details for each purchased item
+    const bookings = await Promise.all(
+      purchasedItems.map(async (item) => {
+        const payment = await Payment.findOne({ productId: item._id });
+        
+        // Format user's full name
+        const fullName = `${item.userDetails.firstName} ${item.userDetails.lastName}`;
+        
+        // Capitalize the first letter of status
+        const formattedStatus = item.status.charAt(0).toUpperCase() + item.status.slice(1).toLowerCase();
+        
+        return {
+          bookingId: item._id,
+          packageName: item.packageDetails.title,
+          bookingDate: item.purchaseDate,
+          status: formattedStatus,
+          amount: item.totalPrice,
+          userDetails: {
+            ...item.userDetails,
+            userId: userId,  // Include userId in user details
+            name: fullName
+          },
+          ticketDetails: item.ticketDetails,
+          paymentDetails: payment ? {
+            status: payment.status,
+            paymentDate: payment.paymentDate,
+            paymentGateway: item.paymentMethod,
+            userDetails: {
+              name: fullName,
+              email: user.email,  // Use logged-in user's email
+              phone: user.phone,  // Use logged-in user's phone
+              address: user.address || user.userAddress || "N/A"  // Use logged-in user's address
+            },
+            packageDetails: {
+              title: item.packageDetails.title,
+              duration: item.packageDetails.duration,
+              category: item.packageDetails.category,
+              price: item.packageDetails.price,
+              startTime: item.packageDetails.startTime,
+              endTime: item.packageDetails.endTime,
+              location: item.packageDetails.location
+            }
+          } : null
+        };
+      })
+    );
+
+    res.json({
+      success: true,
+      bookings
+    });
+  } catch (error) {
+    console.error('Error fetching user bookings:', error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch user bookings",
+      error: error.message
+    });
+  }
+});
 
 // Get all bookings with payment details
 router.get("/all-bookings", async (req, res) => {
@@ -33,8 +113,10 @@ router.get("/all-bookings", async (req, res) => {
           bookingId: booking._id,
           packageName: booking.packageDetails.title,
           bookingDate: booking.purchaseDate,
-          status: formattedStatus, // Use formatted status here
+          status: formattedStatus,
           amount: booking.totalPrice,
+          userDetails: booking.userDetails, // Include direct user details
+          ticketDetails: booking.ticketDetails, // Include ticket details
           paymentDetails: {
             status: payment ? payment.status : booking.status,
             paymentDate: payment ? payment.paymentDate : booking.purchaseDate,
@@ -43,13 +125,16 @@ router.get("/all-bookings", async (req, res) => {
               name: fullName,
               email: booking.userDetails.email,
               phone: booking.userDetails.phone,
-              address: booking.userDetails.address || "N/A" // Ensure address is included
+              address: booking.userDetails.address || "N/A"
             },
             packageDetails: {
               title: booking.packageDetails.title,
               duration: booking.packageDetails.duration,
               category: booking.packageDetails.category,
-              price: booking.packageDetails.price
+              price: booking.packageDetails.price,
+              startTime: booking.packageDetails.startTime,
+              endTime: booking.packageDetails.endTime,
+              location: booking.packageDetails.location
             }
           }
         };

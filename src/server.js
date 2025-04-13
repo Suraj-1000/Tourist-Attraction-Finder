@@ -3,13 +3,11 @@ import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import { createServer } from 'http';
-import NotificationHub from './notificationHub.js';
-import NotificationService from './services/notificationService.js';
 
-import signupRouter from './routes/Signups.js';
-import loginRouters from './routes/Login.js';
-import ForgotPassRouters from './routes/ForgotPass.js'; 
-import PassResetRouter from './routes/ResetPass.js';
+import signupRouter from './Routes/Signups.js';
+import loginRouters from './Routes/Login.js';
+import ForgotPassRouters from './Routes/ForgotPass.js'; 
+import PassResetRouter from './Routes/ResetPass.js';
 import adminMediaRouter from './Routes/Image&Video.js';
 import adminSearchRoutes from './Routes/Image&Video.js';
 import adminSearchAttractionRouter from './Routes/SearchAttractions.js'; 
@@ -19,15 +17,26 @@ import adminTripRouter from './Routes/PlanTrips.js';
 import adminBookingApproveRouter from './Routes/BookingApproval.js'
 import adminUpdateProfileRouter from './Routes/ProfileManages.js'
 import adminEmergencyRouter from './Routes/Emergencys.js'
-import DeleteAccountRouter from './routes/DeleteAccount.js';
-import ChangePasswordRouter from './routes/ChangePassword.js';
-import currencyRoutes from './routes/currencyRoutes.js';
-import LanguageRouter from './routes/Languages.js';
-import AdminDasboardRouter from './routes/AdminDashboard.js';
-import AdmineventRoutes from './routes/eventRoutes.js';
+import DeleteAccountRouter from './Routes/DeleteAccount.js';
+import ChangePasswordRouter from './Routes/ChangePassword.js';
+import currencyRoutes from './Routes/currencyRoutes.js';
+import LanguageRouter from './Routes/Languages.js';
+import AdminDasboardRouter from './Routes/AdminDashboard.js';
+import AdmineventRoutes from './Routes/eventRoutes.js';
 import khaltiRoutes from './Routes/Khalti.js';
 import esewaRoutes from './Routes/Esewa.js';
 import paymentRoutes from './Routes/Payment.js';
+import notificationsRouter from './Routes/Notifications.js';
+import preferenceRoutes from './Routes/PreferenceRoutes.js';
+
+// Import user-specific routes
+import userHistoryRouter from './Routes/userHistory.js';
+import userFavoritesRouter from './Routes/userFavorites.js';
+import userEmergencyContactsRouter from './Routes/userEmergencyContacts.js';
+
+// Admin routes
+import adminFavoritesRouter from './Routes/adminFavorites.js';
+import adminHistoryRouter from './Routes/adminHistory.js';
 
 if (process.env.NODE_ENV !== "production") {
   dotenv.config();
@@ -39,16 +48,6 @@ const port = process.env.PORT || 4000;
 // Create HTTP server
 const server = createServer(app);
 
-// Initialize NotificationHub
-const notificationHub = new NotificationHub(server);
-
-// Initialize NotificationService
-const notificationService = new NotificationService(notificationHub);
-
-// Make services available to routes
-app.set('notificationHub', notificationHub);
-app.set('notificationService', notificationService);
-
 // Middleware
 app.use(express.json());
 app.use(cors());
@@ -59,7 +58,7 @@ mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log('Connected to MongoDB'))
   .catch((error) => {
     console.error('MongoDB connection error:', error);
-    process.exit(1); // Exit the process if MongoDB connection fails
+    process.exit(1);
   });
 
 // Routes
@@ -85,6 +84,17 @@ app.use('/adminDashboard', AdminDasboardRouter)
 app.use('/khalti', khaltiRoutes)
 app.use('/esewa', esewaRoutes)
 app.use('/payments', paymentRoutes)
+app.use('/notifications', notificationsRouter)
+app.use('/preferences', preferenceRoutes)
+
+// User-specific routes with hyphenated paths
+app.use('/user-history', userHistoryRouter);
+app.use('/user-favorites', userFavoritesRouter);
+app.use('/user-emergency-contacts', userEmergencyContactsRouter);
+
+// Admin routes
+app.use('/admin/favorites', adminFavoritesRouter);
+app.use('/admin/history', adminHistoryRouter);
 
 // Start the server
 server.listen(port, () => {

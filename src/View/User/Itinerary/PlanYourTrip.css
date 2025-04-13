@@ -390,3 +390,87 @@ body {
   background-color: #cccccc;
   cursor: not-allowed;
 }
+
+.user-details-container21 {
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.user-details-grid21 {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.user-detail-item21 {
+  display: flex;
+  flex-direction: column;
+}
+
+.user-detail-item21 label {
+  font-weight: 600;
+  color: #495057;
+  margin-bottom: 0.5rem;
+}
+
+.user-detail-item21 input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+.user-detail-item21 input[readonly] {
+  background-color: #e9ecef;
+  cursor: not-allowed;
+}
+
+@media (max-width: 768px) {
+  .user-details-grid21 {
+    grid-template-columns: 1fr;
+  }
+}
+
+.required {
+  color: #AE0808;
+  margin-left: 4px;
+}
+
+.input21:required {
+  border-color: #666;
+}
+
+.input21:required:invalid {
+  border-color: #AE0808;
+}
+
+.input21:required:valid {
+  border-color: #008000;
+}
+
+/* Add validation styles for other input types */
+.radio-input21:required + label,
+.checkbox-input21:required + label {
+  color: #666;
+}
+
+.radio-input21:required:invalid + label,
+.checkbox-input21:required:invalid + label {
+  color: #AE0808;
+}
+
+.radio-input21:required:valid + label,
+.checkbox-input21:required:valid + label {
+  color: #008000;
+}
+
+/* Error message styling */
+.error-message {
+  color: #AE0808;
+  font-size: 12px;
+  margin-top: 4px;
+  display: block;
+}

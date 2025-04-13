@@ -1,0 +1,453 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Mitr';
+}
+
+body {
+    width: 100%;
+    min-height: 100vh;
+    background: #f8f9fa;
+}
+
+.main-container55 {
+    width: 100%;
+    padding: 40px 20px;
+}
+
+.heading55 {
+    display: flex;
+    justify-content: center;
+    padding: 20px 0 40px;
+}
+
+.plan-trip-btn55 {
+    background: linear-gradient(135deg, #008000, #006400);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    font-size: 16px;
+    border-radius: 30px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    box-shadow: 0 4px 15px rgba(0, 128, 0, 0.2);
+    transition: all 0.3s ease;
+}
+
+.plan-trip-btn55:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 128, 0, 0.3);
+}
+
+.form55 {
+    max-width: 1200px;
+    margin: auto;
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    padding: 40px;
+}
+
+.main-heading55 {
+    color: #e63946;
+    font-size: 2.5em;
+    text-align: center;
+    margin-bottom: 40px;
+    position: relative;
+    padding-bottom: 15px;
+}
+
+.main-heading55::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100px;
+    height: 4px;
+    background: linear-gradient(90deg, #e63946, #ff8c94);
+    border-radius: 2px;
+}
+
+.image-section55 {
+    margin: 30px 0;
+}
+
+.image55 {
+    width: 100%;
+    height: 400px;
+    object-fit: cover;
+    border-radius: 15px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.highlight55 {
+    font-size: 55px;
+    line-height: 1.6;
+    color: #2c3e50;
+    text-align: center;
+    margin: 30px 0;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 10px;
+}
+
+/* Common section heading style */
+.additional-heading55,
+.Quick-info55,
+.day-by-day55,
+.include55,
+.info55,
+.additional-details55 {
+    font-size: 1.5em;
+    color: #2c3e50;
+    margin: 30px 0 20px;
+    padding: 15px 20px;
+    background: #f8f9fa;
+    border-radius: 10px;
+    border-left: 5px solid #e63946;
+}
+
+/* Common content style */
+.description55,
+.quick-infoDetail55,
+.additional-details-list55 {
+    padding: 0 10px;
+    margin: 15px 0;
+    line-height: 1.6;
+    color: #2c3e50;
+}
+
+.quick-infoDetail55 li,
+.additional-details-list55 li {
+    margin: 15px 0;
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    padding-left: 10px;
+}
+
+.quick-infoDetail55 strong,
+.additional-details-list55 strong {
+    min-width: 180px;
+    color: #34495e;
+}
+
+/* Itinerary cards */
+.day-by-day-itinerary55 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 25px;
+    margin: 30px 0;
+    padding: 0 20px;
+}
+
+.itinerary-card55 {
+    background: white;
+    border-radius: 15px;
+    padding: 25px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+    border: 1px solid #eee;
+    transition: all 0.3s ease;
+}
+
+.itinerary-card55:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.itinerary-card55 h3 {
+    color: #e63946;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #eee;
+}
+
+.itinerary-card55 p {
+    margin: 10px 0;
+    display: flex;
+    gap: 10px;
+}
+
+.itinerary-card55 strong {
+    min-width: 100px;
+    color: #34495e;
+}
+
+/* Included and Additional Info sections */
+.whats-include55 ol,
+.add-info55 ol {
+    padding-left: 60px;
+    margin: 15px 0;
+    list-style-position: outside;
+}
+
+.whats-include55 li,
+.add-info55 li {
+    margin: 10px 0;
+    color: #2c3e50;
+    line-height: 1.6;
+    padding-left: 20px;
+}
+
+/* Update the quick info and additional details lists */
+.quick-infoDetail55,
+.additional-details-list55 {
+    padding: 0 10px;
+    margin: 15px 0;
+}
+
+.quick-infoDetail55 li,
+.additional-details-list55 li {
+    margin: 15px 0;
+    padding-left: 10px;
+    position: relative;
+}
+
+/* Update the itinerary card list styles */
+.itinerary-card55 ul {
+    list-style-type: none;
+    padding-left: 40px;
+    margin: 10px 0;
+}
+
+.itinerary-card55 ul li {
+    position: relative;
+    padding-left: 20px;
+    margin: 8px 0;
+}
+
+.itinerary-card55 ul li::before {
+    content: "•";
+    position: absolute;
+    left: 0;
+    color: #e63946;
+}
+
+/* Cost breakdown specific styling */
+.itinerary-card55 p:last-of-type + ul {
+    margin-top: 10px;
+    padding-left: 60px;
+}
+
+.itinerary-card55 p:last-of-type + ul li {
+    display: flex;
+    justify-content: space-between;
+    padding-right: 20px;
+}
+
+/* Last section */
+.last55 {
+    text-align: center;
+    color: #e63946;
+    font-size: 1.3em;
+    margin: 40px 0;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 10px;
+}
+
+/* Buttons */
+.button-container55 {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-top: 40px;
+    padding: 20px 0;
+}
+
+.back-btn55, 
+.book-now-btn55 {
+    padding: 12px 30px;
+    font-size: 16px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    min-width: 180px;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 500;
+}
+
+.back-btn55 {
+    background: linear-gradient(135deg, #AE0808, #8B0000);
+    color: white;
+    box-shadow: 0 4px 15px rgba(174, 8, 8, 0.2);
+}
+
+.book-now-btn55 {
+    background: linear-gradient(135deg, #008000, #006400);
+    color: white;
+    box-shadow: 0 4px 15px rgba(0, 128, 0, 0.2);
+}
+
+.back-btn55:hover, 
+.book-now-btn55:hover {
+    transform: translateY(-2px);
+}
+
+/* Price styling */
+.span55 {
+    font-size: 1.1em;
+    padding: 5px 15px;
+    border-radius: 20px;
+    background: #f0fff0;
+}
+
+/* Additional Details styling with indexing */
+.additional-details-list55 {
+    counter-reset: details-counter;
+    list-style-type: none;
+    padding: 0 10px;
+    margin: 15px 0;
+}
+
+.additional-details-list55 li {
+    margin: 15px 0;
+    padding-left: 35px;
+    position: relative;
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+}
+
+.additional-details-list55 li::before {
+    counter-increment: details-counter;
+    content: counter(details-counter) ".";
+    position: absolute;
+    left: 10px;
+    color: #e63946;
+    font-weight: bold;
+}
+
+.additional-details-list55 strong {
+    min-width: 150px;
+    color: #34495e;
+    position: relative;
+}
+
+/* Responsive adjustment for additional details */
+@media (max-width: 768px) {
+    .additional-details-list55 li {
+        padding-left: 25px;
+    }
+    
+    .additional-details-list55 li::before {
+        left: 5px;
+    }
+}
+
+/* Additional Information styling with indexing */
+.add-info55 ol {
+    counter-reset: info-counter;
+    list-style-type: none;
+    padding: 0 10px;
+    margin: 15px 0;
+}
+
+.add-info55 li {
+    margin: 15px 0;
+    padding-left: 35px;
+    position: relative;
+    color: #2c3e50;
+    line-height: 1.6;
+}
+
+.add-info55 li::before {
+    counter-increment: info-counter;
+    content: counter(info-counter) ".";
+    position: absolute;
+    left: 10px;
+    color: #e63946;
+    font-weight: bold;
+}
+
+/* Responsive adjustment for additional info */
+@media (max-width: 768px) {
+    .add-info55 li {
+        padding-left: 25px;
+    }
+    
+    .add-info55 li::before {
+        left: 5px;
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .form55 {
+        padding: 20px;
+    }
+
+    .day-by-day-itinerary55 {
+        grid-template-columns: 1fr;
+    }
+
+    .quick-infoDetail55 li,
+    .additional-details-list55 li {
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .quick-infoDetail55 strong,
+    .additional-details-list55 strong {
+        min-width: unset;
+    }
+
+    .button-container55 {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .back-btn55, 
+    .book-now-btn55 {
+        width: 100%;
+        max-width: 300px;
+    }
+}
+
+/* What's Included styling with indexing */
+.whats-include55 ol {
+    counter-reset: include-counter;
+    list-style-type: none;
+    padding: 0 10px;
+    margin: 15px 0;
+}
+
+.whats-include55 li {
+    margin: 15px 0;
+    padding-left: 35px;
+    position: relative;
+    color: #2c3e50;
+    line-height: 1.6;
+}
+
+.whats-include55 li::before {
+    counter-increment: include-counter;
+    content: counter(include-counter) ".";
+    position: absolute;
+    left: 10px;
+    color: #e63946;
+    font-weight: bold;
+}
+
+/* Responsive adjustment for what's included */
+@media (max-width: 768px) {
+    .whats-include55 li {
+        padding-left: 25px;
+    }
+    
+    .whats-include55 li::before {
+        left: 5px;
+    }
+}
+
+
+
+
+
+

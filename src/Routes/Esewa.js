@@ -2,7 +2,7 @@ import express from "express";
 import { getEsewaPaymentHash, verifyEsewaPayment } from "../config/esewa.js";
 import Payment from "../Models/paymentModel.js";
 import PurchasedItem from "../Models/purchasedItemModel.js";
-
+import Signup from "../Models/Signup.js";
 const router = express.Router();
 
 router.post("/initialize-esewa", async (req, res) => {
@@ -15,7 +15,8 @@ router.post("/initialize-esewa", async (req, res) => {
       lastName,
       email,
       phone,
-      address
+      address,
+      userId
     } = req.body;
 
     console.log('Received eSewa initialization request:', { 
@@ -26,15 +27,16 @@ router.post("/initialize-esewa", async (req, res) => {
       lastName,
       email,
       phone,
-      address
+      address,
+      userId
     });
 
     // Validate input
-    if (!itemId || !totalPrice) {
-      console.error('Missing required fields:', { itemId, totalPrice });
+    if (!itemId || !totalPrice || !userId) {
+      console.error('Missing required fields:', { itemId, totalPrice, userId });
       return res.status(400).json({
         success: false,
-        message: "Missing required fields: itemId and totalPrice are required"
+        message: "Missing required fields: itemId, totalPrice, and userId are required"
       });
     }
 
@@ -65,10 +67,11 @@ router.post("/initialize-esewa", async (req, res) => {
       });
     }
 
-    console.log("Creating purchase record with:", { itemId, price });
+    console.log("Creating purchase record with:", { itemId, price, userId });
     
     // Create a purchase record
     const purchasedItemData = await PurchasedItem.create({
+      userId,
       item: itemId,
       paymentMethod: "esewa",
       totalPrice: price,
@@ -76,7 +79,10 @@ router.post("/initialize-esewa", async (req, res) => {
         title: packageDetails.title,
         duration: packageDetails.duration,
         category: packageDetails.category,
-        price: price
+        price: price,
+        startTime: packageDetails?.startTime,
+        endTime: packageDetails?.endTime,
+        location: packageDetails?.location
       },
       userDetails: {
         firstName,
@@ -84,6 +90,20 @@ router.post("/initialize-esewa", async (req, res) => {
         email,
         phone,
         address
+      },
+      ticketDetails: packageDetails?.ticketDetails || {
+        vipTickets: {
+          quantity: 0,
+          pricePerTicket: 0,
+          totalPrice: 0
+        },
+        generalTickets: {
+          quantity: 0,
+          pricePerTicket: 0,
+          totalPrice: 0
+        },
+        totalTickets: 0,
+        totalTicketPrice: 0
       }
     });
 
@@ -186,6 +206,5 @@ router.get("/complete-payment", async (req, res) => {
     res.redirect(`${process.env.FRONTEND_URI}/payment-failure?error=${encodeURIComponent(error.message)}`);
   }
 });
-
 
 export default router;

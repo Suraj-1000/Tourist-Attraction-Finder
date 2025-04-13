@@ -23,14 +23,19 @@ const UserDetailsForm = ({ onSubmit, onCancel, packageDetails }) => {
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem('user'));
     if (user) {
+      // Set all user details including address
       setFormData(prev => ({
         ...prev,
         firstName: user.firstName || '',
         lastName: user.lastName || '',
         email: user.email || '',
         phone: user.phone || '',
-        address: user.address || ''
+        address: user.address || user.userAddress || '', // Check both address and userAddress fields
+        paymentPartner: prev.paymentPartner // Preserve any selected payment method
       }));
+
+      // Log the user data for debugging
+      console.log('User data loaded from localStorage:', user);
     }
   }, []);
 
@@ -70,6 +75,13 @@ const UserDetailsForm = ({ onSubmit, onCancel, packageDetails }) => {
 
   const handlePayment = async (formData, packageDetails) => {
     try {
+      // Get user from localStorage
+      const user = JSON.parse(localStorage.getItem('user'));
+      const userId = user?._id || user?.id;
+      if (!user || !userId) {
+        throw new Error('Please login to make a booking');
+      }
+
       // Store the current path before initiating payment
       localStorage.setItem('returnPath', window.location.pathname);
 
@@ -78,7 +90,8 @@ const UserDetailsForm = ({ onSubmit, onCancel, packageDetails }) => {
         name: formData.firstName + ' ' + formData.lastName,
         email: formData.email,
         phone: formData.phone,
-        address: formData.address
+        address: formData.address,
+        userId: userId
       }));
 
       // Store package details
@@ -123,6 +136,7 @@ const UserDetailsForm = ({ onSubmit, onCancel, packageDetails }) => {
           email: formData.email,
           phone: formData.phone,
           address: formData.address,
+          userId: userId,
           packageDetails: {
             title: packageDetails.title,
             duration: packageDetails.duration,
@@ -167,6 +181,7 @@ const UserDetailsForm = ({ onSubmit, onCancel, packageDetails }) => {
           email: formData.email,
           phone: formData.phone,
           address: formData.address,
+          userId: userId,
           packageDetails: {
             title: packageDetails.title,
             duration: packageDetails.duration,

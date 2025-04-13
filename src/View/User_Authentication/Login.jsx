@@ -14,36 +14,35 @@ export default function Login() {
   const location = useLocation();
   
   // Get the redirect path from location state, default to homepage if none exists
-  const from = location.state?.from || '/Homepage';
+  const from = location.state?.from || '/Home';
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    const adminEmail = 'suraj.explore.nepal@gmail.com';
     const userRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/; 
 
-    if (!userRegex.test(email)) {
+    if (email !== adminEmail && !userRegex.test(email)) {
       toast.error("Invalid email format. Please enter a valid email address.");
       return;
     }
 
     try {
       const response = await axios.post('http://localhost:4000/login', { email, password });
-      
-      // Add address field to user data if it doesn't exist
-      const userData = {
-        ...response.data.user,
-        address: response.data.user.address || 'Maitidevi Kathmandu' // Default address if not provided
-      };
-      
       localStorage.setItem("token", response.data.token);
-      localStorage.setItem("user", JSON.stringify(userData));
+      localStorage.setItem("user", JSON.stringify(response.data.user));
       
-      // Check user role and navigate accordingly
-      if (response.data.user.role === 'admin') {
+      if (email === adminEmail) {
         toast.success('Admin login successful! Redirecting to Admin Dashboard.');
         navigate('/AdminHome');
       } else {
-        toast.success('Login successful! Redirecting to shared content.');
-        navigate(from, { replace: true });
+        // Check if we're coming from a shared content page
+        if (location.state?.from && location.state.from !== '/Home') {
+          toast.success('Login successful! Redirecting to shared content.');
+          navigate(location.state.from, { replace: true });
+        } else {
+          toast.success('Login successful! Redirecting to Home.');
+          navigate('/Home');
+        }
       }
     } catch (err) {
       const errorMessage = err.response?.data?.message || 'Something went wrong. Please try again.';

@@ -19,29 +19,31 @@ body {
 
 
 .heading22 {
-    display: flex;
-    flex-direction: column;
-    align-items: center;  
-    justify-content: center;
-    padding: 60px 40px;
-    width: 100%;
-    text-align: center;
-  }
-  
-  .title-heading22 {
-    margin-top: 85px;
-    font-size: 16px;
-    font-weight: bold;
-    color: #e63946;
-    margin-bottom: 5px;
-  }
-  
-  .title-para22 {
-    font-size: 28px;
-    font-weight: 500;
-    color: #000;
-    margin: 0;
-  }
+  display: flex;
+  flex-direction: column;
+  align-items: center;  
+  justify-content: center;
+  padding: 60px 40px;
+  width: 100%;
+  text-align: center;
+}
+
+.title-heading22 {
+  margin-top: 85px;
+  font-size: 16px;
+  font-weight: bold;
+  color: #e63946;
+  margin-bottom: 5px;
+}
+
+.title-para22 {
+  font-size: 28px;
+  font-weight: 500;
+  color: #000;
+  margin: 0;
+  width: 891px;
+}
+
 
   .search-container22 {
     display: flex;
@@ -391,12 +393,12 @@ body {
 }
 
 /* Delete Modal Styles */
-.delete-modal-overlay22 {
+.delete-modal {
   position: fixed;
   top: 0;
   left: 0;
-  right: 0;
-  bottom: 0;
+  width: 100%;
+  height: 100%;
   background-color: rgba(0, 0, 0, 0.5);
   display: flex;
   justify-content: center;
@@ -404,7 +406,7 @@ body {
   z-index: 1000;
 }
 
-.delete-modal22 {
+.delete-modal-content {
   background: white;
   padding: 30px;
   border-radius: 12px;
@@ -413,26 +415,27 @@ body {
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
 }
 
-.delete-modal22 h3 {
+.delete-modal-content h2 {
   color: #AE0808;
   margin-bottom: 15px;
-  font-size: 20px;
+  font-size: 24px;
 }
 
-.delete-modal22 p {
-  margin-bottom: 25px;
+.delete-modal-content p {
+  margin: 20px 0;
   color: #333;
+  font-size: 16px;
 }
 
-.delete-modal-buttons22 {
+.delete-modal-buttons {
   display: flex;
   justify-content: center;
   gap: 15px;
+  margin-top: 25px;
 }
 
-.delete-confirm-btn22, 
-.delete-cancel-btn22 {
-  padding: 10px 25px;
+.delete-modal-buttons button {
+  padding: 10px 40px;
   border: none;
   border-radius: 6px;
   cursor: pointer;
@@ -441,22 +444,22 @@ body {
   transition: background-color 0.3s;
 }
 
-.delete-confirm-btn22 {
-  background-color: #AE0808;
-  color: white;
-}
-
-.delete-confirm-btn22:hover {
-  background-color: #8B0000;
-}
-
-.delete-cancel-btn22 {
+.delete-modal-buttons .cancel-button {
   background-color: #008000;
   color: white;
 }
 
-.delete-cancel-btn22:hover {
+.delete-modal-buttons .delete-button {
+  background-color: #AE0808;
+  color: white;
+}
+
+.delete-modal-buttons .cancel-button:hover {
   background-color: #006400;
+}
+
+.delete-modal-buttons .delete-button:hover {
+  background-color: #8B0000;
 }
 
 .budget-value22 {

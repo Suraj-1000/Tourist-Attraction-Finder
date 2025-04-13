@@ -84,6 +84,11 @@ const signupSchema = new mongoose.Schema({
     type: Date,
     default: null,
   },
+  eventPreferences: {
+    type: [String],
+    default: ['None'],
+    enum: ['None', 'Cultural', 'Festival', 'Sports', 'Music', 'Food', 'Religious']
+  }
 });
 
 const Signup = mongoose.model('Signup', signupSchema);

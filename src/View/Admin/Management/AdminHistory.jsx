@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -13,11 +12,27 @@ export default function AdminHistoryPage() {
   const [showMenuIndex, setShowMenuIndex] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredHistory, setFilteredHistory] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchAllUserHistory = async () => {
+    try {
+      const response = await axios.get('http://localhost:4000/admin/history/all');
+      if (response.data.success) {
+        setHistory(response.data.data);
+        setFilteredHistory(response.data.data);
+      } else {
+        toast.error('Failed to fetch history');
+      }
+    } catch (error) {
+      console.error('Error fetching history:', error);
+      toast.error('Error loading history data');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const storedHistory = JSON.parse(localStorage.getItem("userHistory")) || [];
-    setHistory(storedHistory);
-    setFilteredHistory(storedHistory);
+    fetchAllUserHistory();
   }, []);
 
   const handleSearch = (e) => {
@@ -30,10 +45,11 @@ export default function AdminHistoryPage() {
     }
 
     const filtered = history.filter((entry) =>
-      entry.attraction.toLowerCase().includes(query) ||
-      entry.user.toLowerCase().includes(query) ||
-      entry.action.toLowerCase().includes(query) ||
-      entry.timestamp.toLowerCase().includes(query)
+      entry.itemName?.toLowerCase().includes(query) ||
+      entry.userId?.username?.toLowerCase().includes(query) ||
+      entry.action?.toLowerCase().includes(query) ||
+      entry.itemType?.toLowerCase().includes(query) ||
+      new Date(entry.timestamp).toLocaleString().toLowerCase().includes(query)
     );
 
     setFilteredHistory(filtered);
@@ -42,62 +58,56 @@ export default function AdminHistoryPage() {
     }
   };
 
-  const handleCheckboxChange = (index) => {
-    const updatedCheckedItems = new Set(checkedItems);
-    if (updatedCheckedItems.has(index)) {
-      updatedCheckedItems.delete(index);
-    } else {
-      updatedCheckedItems.add(index);
-    }
-    setCheckedItems(updatedCheckedItems);
-  };
-
-  const handleDeleteOrClear = () => {
+  const handleDeleteSelected = async () => {
     try {
-      if (checkedItems.size > 0) {
-        const updatedHistory = history.filter((_, index) => !checkedItems.has(index));
+      if (checkedItems.size === 0) {
+        toast.error('No items selected');
+        return;
+      }
+
+      const selectedIds = Array.from(checkedItems).map(index => filteredHistory[index]._id);
+      const response = await axios.post('http://localhost:4000/admin/history/delete-multiple', {
+        ids: selectedIds
+      });
+
+      if (response.data.success) {
+        const updatedHistory = history.filter(item => !selectedIds.includes(item._id));
         setHistory(updatedHistory);
         setFilteredHistory(updatedHistory);
-        localStorage.setItem("userHistory", JSON.stringify(updatedHistory));
         setCheckedItems(new Set());
-        toast.success(`${checkedItems.size} item${checkedItems.size > 1 ? 's' : ''} deleted successfully!`);
-      } else {
-        if (history.length === 0) {
-          toast.error('No history to clear');
-          return;
-        }
-        setHistory([]);
-        setFilteredHistory([]);
-        localStorage.setItem("userHistory", JSON.stringify([]));
-        setSearchQuery("");
-        toast.success('All history cleared successfully!');
+        toast.success(`${selectedIds.length} items deleted successfully`);
       }
     } catch (error) {
-      toast.error('Operation failed');
+      console.error('Error deleting items:', error);
+      toast.error('Failed to delete selected items');
     }
   };
 
-  const handleRemoveItem = (index) => {
+  const handleDeleteItem = async (index) => {
     try {
-      const actualIndex = history.indexOf(filteredHistory[index]);
-      const updatedHistory = history.filter((_, i) => i !== actualIndex);
-      setHistory(updatedHistory);
-      setFilteredHistory(updatedHistory.filter(item => 
-        item.attraction.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.user.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.action.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.timestamp.toLowerCase().includes(searchQuery.toLowerCase())
-      ));
-      localStorage.setItem("userHistory", JSON.stringify(updatedHistory));
-      setShowMenuIndex(null);
-      toast.success('Item removed successfully!');
+      const itemToDelete = filteredHistory[index];
+      const response = await axios.delete(`http://localhost:4000/admin/history/${itemToDelete._id}`);
+
+      if (response.data.success) {
+        const updatedHistory = history.filter(item => item._id !== itemToDelete._id);
+        setHistory(updatedHistory);
+        setFilteredHistory(updatedHistory.filter(item =>
+          item.itemName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          item.userId?.username?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          item.action?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          item.itemType?.toLowerCase().includes(searchQuery.toLowerCase())
+        ));
+        setShowMenuIndex(null);
+        toast.success('Item deleted successfully');
+      }
     } catch (error) {
-      toast.error('Failed to remove item');
+      console.error('Error deleting item:', error);
+      toast.error('Failed to delete item');
     }
   };
 
-  const handleMenuClick = (index) => {
-    setShowMenuIndex(showMenuIndex === index ? null : index);
+  const renderUserInfo = (entry) => {
+    return entry.userFullName || 'Unknown User';
   };
 
   return (
@@ -105,52 +115,71 @@ export default function AdminHistoryPage() {
       <Header />
       <div className="main-container28">
         <div className="heading28">
-          <h1 className="title-heading28">Track Your Travel History</h1>
-          <p className="title-para28">Access a detailed history of your past trips and visits.</p>
+          <h1 className="title-heading28">User Activity History</h1>
+          <p className="title-para28">View and manage all user activity history.</p>
         </div>
 
         <div className="search-container28">
           <input 
             className="search-location28" 
             type="text" 
-            placeholder="Search History..." 
+            placeholder="Search by user, action, or item..." 
             value={searchQuery}
             onChange={handleSearch}
           />
-          {history.length > 0 && (
+          {filteredHistory.length > 0 && (
             <button 
               className="delete-button28" 
-              onClick={handleDeleteOrClear}
+              onClick={handleDeleteSelected}
             >
-              {checkedItems.size > 0 ? 'Delete' : 'Clear All'}
+              {checkedItems.size > 0 ? `Delete Selected (${checkedItems.size})` : 'Delete All'}
             </button>
           )}
         </div>
 
         <div className="history-container28">
-          {filteredHistory.length > 0 ? (
+          {loading ? (
+            <p className="loading28">Loading history...</p>
+          ) : filteredHistory.length > 0 ? (
             filteredHistory.map((entry, index) => (
               <div className="history-card28" key={index}>
                 <input
                   type="checkbox"
                   className="checkbox28"
                   checked={checkedItems.has(index)}
-                  onChange={() => handleCheckboxChange(index)}
+                  onChange={() => {
+                    const updatedCheckedItems = new Set(checkedItems);
+                    if (updatedCheckedItems.has(index)) {
+                      updatedCheckedItems.delete(index);
+                    } else {
+                      updatedCheckedItems.add(index);
+                    }
+                    setCheckedItems(updatedCheckedItems);
+                  }}
                 />
 
                 <div className="history-content28">
-                  <p>
-                    <strong>{entry.user}</strong> {entry.action}{" "}
-                    <strong>{entry.attraction}</strong>
+                  <p className="user-info28">
+                    {renderUserInfo(entry)}
+                    {entry.userEmail && <span className="user-email28">({entry.userEmail})</span>}
                   </p>
-                  <p className="history-time28">📅 {entry.timestamp}</p>
+                  <p>
+                    <strong>Action:</strong> {entry.action}
+                  </p>
+                  <p>
+                    <strong>Item:</strong> {entry.itemName}
+                  </p>
+                  <p>
+                    <strong>Type:</strong> {entry.itemType}
+                  </p>
+                  <p className="history-time28">📅 {new Date(entry.timestamp).toLocaleString()}</p>
                 </div>
 
                 <span 
                   className="menu-icon28" 
                   onClick={(e) => {
                     e.stopPropagation();
-                    handleMenuClick(index);
+                    setShowMenuIndex(showMenuIndex === index ? null : index);
                   }}
                 >
                   ⋮
@@ -158,8 +187,8 @@ export default function AdminHistoryPage() {
 
                 {showMenuIndex === index && (
                   <div className="dropdown-menu28">
-                    <button className="remove-btn28" onClick={() => handleRemoveItem(index)}>
-                      Remove from history
+                    <button className="remove-btn28" onClick={() => handleDeleteItem(index)}>
+                      Delete entry
                     </button>
                   </div>
                 )}
