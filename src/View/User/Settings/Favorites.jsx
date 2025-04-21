@@ -197,6 +197,36 @@ export default function FavoritesPage() {
     return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   };
 
+  const isFavorite = (card) => {
+    return favorites.some((fav) => fav.title === card.title);
+  };
+
+  // Add renderStarRating function
+  const renderStarRating = (reviews) => {
+    const numReviews = parseInt(reviews) || 0;
+    const rating = Math.min(5, Math.max(1, Math.ceil(numReviews / 100)));
+    
+    return (
+      <div className="star-rating" style={{ display: 'inline-flex', marginLeft: '15px', alignItems: 'center' }}>
+        {[...Array(5)].map((_, index) => (
+          <span key={index} style={{ 
+            color: index < rating ? '#ffd700' : '#ccc', 
+            fontSize: '24px',
+            lineHeight: '1',
+            marginRight: '2px'
+          }}>★</span>
+        ))}
+      </div>
+    );
+  };
+
+  // Add formatAddress function
+  const formatAddress = (address) => {
+    if (!address) return "Nepal";
+    const parts = address.split(',').map(part => part.trim());
+    return `${parts[0]}, Nepal`;
+  };
+
   const renderCard = (item) => {
     // Check if the item is an event
     if (item.startDate && item.endDate && item.endTime) {
@@ -372,7 +402,10 @@ export default function FavoritesPage() {
 
         <div className="card-details66">
           <div className="card-title-rating66">
-            <h3>{item.title}</h3>
+            <h3 className="title66" style={{ display: 'flex', alignItems: 'center' }}>
+              {item.title}
+              {renderStarRating(item.reviews)}
+            </h3>
             <div className="card-actions66">
               <img
                 src="/images/filled_heart.png"
@@ -385,18 +418,24 @@ export default function FavoritesPage() {
           </div>
 
           <div className="address-reviews66">
-            <p className="address66">{item.address || "Gandaki Zone, Nepal"}</p>
+            <p className="address66">{formatAddress(item.address)}</p>
             <p className="reviews66">
               {item.reviews || "Not Reviewed"} reviews and opinions
             </p>
           </div>
-          <p className="ranking-string66">{item.tripType || "N/A"}</p>
-          <p className="ranking-string66">Trip Type: {item.tripType || "N/A"}</p>
-          <p className="ranking-string66">Duration: {item.duration || "N/A"}</p>
-          <p className="category-string66">Price: {item.price || "N/A"}</p>
-          <p className="category-string66">Group Size: {item.groupSize || "N/A"}</p>
-          <p className="category-string66">Difficulty: {item.difficulty || "N/A"}</p>
-          <p className="category-string66">Highlight: {item.highlight || "N/A"}</p>
+
+          <p className="ranking-string66">Trip Type: {item.tripType || "Short"}</p>
+          <p className="ranking-string66">Duration: {item.duration || "3 Days, Cultural & Historical Exploration"}</p>
+          <p className="ranking-string66">Category: {item.category || "Cultural & Historical Exploration"}</p>
+          <p className="category-string66">
+            Price: 
+            <span className="budget-value66">
+              {item.price ? convertPrice(item.price) : "Price Not Available"}
+            </span>
+          </p>
+          <p className="category-string66">Group Size: {item.groupSize || "Starting"}</p>
+          <p className="category-string66">Difficulty: {item.difficulty || "Easy"}</p>
+          <p className="category-string66 highlight-text66">Highlight: {item.highlight || "Traditional villages, breathtaking views, cultural exploration."}</p>
 
           <Link to={`/Itinerary-Package-View/${encodeURIComponent(item.title)}`} className="view-details66">
             View Details

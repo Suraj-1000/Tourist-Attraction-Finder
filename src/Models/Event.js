@@ -35,6 +35,20 @@ const eventSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  locationDetails: {
+    latitude: {
+      type: Number,
+      required: true
+    },
+    longitude: {
+      type: Number,
+      required: true
+    },
+    formattedAddress: {
+      type: String,
+      required: true
+    }
+  },
   image: {
     type: String,
     default: '/images/default-event.png'

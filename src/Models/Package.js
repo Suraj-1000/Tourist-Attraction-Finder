@@ -14,6 +14,11 @@ const packageSchema = new mongoose.Schema({
   imageUrl: String,
   highlight: String,
   address: String,
+  locationDetails: {
+    latitude: Number,
+    longitude: Number,
+    formattedAddress: String
+  },
   reviews: String,
   tripType: String,
   startDate: Date,

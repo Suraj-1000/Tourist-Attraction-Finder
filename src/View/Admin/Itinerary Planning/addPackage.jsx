@@ -6,6 +6,7 @@ import Header from "../../../Components/Admin Header/Admin-Header";
 import Footer from "../../../Components/Footer";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import MapPicker from "../../../Components/MapPicker";
 
 export default function AddPackagePage() {
   const [formData, setFormData] = useState({
@@ -13,6 +14,11 @@ export default function AddPackagePage() {
     image: "",
     highlight: "",
     address: "",
+    locationDetails: {
+      latitude: 27.7172,
+      longitude: 85.3240,
+      formattedAddress: ""
+    },
     reviews: "",
     tripType: "",
     startDate: "",
@@ -36,6 +42,7 @@ export default function AddPackagePage() {
 
   const [loading, setLoading] = useState(false); // Add loading state
   const navigate = useNavigate();
+  const [errors, setErrors] = useState({});
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -95,37 +102,126 @@ export default function AddPackagePage() {
 
   const handleItineraryChange = (index, e) => {
     const { name, value } = e.target;
-    const updatedItinerary = [...formData.itinerary];
-    updatedItinerary[index] = { ...updatedItinerary[index], [name]: value };
-    setFormData({ ...formData, itinerary: updatedItinerary });
+    setFormData(prev => {
+      const updatedItinerary = [...prev.itinerary];
+      updatedItinerary[index] = { 
+        ...updatedItinerary[index], 
+        [name]: value 
+      };
+      
+      // Log the updated itinerary for debugging
+      console.log("Updated itinerary:", updatedItinerary);
+      
+      return {
+        ...prev,
+        itinerary: updatedItinerary
+      };
+    });
+  };
+
+  const handleLocationSelect = (location) => {
+    setFormData(prev => ({
+      ...prev,
+      address: location.address,
+      locationDetails: {
+        latitude: location.lat,
+        longitude: location.lng,
+        formattedAddress: location.address
+      }
+    }));
+  };
+
+  const validateForm = () => {
+    const newErrors = {};
+
+    // Required fields validation
+    if (!formData.title?.trim()) newErrors.title = "Title is required";
+    if (!formData.highlight?.trim()) newErrors.highlight = "Highlight is required";
+    if (!formData.address?.trim()) newErrors.address = "Address is required";
+    if (!formData.startDate) newErrors.startDate = "Start date is required";
+    if (!formData.endDate) newErrors.endDate = "End date is required";
+    if (!formData.category?.trim()) newErrors.category = "Category is required";
+    if (!formData.overview?.trim()) newErrors.overview = "Overview is required";
+    if (!formData.included?.trim()) newErrors.included = "Included items are required";
+    if (!formData.operator?.trim()) newErrors.operator = "Operator is required";
+
+    // Price validation
+    if (!formData.price) {
+      newErrors.price = "Price is required";
+    } else {
+      const price = parseFloat(formData.price.replace(/[^0-9.-]+/g, ""));
+      if (isNaN(price) || price < 0) {
+        newErrors.price = "Price must be a positive number";
+      }
+    }
+
+    // Group size validation
+    if (formData.groupSize) {
+      const size = parseInt(formData.groupSize);
+      if (isNaN(size) || size < 1) {
+        newErrors.groupSize = "Group size must be a positive number";
+      }
+    }
+
+    // Date validation
+    if (formData.startDate && formData.endDate) {
+      const start = new Date(formData.startDate);
+      const end = new Date(formData.endDate);
+      if (end < start) {
+        newErrors.endDate = "End date cannot be before start date";
+      }
+    }
+
+    // Image validation
+    if (!formData.image) {
+      newErrors.image = "Package image is required";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
 
+    if (!validateForm()) {
+      toast.error("Please fill in all required fields correctly", {
+        position: "top-center",
+        autoClose: 3000,
+        className: 'toast-message19'
+      });
+      return;
+    }
+
+    setLoading(true);
     try {
-      // Create FormData object
       const formDataToSubmit = new FormData();
       
-      // Append all form fields to FormData
+      // Add all form data fields
       Object.keys(formData).forEach(key => {
-        if (key === 'itinerary') {
-          // Stringify the itinerary array
+        if (key === 'locationDetails') {
           formDataToSubmit.append(key, JSON.stringify(formData[key]));
         } else if (key === 'image' && formData[key]) {
-          // Handle image file
-          formDataToSubmit.append(key, formData[key]);
+          formDataToSubmit.append('image', formData[key]);
+        } else if (key === 'itinerary') {
+          // Ensure itinerary is properly stringified
+          const itineraryData = formData.itinerary.map(day => ({
+            day: day.day,
+            mode: day.mode || '',
+            highlights: day.highlights || '',
+            stay: day.stay || '',
+            meals: day.meals || '',
+            costBreakdown: day.costBreakdown || ''
+          }));
+          formDataToSubmit.append('itinerary', JSON.stringify(itineraryData));
         } else {
-          // Handle other fields
           formDataToSubmit.append(key, formData[key]);
         }
       });
 
       // Log the form data for debugging
-      console.log('Submitting form data:', Object.fromEntries(formDataToSubmit));
+      console.log("Submitting itinerary data:", formData.itinerary);
 
-      // Make the API request
       const response = await axios.post(
         'http://localhost:4000/adminPackage/Add-Package',
         formDataToSubmit,
@@ -291,46 +387,318 @@ export default function AddPackagePage() {
         <form onSubmit={handleSubmit} className="form19">
           <h2 className="h2-19">Create New Itinerary Package</h2>
 
-          <label className="label19">Title: <input className="input19" type="text" name="title" value={formData.title} onChange={handleChange} /></label>
-          <label className="label19">Image: <input type="file" name="image" onChange={handleFileChange} /></label>
-          <label className="label19">Highlight: <input className="input19" type="text" name="highlight" value={formData.highlight} onChange={handleChange} /></label>
-          <label className="label19">Overview: <textarea className="textarea19" name="overview" value={formData.overview} onChange={handleChange} /></label>
+          <label className="label19">
+            Title: <span className="required">*</span>
+            <input 
+              className={`input19 ${errors.title ? 'error-input' : ''}`}
+              type="text" 
+              name="title" 
+              value={formData.title} 
+              onChange={handleChange} 
+            />
+            {errors.title && <span className="error-message">{errors.title}</span>}
+          </label>
+          <label className="label19">
+            Image: <span className="required">*</span>
+            <input 
+              type="file" 
+              name="image" 
+              onChange={handleFileChange}
+              className={errors.image ? 'error-input' : ''}
+            />
+            {errors.image && <span className="error-message">{errors.image}</span>}
+          </label>
+          <label className="label19">
+            Highlight: <span className="required">*</span>
+            <input 
+              className={`input19 ${errors.highlight ? 'error-input' : ''}`}
+              type="text" 
+              name="highlight" 
+              value={formData.highlight} 
+              onChange={handleChange} 
+            />
+            {errors.highlight && <span className="error-message">{errors.highlight}</span>}
+          </label>
+          <label className="label19">
+            Overview: <span className="required">*</span>
+            <textarea 
+              className={`textarea19 ${errors.overview ? 'error-input' : ''}`}
+              name="overview" 
+              value={formData.overview} 
+              onChange={handleChange} 
+            />
+            {errors.overview && <span className="error-message">{errors.overview}</span>}
+          </label>
 
           <h3 className="h3-19">Quick Info:</h3>
-          <label className="label19">Address: <input className="input19" type="text" name="address" value={formData.address} onChange={handleChange} /></label>
-          <label className="label19">Reviews: <input className="input19" type="text" name="reviews" value={formData.reviews} onChange={handleChange} /></label>
-          <label className="label19">Trip Type: <input className="input19" type="text" name="tripType" value={formData.tripType} readOnly /></label>
+          <label className="label19">
+            Address: <span className="required">*</span>
+            <input 
+              className={`input19 ${errors.address ? 'error-input' : ''}`}
+              type="text" 
+              name="address" 
+              value={formData.address} 
+              onChange={handleChange} 
+            />
+            {errors.address && <span className="error-message">{errors.address}</span>}
+          </label>
+          <div className="map-section19">
+            <h3 className="h3-19">Select Location on Map</h3>
+            <div className="map-container19">
+              <MapPicker
+                onLocationSelect={handleLocationSelect}
+                initialLocation={formData.locationDetails}
+              />
+            </div>
+          </div>
+          <label className="label19">
+            Reviews: <span className="required">*</span>
+            <input 
+              className={`input19 ${errors.reviews ? 'error-input' : ''}`}
+              type="text" 
+              name="reviews" 
+              value={formData.reviews} 
+              onChange={handleChange} 
+            />
+            {errors.reviews && <span className="error-message">{errors.reviews}</span>}
+          </label>
+          <label className="label19">
+            Trip Type: <span className="required">*</span>
+            <input 
+              className={`input19 ${errors.tripType ? 'error-input' : ''}`}
+              type="text" 
+              name="tripType" 
+              value={formData.tripType} 
+              readOnly 
+            />
+            {errors.tripType && <span className="error-message">{errors.tripType}</span>}
+          </label>
 
-          <label className="label19">Start Date: <input className="input19" type="date" name="startDate" value={formData.startDate} onChange={handleChange} /></label>
-          <label className="label19">End Date: <input className="input19" type="date" name="endDate" value={formData.endDate} onChange={handleChange} /></label>
-          <label className="label19">Duration: <input className="input19" type="text" name="duration" value={formData.duration} readOnly /></label>
+          <label className="label19">
+            Start Date: <span className="required">*</span>
+            <input 
+              className={`input19 ${errors.startDate ? 'error-input' : ''}`}
+              type="date" 
+              name="startDate" 
+              value={formData.startDate} 
+              onChange={handleChange} 
+            />
+            {errors.startDate && <span className="error-message">{errors.startDate}</span>}
+          </label>
+          <label className="label19">
+            End Date: <span className="required">*</span>
+            <input 
+              className={`input19 ${errors.endDate ? 'error-input' : ''}`}
+              type="date" 
+              name="endDate" 
+              value={formData.endDate} 
+              onChange={handleChange} 
+            />
+            {errors.endDate && <span className="error-message">{errors.endDate}</span>}
+          </label>
+          <label className="label19">
+            Duration: <span className="required">*</span>
+            <input 
+              className={`input19 ${errors.duration ? 'error-input' : ''}`}
+              type="text" 
+              name="duration" 
+              value={formData.duration} 
+              readOnly 
+            />
+            {errors.duration && <span className="error-message">{errors.duration}</span>}
+          </label>
 
-          <label className="label19">Category: <input className="input19" type="text" name="category" value={formData.category} onChange={handleChange} /></label>
-          <label className="label19">Price: <input className="input19" type="text" name="price" value={formData.price} onChange={handleChange} /></label>
-          <label className="label19">Group Size: <input  className="input19" type="text" name="groupSize" value={formData.groupSize} onChange={handleChange} /></label>
-          <label className="label19">Difficulty: <input className="input19" type="text" name="difficulty" value={formData.difficulty} onChange={handleChange} /></label>
+          <label className="label19">
+            Category: <span className="required">*</span>
+            <input 
+              className={`input19 ${errors.category ? 'error-input' : ''}`}
+              type="text" 
+              name="category" 
+              value={formData.category} 
+              onChange={handleChange} 
+            />
+            {errors.category && <span className="error-message">{errors.category}</span>}
+          </label>
+          <label className="label19">
+            Price: <span className="required">*</span>
+            <input 
+              className={`input19 ${errors.price ? 'error-input' : ''}`}
+              type="text" 
+              name="price" 
+              value={formData.price} 
+              onChange={handleChange}
+              placeholder="Enter price (positive number)" 
+            />
+            {errors.price && <span className="error-message">{errors.price}</span>}
+          </label>
+          <label className="label19">
+            Group Size: <span className="required">*</span>
+            <input 
+              className={`input19 ${errors.groupSize ? 'error-input' : ''}`}
+              type="text" 
+              name="groupSize" 
+              value={formData.groupSize} 
+              onChange={handleChange} 
+            />
+            {errors.groupSize && <span className="error-message">{errors.groupSize}</span>}
+          </label>
+          <label className="label19">
+            Difficulty: <span className="required">*</span>
+            <input 
+              className={`input19 ${errors.difficulty ? 'error-input' : ''}`}
+              type="text" 
+              name="difficulty" 
+              value={formData.difficulty} 
+              onChange={handleChange} 
+            />
+            {errors.difficulty && <span className="error-message">{errors.difficulty}</span>}
+          </label>
           
-          <label className="label19">Age Restriction: <input className="input19" type="text" name="ageRestriction" value={formData.ageRestriction} onChange={handleChange} /></label>
-          <label className="label19">Pickup Details: <textarea className="textarea19"name="pickupDetails" value={formData.pickupDetails} onChange={handleChange} /></label>
-          <label className="label19">Accessibility: <textarea className="textarea19" name="accessibility" value={formData.accessibility} onChange={handleChange} /></label>
-          <label className="label19">Cancellation Policy: <textarea className="textarea19" name="cancellationPolicy" value={formData.cancellationPolicy} onChange={handleChange} /></label>
+          <label className="label19">
+            Age Restriction: <span className="required">*</span>
+            <input 
+              className={`input19 ${errors.ageRestriction ? 'error-input' : ''}`}
+              type="text" 
+              name="ageRestriction" 
+              value={formData.ageRestriction} 
+              onChange={handleChange} 
+            />
+            {errors.ageRestriction && <span className="error-message">{errors.ageRestriction}</span>}
+          </label>
+          <label className="label19">
+            Pickup Details: <span className="required">*</span>
+            <textarea 
+              className={`textarea19 ${errors.pickupDetails ? 'error-input' : ''}`}
+              name="pickupDetails" 
+              value={formData.pickupDetails} 
+              onChange={handleChange} 
+            />
+            {errors.pickupDetails && <span className="error-message">{errors.pickupDetails}</span>}
+          </label>
+          <label className="label19">
+            Accessibility: <span className="required">*</span>
+            <textarea 
+              className={`textarea19 ${errors.accessibility ? 'error-input' : ''}`}
+              name="accessibility" 
+              value={formData.accessibility} 
+              onChange={handleChange} 
+            />
+            {errors.accessibility && <span className="error-message">{errors.accessibility}</span>}
+          </label>
+          <label className="label19">
+            Cancellation Policy: <span className="required">*</span>
+            <textarea 
+              className={`textarea19 ${errors.cancellationPolicy ? 'error-input' : ''}`}
+              name="cancellationPolicy" 
+              value={formData.cancellationPolicy} 
+              onChange={handleChange} 
+            />
+            {errors.cancellationPolicy && <span className="error-message">{errors.cancellationPolicy}</span>}
+          </label>
         
-          <label className="label19">Operator: <input className="input19" type="text" name="operator" value={formData.operator} onChange={handleChange} /></label>
+          <label className="label19">
+            Operator: <span className="required">*</span>
+            <input 
+              className={`input19 ${errors.operator ? 'error-input' : ''}`}
+              type="text" 
+              name="operator" 
+              value={formData.operator} 
+              onChange={handleChange} 
+            />
+            {errors.operator && <span className="error-message">{errors.operator}</span>}
+          </label>
 
           <h3 className="h3-19">Day by Day Itinerary:</h3>
           {formData.itinerary.map((day, index) => (
             <div key={index}>
-              <label className="label19">Day: <input className="input19" type="text" name="day" value={day.day} readOnly /></label>
-              <label className="label19">Mode: <input className="input19" type="text" name="mode" value={day.mode} onChange={(e) => handleItineraryChange(index, e)} /></label>
-              <label className="label19">Highlights: <input className="input19" type="text" name="highlights" value={day.highlights} onChange={(e) => handleItineraryChange(index, e)} /></label>
-              <label className="label19">Stay: <input className="input19" type="text" name="stay" value={day.stay} onChange={(e) => handleItineraryChange(index, e)} /></label>
-              <label className="label19">Meals: <input className="input19" type="text" name="meals" value={day.meals} onChange={(e) => handleItineraryChange(index, e)} /></label>
-              <label className="label19">Cost Breakdown: <textarea className="textarea19" name="costBreakdown" value={day.costBreakdown} onChange={(e) => handleItineraryChange(index, e)} /></label>
+              <label className="label19">
+                Day: <span className="required">*</span>
+                <input 
+                  className={`input19 ${errors.itinerary ? 'error-input' : ''}`}
+                  type="text" 
+                  name="day" 
+                  value={day.day} 
+                  readOnly 
+                />
+                {errors.itinerary && <span className="error-message">{errors.itinerary}</span>}
+              </label>
+              <label className="label19">
+                Mode: <span className="required">*</span>
+                <input 
+                  className={`input19 ${errors.itinerary ? 'error-input' : ''}`}
+                  type="text" 
+                  name="mode" 
+                  value={day.mode} 
+                  onChange={(e) => handleItineraryChange(index, e)} 
+                />
+                {errors.itinerary && <span className="error-message">{errors.itinerary}</span>}
+              </label>
+              <label className="label19">
+                Highlights: <span className="required">*</span>
+                <input 
+                  className={`input19 ${errors.itinerary ? 'error-input' : ''}`}
+                  type="text" 
+                  name="highlights" 
+                  value={day.highlights} 
+                  onChange={(e) => handleItineraryChange(index, e)} 
+                />
+                {errors.itinerary && <span className="error-message">{errors.itinerary}</span>}
+              </label>
+              <label className="label19">
+                Stay: <span className="required">*</span>
+                <input 
+                  className={`input19 ${errors.itinerary ? 'error-input' : ''}`}
+                  type="text" 
+                  name="stay" 
+                  value={day.stay} 
+                  onChange={(e) => handleItineraryChange(index, e)} 
+                />
+                {errors.itinerary && <span className="error-message">{errors.itinerary}</span>}
+              </label>
+              <label className="label19">
+                Meals: <span className="required">*</span>
+                <input 
+                  className={`input19 ${errors.itinerary ? 'error-input' : ''}`}
+                  type="text" 
+                  name="meals" 
+                  value={day.meals} 
+                  onChange={(e) => handleItineraryChange(index, e)} 
+                />
+                {errors.itinerary && <span className="error-message">{errors.itinerary}</span>}
+              </label>
+              <label className="label19">
+                Cost Breakdown: <span className="required">*</span>
+                <textarea 
+                  className={`textarea19 ${errors.itinerary ? 'error-input' : ''}`}
+                  name="costBreakdown" 
+                  value={day.costBreakdown} 
+                  onChange={(e) => handleItineraryChange(index, e)} 
+                />
+                {errors.itinerary && <span className="error-message">{errors.itinerary}</span>}
+              </label>
             </div>
           ))}
 
-          <label className="label19">What's Included: <textarea className="textarea19" name="included" value={formData.included} onChange={handleChange} /></label>
-          <label className="label19">Additional Information: <textarea className="textarea19" name="additionalInfo" value={formData.additionalInfo} onChange={handleChange} /></label>
+          <label className="label19">
+            What's Included: <span className="required">*</span>
+            <textarea 
+              className={`textarea19 ${errors.included ? 'error-input' : ''}`}
+              name="included" 
+              value={formData.included} 
+              onChange={handleChange} 
+            />
+            {errors.included && <span className="error-message">{errors.included}</span>}
+          </label>
+          <label className="label19">
+            Additional Information: <span className="required">*</span>
+            <textarea 
+              className={`textarea19 ${errors.additionalInfo ? 'error-input' : ''}`}
+              name="additionalInfo" 
+              value={formData.additionalInfo} 
+              onChange={handleChange} 
+            />
+            {errors.additionalInfo && <span className="error-message">{errors.additionalInfo}</span>}
+          </label>
 
           <div className="button-container19">
             <Link to="/ItineraryPackage"><button type="button" className="cancel-btn19">Cancel</button></Link>
@@ -338,6 +706,22 @@ export default function AddPackagePage() {
               {loading ? "Adding..." : "Create"}
             </button>
           </div>
+
+          <style jsx>{`
+            .required {
+              color: red;
+              margin-left: 2px;
+            }
+            .error-input {
+              border: 1px solid red;
+            }
+            .error-message {
+              color: red;
+              font-size: 0.8rem;
+              margin-top: 4px;
+              display: block;
+            }
+          `}</style>
         </form>
       </div>
       <Footer />

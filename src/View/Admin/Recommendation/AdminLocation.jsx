@@ -8,7 +8,7 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 // API Key
-const GOMAPS_API_KEY = 'AlzaSy_371N1Zdv2lvQ2QvdnTABfYKRK_uqFjvp';
+const GOOGLE_MAPS_API_KEY = 'AIzaSyB41DRUbKWJHPxaFjMAwdrzWzbVKartNGg';
 const DEFAULT_PLACE_PHOTO = 'data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%22300%22%20height%3D%22200%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20300%20200%22%20preserveAspectRatio%3D%22none%22%3E%3Cdefs%3E%3Cstyle%20type%3D%22text%2Fcss%22%3E%23holder_189e819e4f8%20text%20%7B%20fill%3A%23999%3Bfont-weight%3Anormal%3Bfont-family%3AArial%2C%20Helvetica%2C%20Open%20Sans%2C%20sans-serif%2C%20monospace%3Bfont-size%3A15pt%20%7D%20%3C%2Fstyle%3E%3C%2Fdefs%3E%3Cg%20id%3D%22holder_189e819e4f8%22%3E%3Crect%20width%3D%22300%22%20height%3D%22200%22%20fill%3D%22%23E5E5E5%22%3E%3C%2Frect%3E%3Cg%3E%3Ctext%20x%3D%22107%22%20y%3D%22107.4%22%3ENo Image%3C%2Ftext%3E%3C%2Fg%3E%3C%2Fg%3E%3C%2Fsvg%3E';
 
 // LocationCard component
@@ -160,10 +160,60 @@ export default function AdminLocationPage() {
   const [routeInfo, setRouteInfo] = useState(null);
 
   useEffect(() => {
-    let mapInitTimer;
+    const loadGoogleMaps = () => {
+      return new Promise((resolve, reject) => {
+        if (window.google && window.google.maps && window.google.maps.Map) {
+          resolve();
+          return;
+        }
+
+        // Check if script is already being loaded
+        const existingScript = document.querySelector(`script[src*="maps.googleapis.com"]`);
+        if (existingScript) {
+          const checkLoaded = setInterval(() => {
+            if (window.google && window.google.maps && window.google.maps.Map) {
+              clearInterval(checkLoaded);
+              resolve();
+            }
+          }, 100);
+          return;
+        }
+
+        const script = document.createElement("script");
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places&loading=async`;
+        script.async = true;
+        script.defer = true;
+        
+        script.onload = () => {
+          if (window.google && window.google.maps && window.google.maps.Map) {
+            resolve();
+          } else {
+            reject(new Error("Google Maps API failed to load properly"));
+          }
+        };
+
+        script.onerror = () => {
+          reject(new Error("Failed to load Google Maps API"));
+        };
+
+        document.body.appendChild(script);
+
+        // Load Google Fonts
+        const fontLink = document.createElement("link");
+        fontLink.href = "https://fonts.googleapis.com/css2?family=Poppins:wght@500;700&family=Roboto:wght@400;500&display=swap";
+        fontLink.rel = "stylesheet";
+        document.head.appendChild(fontLink);
+      });
+    };
 
     const initMap = async () => {
       try {
+        await loadGoogleMaps();
+        
+        if (!window.google || !window.google.maps || !window.google.maps.Map) {
+          throw new Error("Google Maps API not properly loaded");
+        }
+        
         // Initialize map centered on Nepal
         const map = new window.google.maps.Map(mapRef.current, {
           center: { lat: 27.7172, lng: 85.3240 },
@@ -188,29 +238,7 @@ export default function AdminLocationPage() {
           input.addEventListener('input', handleSearchInput);
         }
 
-        // Add listeners for map events
-        map.addListener('dragend', () => {
-          if (searchTimeoutRef.current) {
-            clearTimeout(searchTimeoutRef.current);
-          }
-          searchTimeoutRef.current = setTimeout(() => {
-            searchNearbyPlaces();
-          }, 500);
-        });
-
-        map.addListener('zoom_changed', () => {
-          if (searchTimeoutRef.current) {
-            clearTimeout(searchTimeoutRef.current);
-          }
-          searchTimeoutRef.current = setTimeout(() => {
-            searchNearbyPlaces();
-          }, 500);
-        });
-
         setMapLoaded(true);
-        // Initial search
-        searchNearbyPlaces();
-
       } catch (error) {
         console.error('Error initializing map:', error);
         setMapError('Failed to initialize map. Please try refreshing the page.');
@@ -218,35 +246,9 @@ export default function AdminLocationPage() {
       }
     };
 
-    const loadGoMapsScript = () => {
-      if (scriptLoadedRef.current) return;
-      
-      const existingScripts = document.querySelectorAll('script[src*="gomaps.pro"]');
-      existingScripts.forEach(script => script.remove());
-
-      const script = document.createElement('script');
-      script.src = `https://maps.gomaps.pro/maps/api/js?key=${GOMAPS_API_KEY}&libraries=places&v=3.exp`;
-      script.async = true;
-
-      script.onload = () => {
-        initMap();
-      };
-
-      script.onerror = () => {
-        setMapError('Failed to load map. Please check your internet connection.');
-        toast.error('Failed to load map');
-      };
-
-      document.head.appendChild(script);
-      scriptLoadedRef.current = true;
-    };
-
-    loadGoMapsScript();
+    initMap();
 
     return () => {
-      if (mapInitTimer) {
-        clearTimeout(mapInitTimer);
-      }
       if (searchTimeoutRef.current) {
         clearTimeout(searchTimeoutRef.current);
       }
@@ -268,11 +270,11 @@ export default function AdminLocationPage() {
     if (!query) return;
 
     try {
-      const response = await axios.get('https://maps.gomaps.pro/maps/api/geocode/json', {
+      const response = await axios.get('https://maps.googleapis.com/maps/api/geocode/json', {
         params: {
           address: query,
           components: 'country:np',
-          key: GOMAPS_API_KEY
+          key: GOOGLE_MAPS_API_KEY
         }
       });
 
@@ -349,11 +351,15 @@ export default function AdminLocationPage() {
 
       if (searchQuery) {
         try {
-          const geocodeResponse = await axios.get('https://maps.gomaps.pro/maps/api/geocode/json', {
+          const geocodeResponse = await axios.get('https://maps.googleapis.com/maps/api/geocode/json', {
             params: {
               address: searchQuery,
               components: 'country:np',
-              key: GOMAPS_API_KEY
+              key: GOOGLE_MAPS_API_KEY
+            },
+            headers: {
+              'Accept': 'application/json',
+              'Content-Type': 'application/json'
             }
           });
 
@@ -366,12 +372,16 @@ export default function AdminLocationPage() {
         }
       }
 
-      const response = await axios.get('https://maps.gomaps.pro/maps/api/place/nearbysearch/json', {
+      const response = await axios.get('https://maps.googleapis.com/maps/api/place/nearbysearch/json', {
         params: {
-          key: GOMAPS_API_KEY,
+          key: GOOGLE_MAPS_API_KEY,
           location: `${searchLocation.lat},${searchLocation.lng}`,
           radius: 5000,
           type: 'tourist_attraction'
+        },
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
         }
       });
 
@@ -426,39 +436,44 @@ export default function AdminLocationPage() {
     setLoading(true);
 
     try {
-      const response = await axios.get('https://maps.gomaps.pro/maps/api/place/nearbysearch/json', {
-        params: {
-          key: GOMAPS_API_KEY,
-          location: `${center.lat()},${center.lng()}`,
-          radius: 5000,
-          type: ['tourist_attraction', 'point_of_interest']
-        }
-      });
+      // Use the Places API directly instead of REST API
+      const service = new window.google.maps.places.PlacesService(mapInstanceRef.current);
+      
+      const request = {
+        location: center,
+        radius: 5000,
+        type: ['tourist_attraction', 'point_of_interest', 'natural_feature', 'place_of_worship', 'lodging']
+      };
 
-      if (response.data.status === 'OK' && response.data.results) {
-        const newMarkers = response.data.results.map(place => {
-          const marker = new window.google.maps.Marker({
-            position: place.geometry.location,
-            map: mapInstanceRef.current,
-            title: place.name,
-            icon: {
-              url: 'http://maps.google.com/mapfiles/ms/icons/yellow-dot.png'
-            }
+      service.nearbySearch(request, (results, status) => {
+        if (status === window.google.maps.places.PlacesServiceStatus.OK && results) {
+          const newMarkers = results.map(place => {
+            const marker = new window.google.maps.Marker({
+              position: place.geometry.location,
+              map: mapInstanceRef.current,
+              title: place.name,
+              icon: {
+                url: 'http://maps.google.com/mapfiles/ms/icons/blue-dot.png'
+              }
+            });
+
+            // Add click listener to marker
+            marker.addListener('click', () => handleCardClick(place));
+
+            return marker;
           });
 
-          // Add click listener to marker
-          marker.addListener('click', () => handleCardClick(place));
-
-          return marker;
-        });
-
-        setNearbyMarkers(newMarkers);
-        toast.success(`Found ${newMarkers.length} nearby attractions`);
-      }
+          setNearbyMarkers(newMarkers);
+          toast.success(`Found ${newMarkers.length} nearby attractions`);
+        } else {
+          console.error('Places search failed:', status);
+          toast.error('Failed to find nearby attractions');
+        }
+        setLoading(false);
+      });
     } catch (error) {
       console.error('Error searching nearby places:', error);
       toast.error('Failed to find nearby attractions');
-    } finally {
       setLoading(false);
     }
   };
@@ -916,7 +931,7 @@ export default function AdminLocationPage() {
         </div>
       </div>
 
-      {/* Location Details Modal */}
+      {/* Enhanced Location Details Modal */}
       {showModal && selectedLocation && (
         <div className="modal-overlay37">
           <div className="modal-content37">
@@ -942,14 +957,57 @@ export default function AdminLocationPage() {
               )}
             </div>
             <div className="modal-body37">
-              <p>{selectedLocation.vicinity}</p>
-              {selectedLocation.photos && selectedLocation.photos.length > 0 && (
-                <img 
-                  src={`https://maps.gomaps.pro/maps/api/place/photo?maxwidth=400&photo_reference=${selectedLocation.photos[0].photo_reference}&key=${GOMAPS_API_KEY}`}
-                  alt={selectedLocation.name}
-                  className="modal-image37"
-                />
-              )}
+              <div className="modal-image-container37">
+                {selectedLocation.photos && selectedLocation.photos.length > 0 && (
+                  <img 
+                    src={`https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photo_reference=${selectedLocation.photos[0].photo_reference}&key=${GOOGLE_MAPS_API_KEY}`}
+                    alt={selectedLocation.name}
+                    className="modal-image37"
+                  />
+                )}
+              </div>
+              <div className="modal-details37">
+                <p className="modal-address37">📍 {selectedLocation.vicinity}</p>
+                {selectedLocation.types && (
+                  <div className="modal-types37">
+                    <h3>Categories:</h3>
+                    <div className="type-tags37">
+                      {selectedLocation.types.map((type, index) => (
+                        <span key={index} className="type-tag37">
+                          {type.split('_').map(word => 
+                            word.charAt(0).toUpperCase() + word.slice(1)
+                          ).join(' ')}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {selectedLocation.opening_hours && (
+                  <div className="modal-hours37">
+                    <h3>Opening Hours:</h3>
+                    <p>{selectedLocation.opening_hours.isOpen ? 'Open Now' : 'Closed'}</p>
+                    {selectedLocation.opening_hours.weekday_text && (
+                      <ul>
+                        {selectedLocation.opening_hours.weekday_text.map((text, index) => (
+                          <li key={index}>{text}</li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                )}
+                {selectedLocation.website && (
+                  <div className="modal-website37">
+                    <a href={selectedLocation.website} target="_blank" rel="noopener noreferrer">
+                      Visit Website
+                    </a>
+                  </div>
+                )}
+                {selectedLocation.formatted_phone_number && (
+                  <div className="modal-phone37">
+                    <p>📞 {selectedLocation.formatted_phone_number}</p>
+                  </div>
+                )}
+              </div>
               <div className="modal-actions37">
                 <button 
                   className="get-directions-btn37"

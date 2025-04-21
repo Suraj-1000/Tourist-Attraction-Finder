@@ -201,13 +201,12 @@ const EventBookingForm = ({ onSubmit, onCancel, eventDetails }) => {
         packageDetails: packageDetails
       };
 
-      console.log('Sending payment request with data:', paymentRequestData);
-
       if (formData.paymentPartner === 'esewa') {
         // Initialize eSewa payment
         const response = await axios.post('http://localhost:4000/esewa/initialize-esewa', paymentRequestData);
 
         if (response.data.success) {
+          toast.success('Redirecting to eSewa payment...');
           const form = document.createElement('form');
           form.method = 'POST';
           form.action = response.data.formAction;
@@ -236,6 +235,8 @@ const EventBookingForm = ({ onSubmit, onCancel, eventDetails }) => {
         const response = await axios.post('http://localhost:4000/khalti/initialize-khalti', khaltiRequestData);
 
         if (response.data.success && response.data.payment?.payment_url) {
+          toast.success('Redirecting to Khalti payment...');
+          // Redirect to Khalti payment page
           window.location.href = response.data.payment.payment_url;
         } else {
           throw new Error(response.data.message || 'Failed to get Khalti payment URL');
@@ -262,8 +263,6 @@ const EventBookingForm = ({ onSubmit, onCancel, eventDetails }) => {
     setIsSubmitting(true);
     try {
       await handlePayment(formData, eventDetails);
-      toast.success('Payment processing successfully initiated!');
-      onSubmit();
     } catch (error) {
       console.error('Payment error:', error);
       toast.error(error.message || 'Failed to process payment. Please try again.');

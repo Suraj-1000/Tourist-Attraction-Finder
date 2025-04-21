@@ -74,10 +74,21 @@ router.post('/', upload.single('image'), async (req, res) => {
   try {
     const eventData = JSON.parse(req.body.data);
     
+    // Validate location details
+    if (!eventData.locationDetails || 
+        !eventData.locationDetails.latitude || 
+        !eventData.locationDetails.longitude || 
+        !eventData.locationDetails.formattedAddress) {
+      return res.status(400).json({ 
+        message: 'Location details are required',
+        type: 'ValidationError'
+      });
+    }
+
     // Ensure schedule has day field
     if (eventData.schedule && Array.isArray(eventData.schedule)) {
       eventData.schedule = eventData.schedule.map(item => ({
-        day: item.day || "Day 1", // Ensure day exists
+        day: item.day || "Day 1",
         time: item.time,
         activity: item.activity
       }));
@@ -112,6 +123,17 @@ router.put('/:id', upload.single('image'), async (req, res) => {
 
     // Parse the event data from the request body
     const eventData = JSON.parse(req.body.data);
+
+    // Validate location details
+    if (!eventData.locationDetails || 
+        !eventData.locationDetails.latitude || 
+        !eventData.locationDetails.longitude || 
+        !eventData.locationDetails.formattedAddress) {
+      return res.status(400).json({ 
+        message: 'Location details are required',
+        type: 'ValidationError'
+      });
+    }
 
     // Add image if uploaded
     if (req.file) {

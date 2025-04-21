@@ -144,6 +144,30 @@ export default function AdminFavoritesPage() {
     return "⭐".repeat(Math.round(rating));
   };
 
+  const renderStarRating = (reviews) => {
+    const numReviews = parseInt(reviews) || 0;
+    const rating = Math.min(5, Math.max(1, Math.ceil(numReviews / 100)));
+    
+    return (
+      <div className="star-rating" style={{ display: 'inline-flex', marginLeft: '15px', alignItems: 'center' }}>
+        {[...Array(5)].map((_, index) => (
+          <span key={index} style={{ 
+            color: index < rating ? '#ffd700' : '#ccc', 
+            fontSize: '24px',
+            lineHeight: '1',
+            marginRight: '2px'
+          }}>★</span>
+        ))}
+      </div>
+    );
+  };
+
+  const formatAddress = (address) => {
+    if (!address) return "Nepal";
+    const parts = address.split(',').map(part => part.trim());
+    return `${parts[0]}, Nepal`;
+  };
+
   const filteredFavorites = () => {
     switch (activeTab) {
       case 'events':
@@ -286,26 +310,38 @@ export default function AdminFavoritesPage() {
 
             <div className="card-details-fav">
               <div className="card-title-rating-fav">
-                <h3 className="title-fav">{item.title}</h3>
+                <h3 className="title-fav" style={{ display: 'flex', alignItems: 'center' }}>
+                  {item.title}
+                  {renderStarRating(item.reviews)}
+                </h3>
+                <img
+                  src={isFavorite(favorite) ? "/images/filled_heart.png" : "/images/heart.png"}
+                  alt="Favorite"
+                  className="favorite-icon-fav"
+                  onClick={() => toggleFavorite(favorite)}
+                />
               </div>
 
-              <img
-                src={isFavorite(favorite) ? "/images/filled_heart.png" : "/images/heart.png"}
-                alt="Favorite"
-                className="favorite-icon-fav"
-                onClick={() => toggleFavorite(favorite)}
-              />
-
               <div className="address-reviews-fav">
-                <p className="address-fav">{item.address || "Gandaki Zone, Nepal"}</p>
+                <p className="address-fav">{formatAddress(item.address)}</p>
                 <p className="reviews-fav">{item.reviews || "Not Reviewed"} reviews and opinions</p>
               </div>
 
               <p className="ranking-string-fav">Trip Type: {item.tripType || "Short"}</p>
-              <p className="ranking-string-fav">Duration: {item.duration}</p>
+              <p className="ranking-string-fav">Duration: {item.duration || "3 Days, Cultural & Historical Exploration"}</p>
+              <p className="ranking-string-fav">Category: {item.category || "Cultural & Historical Exploration"}</p>
               <p className="category-string-fav">
-                Price: <span className="budget-value-fav">{convertPrice(item.price)}</span>
+                Price: 
+                <span className="budget-value-fav">
+                  {item.price ? convertPrice(item.price) : "Price Not Available"}
+                </span>
               </p>
+              <p className="category-string-fav">Group Size: {item.groupSize || "Starting"}</p>
+              <p className="category-string-fav">Difficulty: {item.difficulty || "Easy"}</p>
+              <p className="category-string-fav highlight-text-fav">
+                Highlight: {item.highlight || "Traditional villages, breathtaking views, cultural exploration."}
+              </p>
+
               <Link to={`/ItineraryPackageView/${encodeURIComponent(item.title)}`} className="view-details222">
                 View Details
               </Link>

@@ -16,6 +16,19 @@ const PlanTripSchema = new mongoose.Schema({
   tripType: { type: String, enum: ['Short Trip', 'Long Trip'] },
   duration: String,
   destinations: String,  // Stored as a string instead of an array
+  locationDetails: {
+    latitude: Number,
+    longitude: Number,
+    formattedAddress: String
+  },
+  groupSize: { 
+    type: Number,
+    required: function() {
+      return this.travelStyle === 'Family' || this.travelStyle === 'Groups';
+    },
+    min: [1, 'Group size must be at least 1'],
+    max: [20, 'Group size cannot exceed 20']
+  },
   adventureActivities: [String], // Change from String to Array of Strings
   culturalExperiences: [String],
   relaxation: [String],

@@ -191,6 +191,23 @@ export default function AdminEventPage() {
     return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   };
 
+  const formatLocation = (location) => {
+    // Split into parts
+    const parts = location.split(',').map(part => part.trim());
+    
+    // Process each part to remove ZIP codes
+    const cleanParts = parts.map(part => {
+      // Remove any numbers (ZIP codes) from the part
+      return part.replace(/\d+/g, '').trim();
+    });
+
+    // Take first two parts and remove empty parts
+    return cleanParts
+      .filter(part => part && !part.includes('Nepal')) // Remove empty parts and 'Nepal'
+      .slice(0, 2) // Take only first two parts
+      .join(', '); // Join with comma and space
+  };
+
   const saveToHistory = (action, event) => {
     if (!user) return;
 
@@ -463,7 +480,7 @@ export default function AdminEventPage() {
                     </p>
                     <p className="event-location36">Location:
                       <FaMapMarkerAlt className="info-icon36" />
-                      {event.location}
+                      {formatLocation(event.location)}
                     </p>
                   </div>
 

@@ -58,23 +58,77 @@ const sendNewPackageEmail = async (userEmail, packageDetails) => {
   }
 };
 
+// Add validation helper function
+const validateLocationDetails = (locationDetails) => {
+  const defaultLocation = {
+    latitude: 27.7172,
+    longitude: 85.3240,
+    formattedAddress: "Kathmandu, Nepal"
+  };
+
+  if (!locationDetails) return defaultLocation;
+
+  try {
+    const location = typeof locationDetails === 'string' ? JSON.parse(locationDetails) : locationDetails;
+    
+    const latitude = parseFloat(location.latitude);
+    const longitude = parseFloat(location.longitude);
+
+    if (isNaN(latitude) || isNaN(longitude) || !isFinite(latitude) || !isFinite(longitude)) {
+      return defaultLocation;
+    }
+
+    return {
+      latitude,
+      longitude,
+      formattedAddress: location.formattedAddress || defaultLocation.formattedAddress
+    };
+  } catch (error) {
+    console.error("Error parsing locationDetails:", error);
+    return defaultLocation;
+  }
+};
+
+// Add itinerary validation helper
+const validateItinerary = (itinerary) => {
+  if (!itinerary) return [];
+  
+  try {
+    // If itinerary is already an array, return it
+    if (Array.isArray(itinerary)) {
+      return itinerary;
+    }
+    
+    // If itinerary is a string, try to parse it
+    if (typeof itinerary === 'string') {
+      return JSON.parse(itinerary);
+    }
+    
+    // If itinerary is an object, wrap it in an array
+    if (typeof itinerary === 'object') {
+      return [itinerary];
+    }
+    
+    return [];
+  } catch (error) {
+    console.error("Error parsing itinerary:", error);
+    return [];
+  }
+};
+
 // Route to Add a New Itinerary Package
 router.post("/Add-Package", upload.single("image"), async (req, res) => {
   try {
     const packageData = {
       ...req.body,
-      imageUrl: req.file ? req.file.path : null, // Save the Cloudinary URL
+      imageUrl: req.file ? req.file.path : null,
     };
 
-    // Parse the itinerary if it's a string
-    if (typeof packageData.itinerary === 'string') {
-      try {
-        packageData.itinerary = JSON.parse(packageData.itinerary);
-      } catch (error) {
-        console.error("Error parsing itinerary:", error);
-        return res.status(400).json({ message: "Invalid itinerary format" });
-      }
-    }
+    // Validate and parse locationDetails
+    packageData.locationDetails = validateLocationDetails(packageData.locationDetails);
+
+    // Validate and parse itinerary
+    packageData.itinerary = validateItinerary(packageData.itinerary);
 
     const newPackage = new Package(packageData);
     await newPackage.save();
@@ -190,54 +244,50 @@ router.get("/package", async (req, res) => {
 
 router.put('/updatePackage', upload.single('image'), async (req, res) => {
   try {
-      console.log("📥 Incoming Update Request");
-      console.log("🔹 Request Body:", req.body);
-      console.log("🔹 Uploaded File:", req.file);
+    console.log("📥 Incoming Update Request");
+    console.log("🔹 Request Body:", req.body);
+    console.log("🔹 Uploaded File:", req.file);
 
-      const { title, itinerary, ...updateData } = req.body;
+    const { title, itinerary, locationDetails, ...updateData } = req.body;
 
-      if (!title) {
-          return res.status(400).json({ message: 'Package title is required for update' });
+    if (!title) {
+      return res.status(400).json({ message: 'Package title is required for update' });
+    }
+
+    // Validate and parse locationDetails
+    updateData.locationDetails = validateLocationDetails(locationDetails);
+
+    // Validate and parse itinerary
+    updateData.itinerary = validateItinerary(itinerary);
+
+    // If an image is uploaded, update the imageUrl
+    if (req.file) {
+      updateData.imageUrl = req.file.path;
+    } else {
+      // If no new image is uploaded, retain the existing image URL
+      const existingPackage = await Package.findOne({ title: { $regex: new RegExp(title, 'i') } });
+      if (existingPackage) {
+        updateData.imageUrl = existingPackage.imageUrl;
       }
+    }
 
-      // ✅ Handle itinerary parsing safely (Only parse if it's a string)
-      if (itinerary && typeof itinerary === "string") {
-          try {
-              updateData.itinerary = JSON.parse(itinerary);
-          } catch (error) {
-              console.error("❌ Error parsing itinerary JSON:", error);
-              return res.status(400).json({ message: "Invalid itinerary format." });
-          }
-      }
+    console.log("📝 Final Update Data:", updateData);
 
-      // ✅ If an image is uploaded, update the `imageUrl`
-      if (req.file) {
-          updateData.imageUrl = req.file.path; // Cloudinary URL
-      } else {
-          // If no new image is uploaded, retain the existing image URL
-          const existingPackage = await Package.findOne({ title: { $regex: new RegExp(title, 'i') } });
-          if (existingPackage) {
-              updateData.imageUrl = existingPackage.imageUrl; // Preserve old image
-          }
-      }
+    const updatedPackage = await Package.findOneAndUpdate(
+      { title: { $regex: new RegExp(title, 'i') } },
+      { $set: updateData },
+      { new: true }
+    );
 
-      console.log("📝 Final Update Data:", updateData);
+    if (!updatedPackage) {
+      return res.status(404).json({ message: 'Package not found' });
+    }
 
-      const updatedPackage = await Package.findOneAndUpdate(
-          { title: { $regex: new RegExp(title, 'i') } },
-          { $set: updateData },
-          { new: true }
-      );
-
-      if (!updatedPackage) {
-          return res.status(404).json({ message: 'Package not found' });
-      }
-
-      console.log("✅ Successfully Updated Package:", updatedPackage);
-      res.json(updatedPackage);
+    console.log("✅ Successfully Updated Package:", updatedPackage);
+    res.json(updatedPackage);
   } catch (error) {
-      console.error('❌ Error updating package:', error);
-      res.status(500).json({ message: 'Internal Server Error', error });
+    console.error('❌ Error updating package:', error);
+    res.status(500).json({ message: 'Internal Server Error', error });
   }
 });
 

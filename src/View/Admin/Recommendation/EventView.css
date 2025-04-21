@@ -96,98 +96,146 @@
 .event-info-section37 {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 1.5rem;
-  margin-bottom: 2rem;
-  padding: 2rem;
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  gap: 2rem;
+  margin: 2rem 0;
+  padding: 0;
 }
 
 .info-card37 {
-  background: #f8f9fa;
-  padding: 1.5rem;
-  border-radius: 12px;
+  background: #ffffff;
+  padding: 2.5rem;
+  border-radius: 20px;
   text-align: center;
   transition: all 0.3s ease;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  min-height: 200px;
+  min-height: 280px;
+  position: relative;
+  overflow: hidden;
 }
 
 .info-card37:hover {
   transform: translateY(-5px);
-  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
 }
 
 .info-type37 {
-  font-weight: 700;
-  color: #2c3e50;
-  margin-bottom: 0.5rem;
-  font-size: 1.2rem;
-}
-
-.info-value37 {
-  font-size: 1.1rem;
-  color: #e63946;
-  font-weight: 500;
-  margin: 1rem 0;
-  line-height: 1.6;
-  text-align: center;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: 0.8rem;
+  font-size: 1rem;
+  color: #ffffff;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  background: linear-gradient(135deg, #ff4757, #ff6b6b);
+  border-radius: 20px 20px 0 0;
 }
 
 .info-icon37 {
-  color: #e63946;
-  font-size: 2rem;
-  margin-bottom: 1rem;
-  transition: all 0.3s ease;
-  background: #ffffff;
-  width: 60px;
-  height: 60px;
+  color: #ff4757;
+  font-size: 2.5rem;
+  margin-top: 3rem;
+  background: rgba(255, 71, 87, 0.1);
+  width: 80px;
+  height: 80px;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  box-shadow: 0 2px 4px rgba(230, 57, 70, 0.1);
+  margin-bottom: 1.5rem;
+  transition: all 0.3s ease;
 }
 
 .info-card37:hover .info-icon37 {
   transform: scale(1.1);
-  box-shadow: 0 4px 8px rgba(230, 57, 70, 0.2);
+  background: rgba(255, 71, 87, 0.15);
+}
+
+.info-value37 {
+  color: #1a1a1a;
+  font-size: 1.2rem;
+  line-height: 1.6;
+  margin-top: 1rem;
+  font-weight: 500;
+}
+
+.info-value37 p {
+  margin: 0;
+  color: #1a1a1a;
 }
 
 .info-price37 {
-  color: #28a745;
+  margin-top: 1.5rem;
+  padding: 0.8rem 1.5rem;
+  background: #e8f5e9;
+  color: #2e7d32;
+  border-radius: 25px;
+  font-weight: 600;
   font-size: 1rem;
-  font-weight: 600;
-  margin-top: 0.5rem;
-  padding: 0.8rem 1.2rem;
-  background-color: #f0fff0;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 128, 0, 0.1);
-  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(46, 125, 50, 0.1);
 }
 
-.info-card37:hover .info-price37 {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 128, 0, 0.15);
+/* Location card specific styles */
+.info-card37:nth-child(3) {
+  min-height: 350px;
 }
 
-.info-content37 h3 {
-  color: #2c3e50;
-  margin-bottom: 0.75rem;
-  font-size: 1.2rem;
-  font-weight: 600;
+.map-section37 {
+  width: 100%;
+  height: 200px;
+  margin-top: 1.5rem;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-.info-content37 p {
-  color: #495057;
-  margin: 0.5rem 0;
-  line-height: 1.6;
-  font-size: 1.1rem;
+/* Date specific styles */
+.info-card37:nth-child(1) .info-value37 div {
+  color: #ff4757;
+  font-weight: 500;
+  margin: 0.3rem 0;
+}
+
+/* Time specific styles */
+.info-card37:nth-child(2) .info-value37 div {
+  color: #ff4757;
+  font-weight: 500;
+  margin: 0.3rem 0;
+}
+
+/* Capacity cards */
+.info-card37:nth-child(5),
+.info-card37:nth-child(6) {
+  background: linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%);
+}
+
+.info-card37:nth-child(5) .info-icon37,
+.info-card37:nth-child(6) .info-icon37 {
+  background: rgba(255, 71, 87, 0.1);
+}
+
+@media (max-width: 1200px) {
+  .event-info-section37 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .event-info-section37 {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    padding: 1rem;
+  }
+
+  .info-card37 {
+    padding: 1.5rem;
+    min-height: auto;
+  }
 }
 
 .ticket-availability37 {

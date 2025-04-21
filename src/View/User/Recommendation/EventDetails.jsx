@@ -12,6 +12,7 @@ import {
 import Header from "../../../Components/User Header/User-Header";
 import Footer from "../../../Components/Footer";
 import EventBookingForm from '../../Payment/EventBookingForm';
+import MapDisplay from "../../../Components/MapDisplay";
 import "./EventDetails.css";
 
 export default function EventDetails() {
@@ -216,7 +217,9 @@ export default function EventDetails() {
             <div className="info-card58">
               <FaMapMarkerAlt className="info-icon58" />
               <div className="info-type58">Location</div>
-              <div className="info-value58">{event.location}</div>
+              <div className="info-value58">
+                <div>{event.location}</div>
+              </div>
             </div>
 
             <div className="info-card58">
@@ -244,7 +247,19 @@ export default function EventDetails() {
             </div>
           </div>
 
-  
+          {/* Separate map section below the cards */}
+          {event.locationDetails && (
+            <div className="map-container-section58">
+              <h2 className="section-title58">Location Map</h2>
+              <div className="map-wrapper58">
+                <MapDisplay 
+                  latitude={event.locationDetails.latitude}
+                  longitude={event.locationDetails.longitude}
+                  formattedAddress={event.locationDetails.formattedAddress}
+                />
+              </div>
+            </div>
+          )}
 
           <div className="event-description58">
             <h2>Description</h2>
@@ -357,14 +372,13 @@ export default function EventDetails() {
               className="back-button58" 
               onClick={() => navigate('/Event-Based')}
             >
-              <FaArrowLeft style={{ fontSize: '20px' }} /> Back to Events
+              Back
             </button>
             {isEventBookable() ? (
               <button 
                 className="book-button58"
                 onClick={handleBooking}
               >
-                <FaTicketAlt style={{ fontSize: '20px' }} />
                 Book Now
               </button>
             ) : (
@@ -372,7 +386,6 @@ export default function EventDetails() {
                 className="book-button58"
                 disabled={true}
               >
-                <FaTicketAlt style={{ fontSize: '20px' }} />
                 {event.category === 'Religious' ? 'Religious Event - No Booking Required' : 
                  getEventStatus() === 'Past' ? 'Event Ended' : 'Not Available'}
               </button>

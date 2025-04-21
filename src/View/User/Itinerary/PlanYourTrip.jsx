@@ -6,6 +6,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import "./PlanYourTrip.css";
 import Header from "../../../Components/User Header/User-Header";
 import Footer from "../../../Components/Footer";
+import MapPicker from "../../../Components/MapPicker";
 
 // Add toast configuration at the top after imports
 const toastConfig = {
@@ -28,6 +29,11 @@ export default function PlanYourTripPage() {
     tripType: "", 
     duration: "",
     destinations: "",
+    locationDetails: {
+      latitude: 27.7172,
+      longitude: 85.3240,
+      formattedAddress: ""
+    },
     adventureActivities: [],
     culturalExperiences: [],
     relaxation: [],
@@ -51,11 +57,13 @@ export default function PlanYourTripPage() {
     activitiesCost: "",
     userName: "",
     userEmail: "",
-    userAddress: ""
+    userAddress: "",
+    groupSize: "",
   });
 
   const [user, setUser] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errors, setErrors] = useState({});
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -175,6 +183,7 @@ const calculateCostBreakdown = (data) => {
       transportationType,
       mealsPreferences,
       travelStyle,
+      groupSize,
       adventureActivities,
       culturalExperiences,
       relaxation,
@@ -226,6 +235,14 @@ const calculateCostBreakdown = (data) => {
   let eventsCost = includeEvents ? COST_RANGES.eventsFestivals.local : 0;
 
   let travelStyleMultiplier = COST_RANGES.travelStyles[travelStyle.toLowerCase()] || 1.0;
+  
+  if (travelStyle === "Family" || travelStyle === "Groups") {
+    const size = parseInt(groupSize) || 1;
+    if (size > 1) {
+      // Additional discount for larger groups
+      travelStyleMultiplier *= (1 - (Math.min(size - 1, 10) * 0.05)); // 5% discount per additional person up to 50%
+    }
+  }
 
   let adjustedTransport = (minTransport * days * travelStyleMultiplier).toFixed(2);
   let adjustedAccommodation = (minAccommodation * days * travelStyleMultiplier).toFixed(2);
@@ -366,34 +383,46 @@ const handleChange = (e) => {
     }));
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsSubmitting(true);
+  const validateForm = () => {
+    const newErrors = {};
 
-    // Validate required fields
-    const requiredFields = {
-      tripName: "Trip Name",
-      startDate: "Start Date",
-      endDate: "End Date",
-      destinations: "Destinations",
-      travelStyle: "Travel Style",
-      accommodationType: "Accommodation Type",
-      mealsPreferences: "Meals Preferences",
-      transportationType: "Transportation Type"
-    };
+    // Required fields validation
+    if (!formData.tripName?.trim()) newErrors.tripName = "Trip name is required";
+    if (!formData.startDate) newErrors.startDate = "Start date is required";
+    if (!formData.endDate) newErrors.endDate = "End date is required";
+    if (!formData.destinations?.trim()) newErrors.destinations = "Destination is required";
+    if (!formData.travelStyle) newErrors.travelStyle = "Travel style is required";
+    if (!formData.accommodationType) newErrors.accommodationType = "Accommodation type is required";
+    if (!formData.transportationType) newErrors.transportationType = "Transportation type is required";
 
-    const missingFields = [];
-    for (const [field, label] of Object.entries(requiredFields)) {
-      if (!formData[field]) {
-        missingFields.push(label);
+    // Group size validation for Family and Groups
+    if ((formData.travelStyle === "Family" || formData.travelStyle === "Groups") && 
+        (!formData.groupSize || formData.groupSize < 1)) {
+      newErrors.groupSize = "Please specify the group size";
+    }
+
+    // Date validation
+    if (formData.startDate && formData.endDate) {
+      const start = new Date(formData.startDate);
+      const end = new Date(formData.endDate);
+      if (end < start) {
+        newErrors.endDate = "End date cannot be before start date";
       }
     }
 
-    if (missingFields.length > 0) {
-      toast.error(`Please fill in the following required fields: ${missingFields.join(", ")}`, toastConfig);
-      setIsSubmitting(false);
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!validateForm()) {
+      toast.error("Please fill in all required fields correctly", toastConfig);
       return;
     }
+
+    setIsSubmitting(true);
 
     try {
       const user = JSON.parse(localStorage.getItem("user"));
@@ -457,6 +486,18 @@ const handleChange = (e) => {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleLocationSelect = (location) => {
+    setFormData(prev => ({
+      ...prev,
+      destinations: location.address,
+      locationDetails: {
+        latitude: location.lat,
+        longitude: location.lng,
+        formattedAddress: location.address
+      }
+    }));
   };
 
   return (
@@ -524,9 +565,12 @@ const handleChange = (e) => {
 
           
           <h3 className="h3-21">Select Your Destinations</h3>
-          <div className="label-input-container21">
-              <label className="label21">Destination:</label>
-              <input className="input21" type="text" name="destinations" value={formData.destinations} onChange={handleChange} placeholder="Enter your destination" />
+          <div className="label-input-container23">
+              <label className="label23">Destination:</label>
+              <MapPicker
+                onLocationSelect={handleLocationSelect}
+                initialLocation={formData.locationDetails}
+              />
           </div>
 
 
@@ -627,6 +671,23 @@ const handleChange = (e) => {
               </label>
           </div>
 
+          {(formData.travelStyle === "Family" || formData.travelStyle === "Groups") && (
+            <div className="group-size-input21">
+              <label className="label21">
+                Number of People:
+                <input
+                  type="number"
+                  min="1"
+                  max="20"
+                  name="groupSize"
+                  value={formData.groupSize}
+                  onChange={handleChange}
+                  className={`input21 ${errors.groupSize ? 'error-input' : ''}`}
+                />
+              </label>
+              {errors.groupSize && <span className="error-message21">{errors.groupSize}</span>}
+            </div>
+          )}
 
           <h2 className="h2-21">Select Your Accommodation Preferences</h2>
 
@@ -881,6 +942,24 @@ const handleChange = (e) => {
         </form>
       </div>
       <Footer />
+      <style jsx>{`
+        .error-input {
+          border: 1px solid #ff0000;
+        }
+
+        .error-message21 {
+          color: #ff0000;
+          font-size: 0.8rem;
+          margin-top: 4px;
+        }
+
+        .group-size-input21 {
+          margin-top: 15px;
+          padding: 10px;
+          background: #f8f9fa;
+          border-radius: 8px;
+        }
+      `}</style>
     </>
   );
 }

@@ -336,6 +336,33 @@ const handleShare = (card) => {
   
   
 
+  // Add this helper function for address formatting
+  const formatAddress = (address) => {
+    if (!address) return "Nepal";
+    const parts = address.split(',').map(part => part.trim());
+    // Keep the first part (location name) and "Nepal"
+    return `${parts[0]}, Nepal`;
+  };
+
+  // Add this helper function for star rating display
+  const renderStarRating = (reviews) => {
+    const numReviews = parseInt(reviews) || 0;
+    const rating = Math.min(5, Math.max(1, Math.ceil(numReviews / 100)));
+    
+    return (
+      <div className="star-rating" style={{ display: 'inline-flex', marginLeft: '15px', alignItems: 'center' }}>
+        {[...Array(5)].map((_, index) => (
+          <span key={index} style={{ 
+            color: index < rating ? '#ffd700' : '#ccc', 
+            fontSize: '24px',  // Increased from 18px to 24px
+            lineHeight: '1',   // Added to prevent vertical spacing issues
+            marginRight: '2px' // Added small gap between stars
+          }}>★</span>
+        ))}
+      </div>
+    );
+  };
+
   return (
     <>
       <Header />
@@ -428,8 +455,9 @@ const handleShare = (card) => {
 
                   <div className="card-details17">
                     <div className="card-title-rating17">
-                      <h3 className="title17">
-                        {result.title || "Bandipur Cultural Escape (3 Days, 2 Nights)"} 
+                      <h3 className="title17" style={{ display: 'flex', alignItems: 'center' }}>
+                        {result.title || "Bandipur Cultural Escape (3 Days, 2 Nights)"}
+                        {renderStarRating(result.reviews)}
                       </h3>
                       <div className="card-actions17">
                       <img
@@ -450,9 +478,9 @@ const handleShare = (card) => {
                     </div>
 
                     <div className="address-reviews17">
-                      <p className="address17">{result.address || "Gandaki Zone, Nepal"}</p>
+                      <p className="address17">{formatAddress(result.address)}</p>
                       <p className="reviews17">
-                        {result.reviews  || "Not Reviewed"} reviews and opinions
+                        {result.reviews || "Not Reviewed"} reviews and opinions
                       </p>
                     </div>
 
@@ -467,7 +495,7 @@ const handleShare = (card) => {
                     </p>
                     <p className="category-string17">Group Size: {result.groupSize || "Starting"}</p>
                     <p className="category-string17">Difficulty: {result.difficulty || "Easy"}</p>
-                    <p className="category-string17">Highlight: {result.highlight || "Traditional villages, breathtaking views, cultural exploration."}</p>
+                    <p className="category-string17 highlight-text17">Highlight: {result.highlight || "Traditional villages, breathtaking views, cultural exploration."}</p>
                     <Link
               to={`/ItineraryPackageView/${encodeURIComponent(result.title)}`}
               onClick={() => saveToHistory("viewed details of", result.title)}

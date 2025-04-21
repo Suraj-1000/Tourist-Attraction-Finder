@@ -73,12 +73,17 @@
   font-size: 20px;
 }
 
-/* Content Area */
-.content-area35 {
-  margin-left: 280px;
-  padding: 20px 40px;
-  width: calc(100% - 280px);
-  transition: all 0.3s ease;
+
+
+.area-35 {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-top: 90px;
+  margin-right: 0px;
 }
 
 /* Header Section */

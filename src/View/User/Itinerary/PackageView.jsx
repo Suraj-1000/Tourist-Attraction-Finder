@@ -8,6 +8,7 @@ import Footer from "../../../Components/Footer";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import UserDetailsForm from '../../../View/Payment/UserDetailsForm';
+import MapDisplay from "../../../Components/MapDisplay";
 
 export default function ItineraryPackageViewPage() {
     const { currency, exchangeRates } = useContext(CurrencyContext);
@@ -175,6 +176,20 @@ export default function ItineraryPackageViewPage() {
                 </li>
             </ul>
 
+            {/* Add Map Display Section */}
+            {packageData.locationDetails && (
+                <div className="map-section55">
+                    <h3 className="section-heading55">Location Map</h3>
+                    <div className="map-wrapper55">
+                        <MapDisplay
+                            latitude={packageData.locationDetails.latitude}
+                            longitude={packageData.locationDetails.longitude}
+                            formattedAddress={packageData.locationDetails.formattedAddress}
+                        />
+                    </div>
+                </div>
+            )}
+
             <h3 className="day-by-day55">Day by Day Itinerary</h3>
             <div className="day-by-day-itinerary55">
             {packageData.itinerary?.length > 0 ? (
@@ -255,6 +270,32 @@ export default function ItineraryPackageViewPage() {
       </div>
       <Footer />
       <ToastContainer />
+
+      <style jsx>{`
+        .map-section55 {
+            margin: 20px 0;
+            padding: 20px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .map-wrapper55 {
+            height: 400px;
+            width: 100%;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-top: 15px;
+        }
+
+        .section-heading55 {
+            font-size: 1.5rem;
+            color: #333;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+      `}</style>
     </>
   );
 }

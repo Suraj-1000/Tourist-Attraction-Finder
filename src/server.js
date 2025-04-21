@@ -28,6 +28,7 @@ import esewaRoutes from './Routes/Esewa.js';
 import paymentRoutes from './Routes/Payment.js';
 import notificationsRouter from './Routes/Notifications.js';
 import preferenceRoutes from './Routes/PreferenceRoutes.js';
+import contactRoutes from './Routes/ContactRoutes.js';
 
 // Import user-specific routes
 import userHistoryRouter from './Routes/userHistory.js';
@@ -86,6 +87,7 @@ app.use('/esewa', esewaRoutes)
 app.use('/payments', paymentRoutes)
 app.use('/notifications', notificationsRouter)
 app.use('/preferences', preferenceRoutes)
+app.use('/contact', contactRoutes);
 
 // User-specific routes with hyphenated paths
 app.use('/user-history', userHistoryRouter);

@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { 
   FaSearch, FaUsers, FaUserShield, FaMale, FaFemale, FaEye, FaEdit, 
-  FaTrash, FaTachometerAlt, FaHistory, FaUserPlus, FaTimes, FaUserCog 
+  FaTrash, FaTachometerAlt, FaHistory, FaUserPlus, FaTimes, FaUserCog,
+  FaEnvelope 
 } from "react-icons/fa";
 import Header from "../../../Components/Admin Header/Admin-Header";
 import Footer from "../../../Components/Footer";
@@ -13,6 +15,7 @@ import "./AdminHomePage.css";
 
 
 export default function AdminHomepage() {
+  const navigate = useNavigate();
   const [users, setUsers] = useState([]);
   const [activePage, setActivePage] = useState("dashboard");
   const [selectedUser, setSelectedUser] = useState(null);
@@ -55,6 +58,12 @@ export default function AdminHomepage() {
 
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    if (activePage === "contact-management") {
+      navigate('/AdminContactManagement');
+    }
+  }, [activePage, navigate]);
 
   const fetchUsers = async () => {
     try {
@@ -649,7 +658,7 @@ export default function AdminHomepage() {
         </div>
 
         {/* Content Area */}
-        <div className="content-area35">
+        <div className="area-35">
           {/* Conditional Heading for Active Page */}
           <div className="heading35">
             <h1 className="title-heading35">
@@ -659,6 +668,8 @@ export default function AdminHomepage() {
                 ? "Recently Registered Users"
                 : activePage === "recent-logins"
                 ? "Recently Logged In Users"
+                : activePage === "contact-management"
+                ? "Contact Management"
                 : "Active Users"}
             </h1>
           </div>
@@ -757,6 +768,13 @@ export default function AdminHomepage() {
                 ))}
               </div>
             </>
+          )}
+
+          {/* Contact Management Section */}
+          {activePage === "contact-management" && (
+            <div className="contact-management-redirect">
+              <p>Redirecting to Contact Management page...</p>
+            </div>
           )}
 
           {/* Recent Registrations Section */}

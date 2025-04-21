@@ -445,6 +445,15 @@ cursor: pointer;
     margin-bottom: 2px;
 }
 
+.highlight-text54 {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 80%;
+  display: block;
+}
+
+
 /* Toast Styles */
 .toast-message54 {
   font-family: 'Mitr' !important;

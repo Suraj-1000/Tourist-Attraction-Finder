@@ -3,6 +3,7 @@ import axios from "axios";
 import { FaStar, FaUsers, FaTicketAlt, FaMapMarkerAlt, FaCalendarAlt, FaUserTie, FaInfoCircle, FaPlus, FaTrash } from 'react-icons/fa';
 import "./AddEvent.css";
 import { toast } from 'react-toastify';
+import MapPicker from "../../../Components/MapPicker";
 
 export default function AddEvent({ onEventAdded, onEventEdited, onClose, existingEvent }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -16,6 +17,11 @@ export default function AddEvent({ onEventAdded, onEventEdited, onClose, existin
     startTime: existingEvent?.startTime || "",
     endTime: existingEvent?.endTime || "",
     location: existingEvent?.location || "",
+    locationDetails: existingEvent?.locationDetails || {
+      latitude: 27.7172,
+      longitude: 85.3240,
+      formattedAddress: ""
+    },
     image: null,
     imageUrl: existingEvent?.image || "",
     ticketPrice: {
@@ -185,6 +191,18 @@ export default function AddEvent({ onEventAdded, onEventEdited, onClose, existin
     }));
   };
 
+  const handleLocationSelect = (location) => {
+    setNewEvent({
+      ...newEvent,
+      location: location.address,
+      locationDetails: {
+        latitude: location.lat,
+        longitude: location.lng,
+        formattedAddress: location.address
+      }
+    });
+  };
+
   const handleSubmit = async () => {
     try {
       // Validate required fields
@@ -235,6 +253,7 @@ export default function AddEvent({ onEventAdded, onEventEdited, onClose, existin
         startTime: newEvent.startTime,
         endTime: newEvent.endTime,
         location: newEvent.location,
+        locationDetails: newEvent.locationDetails,
         organizer: newEvent.organizer,
         featured: newEvent.featured,
         ticketPrice: newEvent.ticketPrice,
@@ -400,11 +419,9 @@ export default function AddEvent({ onEventAdded, onEventEdited, onClose, existin
             <h3>Location and Organizer</h3>
             <div className="form-group36">
               <label>Location</label>
-              <input
-                type="text"
-                placeholder="Enter event location"
-                value={newEvent.location}
-                onChange={(e) => setNewEvent({...newEvent, location: e.target.value})}
+              <MapPicker
+                onLocationSelect={handleLocationSelect}
+                initialLocation={existingEvent?.locationDetails}
               />
             </div>
             <div className="form-group36">

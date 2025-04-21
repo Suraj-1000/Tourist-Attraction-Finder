@@ -8,6 +8,7 @@ import Footer from "../../../Components/Footer";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import UserDetailsForm from '../../../View/Payment/UserDetailsForm';
+import MapDisplay from "../../../Components/MapDisplay";
 
 export default function ViewTripDetailsPage() {
   const { tripName } = useParams(); 
@@ -136,6 +137,20 @@ const convertPrice = (priceString) => {
         <p className="info-item24"><strong>Trip Type:</strong> {tripDetails.tripType || "Not Specified"}</p>
         <p className="info-item24"><strong>Destinations:</strong> {tripDetails.destinations || "Not Specified"}</p>
         
+        {/* Add Map Display Section */}
+        {tripDetails.locationDetails && (
+          <div className="map-section24">
+            <h3 className="section-heading24">Location Map</h3>
+            <div className="map-wrapper24">
+              <MapDisplay 
+                latitude={tripDetails.locationDetails.latitude}
+                longitude={tripDetails.locationDetails.longitude}
+                formattedAddress={tripDetails.locationDetails.formattedAddress}
+              />
+            </div>
+          </div>
+        )}
+
         <h3 className="section-heading24">How Do You Want to Spend Your Time?</h3>
         <p className="info-item24"><strong>Adventure Activities:</strong> {tripDetails.adventureActivities?.join(", ") || "None Selected"}</p>
         <p className="info-item24"><strong>Cultural Experiences:</strong> {tripDetails.culturalExperiences?.join(", ") || "None Selected"}</p>
@@ -145,7 +160,11 @@ const convertPrice = (priceString) => {
         <p className="info-item24"><strong>Custom Activities:</strong> {tripDetails.customActivities || "None Provided"}</p>
         
         <h3 className="section-heading24">Travel Style</h3>
-        <p className="info-item24">{tripDetails.travelStyle || "Not Specified"}</p>
+        <p className="info-item24">{tripDetails.travelStyle || "Not Specified"}
+          {(tripDetails.travelStyle === "Family" || tripDetails.travelStyle === "Groups") && tripDetails.groupSize && (
+            <span className="group-size24"> - Group Size: {tripDetails.groupSize} {tripDetails.groupSize === 1 ? 'person' : 'people'}</span>
+          )}
+        </p>
 
         <h3 className="section-heading24">Accommodation Preferences</h3>
         <p className="info-item24"><strong>Type:</strong> {tripDetails.accommodationType || "Not Specified"}</p>

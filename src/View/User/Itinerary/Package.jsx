@@ -114,9 +114,16 @@ const convertPrice = (priceString) => {
     if (!user) return;
 
     try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        console.log("No token found");
+        return;
+      }
+
       const response = await axios.get('http://localhost:4000/user-favorites', {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         }
       });
       
@@ -125,8 +132,13 @@ const convertPrice = (priceString) => {
         setFavorites(dbFavorites.map(fav => fav.itemDetails));
       }
     } catch (error) {
-      console.error('Error fetching favorites:', error);
-      toast.error('Failed to load favorites', toastConfig);
+      if (error.response?.status === 401) {
+        toast.error('Please login to access favorites', toastConfig);
+        // Optionally redirect to login page or handle expired token
+      } else {
+        console.error('Error fetching favorites:', error);
+        toast.error('Failed to load favorites', toastConfig);
+      }
     }
   };
 
@@ -354,13 +366,20 @@ const handleShare = async (card) => {
     }
 
     try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        toast.error("Please login to manage favorites", toastConfig);
+        return;
+      }
+
       const isAlreadyFavorite = favorites.some((fav) => fav.title === card.title);
 
       if (isAlreadyFavorite) {
         // Find the favorite document that contains this item
         const response = await axios.get('http://localhost:4000/user-favorites', {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
           }
         });
         
@@ -372,13 +391,13 @@ const handleShare = async (card) => {
           if (favoriteDoc) {
             await axios.delete(`http://localhost:4000/user-favorites/${favoriteDoc._id}`, {
               headers: {
-                Authorization: `Bearer ${localStorage.getItem('token')}`
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
               }
             });
             
             setFavorites(prev => prev.filter((fav) => fav.title !== card.title));
             toast.error(`Removed "${card.title}" from favorites`, toastConfig);
-            // Don't await history saving to prevent blocking the UI
             saveToHistory("removed from favorites", card.title).catch(console.error);
           }
         }
@@ -390,20 +409,25 @@ const handleShare = async (card) => {
           itemDetails: card
         }, {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
           }
         });
 
         if (response.data.success) {
           setFavorites(prev => [...prev, card]);
           toast.success(`Added "${card.title}" to favorites`, toastConfig);
-          // Don't await history saving to prevent blocking the UI
           saveToHistory("added to favorites", card.title).catch(console.error);
         }
       }
     } catch (error) {
-      console.error('Error updating favorites:', error);
-      toast.error('Failed to update favorites. Please try again.', toastConfig);
+      if (error.response?.status === 401) {
+        toast.error('Please login again to manage favorites', toastConfig);
+        // Optionally handle token expiration
+      } else {
+        console.error('Error updating favorites:', error);
+        toast.error('Failed to update favorites. Please try again.', toastConfig);
+      }
     }
   };
 
@@ -411,6 +435,33 @@ const handleShare = async (card) => {
     return favorites.some((fav) => fav.title === card.title);
   };
   
+  // Add this helper function for address formatting
+  const formatAddress = (address) => {
+    if (!address) return "Nepal";
+    const parts = address.split(',').map(part => part.trim());
+    // Keep the first part (location name) and "Nepal"
+    return `${parts[0]}, Nepal`;
+  };
+
+  // Add this helper function for star rating display
+  const renderStarRating = (reviews) => {
+    const numReviews = parseInt(reviews) || 0;
+    const rating = Math.min(5, Math.max(1, Math.ceil(numReviews / 100)));
+    
+    return (
+      <div className="star-rating" style={{ display: 'inline-flex', marginLeft: '15px', alignItems: 'center' }}>
+        {[...Array(5)].map((_, index) => (
+          <span key={index} style={{ 
+            color: index < rating ? '#ffd700' : '#ccc', 
+            fontSize: '24px',  // Increased from 18px to 24px
+            lineHeight: '1',   // Added to prevent vertical spacing issues
+            marginRight: '2px' // Added small gap between stars
+          }}>★</span>
+        ))}
+      </div>
+    );
+  };
+
   return (
     <>
       <Header />
@@ -505,8 +556,9 @@ const handleShare = async (card) => {
 
                   <div className="card-details54">
                     <div className="card-title-rating54">
-                      <h3 className="title54">
-                        {result.title || "Bandipur Cultural Escape (3 Days, 2 Nights)"} 
+                      <h3 className="title54" style={{ display: 'flex', alignItems: 'center' }}>
+                        {result.title || "Bandipur Cultural Escape (3 Days, 2 Nights)"}
+                        {renderStarRating(result.reviews)}
                       </h3>
                       <div className="card-actions54">
                       <img
@@ -527,9 +579,9 @@ const handleShare = async (card) => {
                     </div>
 
                     <div className="address-reviews54">
-                      <p className="address54">{result.address || "Gandaki Zone, Nepal"}</p>
+                      <p className="address54">{formatAddress(result.address)}</p>
                       <p className="reviews54">
-                        {result.reviews  || "Not Reviewed"} reviews and opinions
+                        {result.reviews || "Not Reviewed"} reviews and opinions
                       </p>
                     </div>
 
@@ -544,7 +596,7 @@ const handleShare = async (card) => {
                     </p>
                     <p className="category-string54">Group Size: {result.groupSize || "Starting"}</p>
                     <p className="category-string54">Difficulty: {result.difficulty || "Easy"}</p>
-                    <p className="category-string54">Highlight: {result.highlight || "Traditional villages, breathtaking views, cultural exploration."}</p>
+                    <p className="category-string54 highlight-text54">Highlight: {result.highlight || "Traditional villages, breathtaking views, cultural exploration."}</p>
                     <Link
               to={`/Itinerary-Package-View/${encodeURIComponent(result.title)}`}
               onClick={async () => {

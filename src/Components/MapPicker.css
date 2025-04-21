@@ -1,0 +1,29 @@
+.map-picker-container {
+  width: 100%;
+  margin: 20px 0;
+}
+
+.search-box-container {
+  width: 100%;
+  margin-bottom: 10px;
+}
+
+.location-search-input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 16px;
+}
+
+.selected-location {
+  margin-top: 10px;
+  padding: 10px;
+  background-color: #f5f5f5;
+  border-radius: 4px;
+}
+
+.selected-location p {
+  margin: 5px 0;
+  font-size: 14px;
+} 

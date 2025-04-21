@@ -105,9 +105,6 @@ const UserDetailsForm = ({ onSubmit, onCancel, packageDetails }) => {
       // Store payment gateway
       localStorage.setItem('paymentGateway', formData.paymentPartner);
 
-      // Log the complete package details for debugging
-      console.log('Complete Package Details:', JSON.stringify(packageDetails, null, 2));
-
       // Convert price to number and ensure it's valid
       const price = Number(packageDetails.price);
       if (isNaN(price)) {
@@ -144,19 +141,15 @@ const UserDetailsForm = ({ onSubmit, onCancel, packageDetails }) => {
             price: price
           }
         };
-        console.log('Sending eSewa request with data:', requestData);
 
         const response = await axios.post('http://localhost:4000/esewa/initialize-esewa', requestData);
 
-        console.log('eSewa Response:', response.data);
-
         if (response.data.success) {
-          // Create a form and submit it
+          toast.success('Redirecting to eSewa payment...');
           const form = document.createElement('form');
           form.method = 'POST';
           form.action = response.data.formAction;
 
-          // Add all form fields
           Object.entries(response.data.formData).forEach(([key, value]) => {
             const input = document.createElement('input');
             input.type = 'hidden';
@@ -165,10 +158,11 @@ const UserDetailsForm = ({ onSubmit, onCancel, packageDetails }) => {
             form.appendChild(input);
           });
 
-          // Add the form to the document and submit it
           document.body.appendChild(form);
           form.submit();
           document.body.removeChild(form);
+        } else {
+          throw new Error(response.data.message || 'Failed to initialize eSewa payment');
         }
       } else if (formData.paymentPartner === 'khalti') {
         // Initialize Khalti payment
@@ -189,13 +183,11 @@ const UserDetailsForm = ({ onSubmit, onCancel, packageDetails }) => {
             price: price
           }
         };
-        console.log('Sending Khalti request with data:', requestData);
 
         const response = await axios.post('http://localhost:4000/khalti/initialize-khalti', requestData);
 
-        console.log('Khalti Response:', response.data);
-
         if (response.data.success && response.data.payment?.payment_url) {
+          toast.success('Redirecting to Khalti payment...');
           // Redirect to Khalti payment page
           window.location.href = response.data.payment.payment_url;
         } else {
@@ -204,7 +196,7 @@ const UserDetailsForm = ({ onSubmit, onCancel, packageDetails }) => {
       }
     } catch (error) {
       console.error('Error initializing payment:', error);
-      toast.error('Failed to initialize payment. Please try again.');
+      toast.error(error.message || 'Failed to initialize payment. Please try again.');
       setFormErrors({
         submit: error.message || 'Failed to process payment. Please try again.'
       });
@@ -223,8 +215,6 @@ const UserDetailsForm = ({ onSubmit, onCancel, packageDetails }) => {
     setIsSubmitting(true);
     try {
       await handlePayment(formData, packageDetails);
-      toast.success('Payment processing successfully initiated!');
-      onSubmit();
     } catch (error) {
       console.error('Payment error:', error);
       toast.error(error.message || 'Failed to process payment. Please try again.');

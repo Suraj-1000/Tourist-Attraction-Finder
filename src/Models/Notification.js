@@ -21,6 +21,8 @@ const notificationSchema = new mongoose.Schema({
     status: String,
     declineMessage: String,
     userEmail: String,
+    subject: String,
+    adminMessage: String,
 
     // Package specific fields
     title: String,
@@ -72,6 +74,7 @@ notificationSchema.index({ type: 1 });
 notificationSchema.index({ timestamp: -1 });
 notificationSchema.index({ 'details.title': 1 }); // Index for package title searches
 notificationSchema.index({ 'details.category': 1 }); // Index for package category searches
+notificationSchema.index({ 'details.subject': 1 }); // Index for contact subject searches
 
 const Notification = mongoose.model('Notification', notificationSchema);
 

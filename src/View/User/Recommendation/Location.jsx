@@ -8,7 +8,8 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 // API Key
-const GOMAPS_API_KEY = 'AlzaSy_371N1Zdv2lvQ2QvdnTABfYKRK_uqFjvp';
+const GOOGLE_MAPS_API_KEY = 'AIzaSyB41DRUbKWJHPxaFjMAwdrzWzbVKartNGg';
+const GOMAPS_API_KEY = GOOGLE_MAPS_API_KEY;
 const DEFAULT_PLACE_PHOTO = 'data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%22300%22%20height%3D%22200%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20300%20200%22%20preserveAspectRatio%3D%22none%22%3E%3Cdefs%3E%3Cstyle%20type%3D%22text%2Fcss%22%3E%23holder_189e819e4f8%20text%20%7B%20fill%3A%23999%3Bfont-weight%3Anormal%3Bfont-family%3AArial%2C%20Helvetica%2C%20Open%20Sans%2C%20sans-serif%2C%20monospace%3Bfont-size%3A15pt%20%7D%20%3C%2Fstyle%3E%3C%2Fdefs%3E%3Cg%20id%3D%22holder_189e819e4f8%22%3E%3Crect%20width%3D%22300%22%20height%3D%22200%22%20fill%3D%22%23E5E5E5%22%3E%3C%2Frect%3E%3Cg%3E%3Ctext%20x%3D%22107%22%20y%3D%22107.4%22%3ENo Image%3C%2Ftext%3E%3C%2Fg%3E%3C%2Fg%3E%3C%2Fsvg%3E';
 
 // LocationCard component
@@ -21,16 +22,7 @@ const LocationCard = React.memo(({ place, onClick, onDirectionsClick }) => {
     const loadPlacePhoto = async () => {
       if (place.photos && place.photos.length > 0 && place.photos[0].photo_reference) {
         try {
-          const response = await axios.get(`https://maps.gomaps.pro/maps/api/place/photo`, {
-            params: {
-              maxwidth: 400,
-              photo_reference: place.photos[0].photo_reference,
-              key: GOMAPS_API_KEY
-            },
-            responseType: 'blob'
-          });
-          
-          const url = URL.createObjectURL(response.data);
+          const url = `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photo_reference=${place.photos[0].photo_reference}&key=${GOOGLE_MAPS_API_KEY}`;
           setImageUrl(url);
           setImageLoaded(true);
           setImageError(false);
@@ -160,10 +152,52 @@ export default function LocationPage() {
   const [routeInfo, setRouteInfo] = useState(null);
 
   useEffect(() => {
-    let mapInitTimer;
+    let isMapInitialized = false;
+
+    const loadGoogleMaps = () => {
+      return new Promise((resolve, reject) => {
+        // If the API is already loaded and initialized properly, resolve immediately
+        if (window.google && window.google.maps && window.google.maps.places && window.google.maps.places.PlacesService) {
+          resolve();
+          return;
+        }
+
+        // Remove any existing Google Maps scripts
+        const existingScripts = document.querySelectorAll('script[src*="maps.googleapis.com"]');
+        existingScripts.forEach(script => script.remove());
+
+        // Create a global callback function
+        window.initGoogleMaps = () => {
+          // Wait a short moment for all components to initialize
+          setTimeout(() => {
+            if (window.google && window.google.maps && window.google.maps.places && window.google.maps.places.PlacesService) {
+              resolve();
+            } else {
+              reject(new Error("Google Maps API failed to load properly"));
+            }
+          }, 100);
+        };
+
+        // Load the script
+        const script = document.createElement("script");
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places&callback=initGoogleMaps&v=weekly`;
+        script.async = true;
+        script.defer = true;
+        script.onerror = () => reject(new Error("Failed to load Google Maps API"));
+        document.head.appendChild(script);
+      });
+    };
 
     const initMap = async () => {
+      if (isMapInitialized) return;
+
       try {
+        await loadGoogleMaps();
+        
+        if (!mapRef.current || !window.google || !window.google.maps) {
+          throw new Error("Map container or Google Maps API not available");
+        }
+
         // Initialize map centered on Nepal
         const map = new window.google.maps.Map(mapRef.current, {
           center: { lat: 27.7172, lng: 85.3240 },
@@ -185,32 +219,27 @@ export default function LocationPage() {
         // Setup search box
         const input = searchBoxRef.current;
         if (input) {
-          input.addEventListener('input', handleSearchInput);
+          const searchBox = new window.google.maps.places.SearchBox(input);
+          map.addListener('bounds_changed', () => {
+            searchBox.setBounds(map.getBounds());
+          });
+
+          searchBox.addListener('places_changed', () => {
+            const places = searchBox.getPlaces();
+            if (places.length === 0) return;
+
+            const bounds = new window.google.maps.LatLngBounds();
+            places.forEach(place => {
+              if (place.geometry && place.geometry.location) {
+                bounds.extend(place.geometry.location);
+              }
+            });
+            map.fitBounds(bounds);
+          });
         }
 
-        // Add listeners for map events
-        map.addListener('dragend', () => {
-          if (searchTimeoutRef.current) {
-            clearTimeout(searchTimeoutRef.current);
-          }
-          searchTimeoutRef.current = setTimeout(() => {
-            searchNearbyPlaces();
-          }, 500);
-        });
-
-        map.addListener('zoom_changed', () => {
-          if (searchTimeoutRef.current) {
-            clearTimeout(searchTimeoutRef.current);
-          }
-          searchTimeoutRef.current = setTimeout(() => {
-            searchNearbyPlaces();
-          }, 500);
-        });
-
+        isMapInitialized = true;
         setMapLoaded(true);
-        // Initial search
-        searchNearbyPlaces();
-
       } catch (error) {
         console.error('Error initializing map:', error);
         setMapError('Failed to initialize map. Please try refreshing the page.');
@@ -218,34 +247,12 @@ export default function LocationPage() {
       }
     };
 
-    const loadGoMapsScript = () => {
-      if (scriptLoadedRef.current) return;
-      
-      const existingScripts = document.querySelectorAll('script[src*="gomaps.pro"]');
-      existingScripts.forEach(script => script.remove());
-
-      const script = document.createElement('script');
-      script.src = `https://maps.gomaps.pro/maps/api/js?key=${GOMAPS_API_KEY}&libraries=places&v=3.exp`;
-      script.async = true;
-
-      script.onload = () => {
         initMap();
-      };
-
-      script.onerror = () => {
-        setMapError('Failed to load map. Please check your internet connection.');
-        toast.error('Failed to load map');
-      };
-
-      document.head.appendChild(script);
-      scriptLoadedRef.current = true;
-    };
-
-    loadGoMapsScript();
 
     return () => {
-      if (mapInitTimer) {
-        clearTimeout(mapInitTimer);
+      // Cleanup
+      if (window.initGoogleMaps) {
+        delete window.initGoogleMaps;
       }
       if (searchTimeoutRef.current) {
         clearTimeout(searchTimeoutRef.current);
@@ -254,10 +261,7 @@ export default function LocationPage() {
         markersRef.current.forEach(marker => marker.setMap(null));
         markersRef.current = [];
       }
-      const input = searchBoxRef.current;
-      if (input) {
-        input.removeEventListener('input', handleSearchInput);
-      }
+      nearbyMarkers.forEach(marker => marker.setMap(null));
     };
   }, []);
 
@@ -268,11 +272,11 @@ export default function LocationPage() {
     if (!query) return;
 
     try {
-      const response = await axios.get('https://maps.gomaps.pro/maps/api/geocode/json', {
+      const response = await axios.get('https://maps.googleapis.com/maps/api/geocode/json', {
         params: {
           address: query,
           components: 'country:np',
-          key: GOMAPS_API_KEY
+          key: GOOGLE_MAPS_API_KEY
         }
       });
 
@@ -349,11 +353,15 @@ export default function LocationPage() {
 
       if (searchQuery) {
         try {
-          const geocodeResponse = await axios.get('https://maps.gomaps.pro/maps/api/geocode/json', {
+          const geocodeResponse = await axios.get('https://maps.googleapis.com/maps/api/geocode/json', {
             params: {
               address: searchQuery,
               components: 'country:np',
-              key: GOMAPS_API_KEY
+              key: GOOGLE_MAPS_API_KEY
+            },
+            headers: {
+              'Accept': 'application/json',
+              'Content-Type': 'application/json'
             }
           });
 
@@ -366,12 +374,16 @@ export default function LocationPage() {
         }
       }
 
-      const response = await axios.get('https://maps.gomaps.pro/maps/api/place/nearbysearch/json', {
+      const response = await axios.get('https://maps.googleapis.com/maps/api/place/nearbysearch/json', {
         params: {
-          key: GOMAPS_API_KEY,
+          key: GOOGLE_MAPS_API_KEY,
           location: `${searchLocation.lat},${searchLocation.lng}`,
           radius: 5000,
           type: 'tourist_attraction'
+        },
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
         }
       });
 
@@ -404,60 +416,315 @@ export default function LocationPage() {
     }
   };
 
-  const handleCardClick = (place) => {
+  const handleCardClick = async (place) => {
     if (!place || !place.geometry || !place.geometry.location) return;
     
-    setSelectedLocation(place);
+    try {
+      setLoading(true);
+      
+      // Get detailed place information
+      const service = new window.google.maps.places.PlacesService(mapInstanceRef.current);
+      const detailedPlace = await new Promise((resolve, reject) => {
+        service.getDetails({
+          placeId: place.place_id,
+          fields: [
+            'name',
+            'rating',
+            'formatted_phone_number',
+            'formatted_address',
+            'geometry',
+            'photos',
+            'opening_hours',
+            'website',
+            'reviews',
+            'price_level',
+            'user_ratings_total',
+            'types',
+            'vicinity',
+            'url',
+            'editorial_summary',
+            'wheelchair_accessible_entrance'
+          ]
+        }, (result, status) => {
+          if (status === window.google.maps.places.PlacesServiceStatus.OK) {
+            resolve(result);
+          } else {
+            reject(new Error(`Place details failed: ${status}`));
+          }
+        });
+      });
+
+      // Merge the detailed information with the place object
+      const enhancedPlace = {
+        ...place,
+        ...detailedPlace
+      };
+      
+      setSelectedLocation(enhancedPlace);
     setShowModal(true);
+      
     if (mapInstanceRef.current) {
       mapInstanceRef.current.setCenter(place.geometry.location);
-      mapInstanceRef.current.setZoom(15);
+        mapInstanceRef.current.setZoom(17);
+      }
+    } catch (error) {
+      console.error('Error getting place details:', error);
+      toast.error('Failed to load place details');
+      setSelectedLocation(place);
+      setShowModal(true);
+    } finally {
+      setLoading(false);
     }
   };
 
   const searchNearbyAttractions = async () => {
-    if (!mapInstanceRef.current) return;
+    if (!mapInstanceRef.current || !window.google || !window.google.maps) {
+      toast.error('Map not initialized. Please wait or refresh the page.');
+      return;
+    }
 
-    // Clear existing nearby markers
-    nearbyMarkers.forEach(marker => marker.setMap(null));
-    setNearbyMarkers([]);
-
-    const center = mapInstanceRef.current.getCenter();
     setLoading(true);
 
     try {
-      const response = await axios.get('https://maps.gomaps.pro/maps/api/place/nearbysearch/json', {
-        params: {
-          key: GOMAPS_API_KEY,
-          location: `${center.lat()},${center.lng()}`,
-          radius: 5000,
-          type: ['tourist_attraction', 'point_of_interest']
-        }
-      });
-
-      if (response.data.status === 'OK' && response.data.results) {
-        const newMarkers = response.data.results.map(place => {
-          const marker = new window.google.maps.Marker({
-            position: place.geometry.location,
-            map: mapInstanceRef.current,
-            title: place.name,
-            icon: {
-              url: 'http://maps.google.com/mapfiles/ms/icons/yellow-dot.png'
+      let searchLocation;
+      
+      // Get user location if we don't have it
+      if (!userLocation) {
+        const position = await new Promise((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(
+            (pos) => resolve(pos),
+            (error) => reject(error),
+            {
+              enableHighAccuracy: true,
+              timeout: 10000,
+              maximumAge: 0
             }
-          });
-
-          // Add click listener to marker
-          marker.addListener('click', () => handleCardClick(place));
-
-          return marker;
+          );
         });
 
-        setNearbyMarkers(newMarkers);
-        toast.success(`Found ${newMarkers.length} nearby attractions`);
+        searchLocation = {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude
+        };
+
+        setUserLocation(searchLocation);
+        
+        if (userMarker) {
+          userMarker.setMap(null);
+        }
+
+        const newUserMarker = new window.google.maps.Marker({
+          position: searchLocation,
+          map: mapInstanceRef.current,
+          title: 'Your Location',
+          icon: {
+            url: 'http://maps.google.com/mapfiles/ms/icons/pink-dot.png',
+            scaledSize: new window.google.maps.Size(40, 40),
+            anchor: new window.google.maps.Point(20, 40)
+          }
+        });
+        setUserMarker(newUserMarker);
+      } else {
+        searchLocation = userLocation;
       }
+
+      // Clear existing nearby markers
+      nearbyMarkers.forEach(marker => marker.setMap(null));
+      setNearbyMarkers([]);
+
+      const service = new window.google.maps.places.PlacesService(mapInstanceRef.current);
+      const allResults = new Map();
+
+      // Define place types to search for
+      const placeTypes = [
+        'place_of_worship',  // For temples and stupas
+        'lodging',           // For hotels
+        'tourist_attraction' // For additional religious sites
+      ];
+
+      // Search for each place type
+      for (const type of placeTypes) {
+        try {
+          const request = {
+            location: new window.google.maps.LatLng(searchLocation.lat, searchLocation.lng),
+            radius: 10000, // Increased to 10km to find more religious sites
+            type: type
+          };
+
+          const results = await new Promise((resolve, reject) => {
+            service.nearbySearch(request, (results, status) => {
+              if (status === window.google.maps.places.PlacesServiceStatus.OK && results) {
+                resolve(results);
+              } else {
+                resolve([]);
+              }
+            });
+          });
+
+          // Process and categorize results
+          for (const place of results) {
+            if (!allResults.has(place.place_id)) {
+              // Determine category based on place type and name
+              let category = 'other';
+              let minRating = 3.5;
+              let minReviews = 50;
+
+              const placeName = place.name.toLowerCase();
+              
+              // Categorize based on place type and name
+              if (type === 'place_of_worship' || 
+                  placeName.includes('temple') || 
+                  placeName.includes('stupa') || 
+                  placeName.includes('monastery') ||
+                  placeName.includes('gumba') ||
+                  placeName.includes('gomp') ||
+                  placeName.includes('vihar') ||
+                  placeName.includes('mandir') ||
+                  placeName.includes('gurudwara') ||
+                  placeName.includes('church') ||
+                  placeName.includes('mosque')) {
+                category = 'religious_sites';
+                minRating = 3.5;
+                minReviews = 50;
+              } else if (type === 'lodging') {
+                if (place.rating >= 4.0 && place.user_ratings_total >= 200) {
+                  category = 'luxury_hotels';
+                  minRating = 4.0;
+                  minReviews = 200;
+                } else {
+                  continue; // Skip hotels that don't meet luxury standards
+                }
+              } else if (type === 'tourist_attraction' && 
+                        (placeName.includes('temple') || 
+                         placeName.includes('stupa') || 
+                         placeName.includes('monastery') ||
+                         placeName.includes('gumba') ||
+                         placeName.includes('gomp') ||
+                         placeName.includes('vihar') ||
+                         placeName.includes('mandir'))) {
+                category = 'religious_sites';
+                minRating = 3.5;
+                minReviews = 50;
+              }
+
+              // Add place if it meets minimum requirements
+              if (place.rating >= minRating && place.user_ratings_total >= minReviews) {
+                place.category = category;
+                place.importance = category === 'luxury_hotels' ? 'medium' : 'high';
+                allResults.set(place.place_id, place);
+              }
+            }
+          }
+        } catch (error) {
+          console.error(`Error searching for ${type}:`, error);
+        }
+      }
+
+      const uniqueResults = Array.from(allResults.values())
+        .sort((a, b) => {
+          // First sort by importance
+          if (a.importance !== b.importance) {
+            return a.importance === 'high' ? -1 : 1;
+          }
+          // Then by rating
+          if (a.rating !== b.rating) {
+            return b.rating - a.rating;
+          }
+          // Finally by number of reviews
+          return b.user_ratings_total - a.user_ratings_total;
+        });
+
+      if (uniqueResults.length === 0) {
+        toast.info('No tourist attractions found nearby.');
+        setLoading(false);
+        return;
+      }
+
+      const bounds = new window.google.maps.LatLngBounds();
+      bounds.extend(new window.google.maps.LatLng(searchLocation.lat, searchLocation.lng));
+
+      // Category-specific marker colors
+      const categoryColors = {
+        religious_sites: 'purple',
+        luxury_hotels: 'blue',
+        other: 'orange'
+      };
+
+      const newMarkers = uniqueResults.map(place => {
+        bounds.extend(place.geometry.location);
+        
+        const marker = new window.google.maps.Marker({
+          position: place.geometry.location,
+          map: mapInstanceRef.current,
+          title: place.name,
+          icon: {
+            url: `http://maps.google.com/mapfiles/ms/icons/${categoryColors[place.category] || 'red'}-dot.png`,
+            scaledSize: new window.google.maps.Size(32, 32),
+            anchor: new window.google.maps.Point(16, 32)
+          }
+        });
+
+        const infoWindow = new window.google.maps.InfoWindow({
+          content: `
+            <div style="padding: 12px; max-width: 300px;">
+              <h3 style="margin: 0 0 8px 0; color: #1a73e8;">${place.name}</h3>
+              ${place.rating ? `
+                <div style="color: #666; margin-bottom: 8px;">
+                  <span style="color: #fbbc04;">⭐ ${place.rating.toFixed(1)}</span>
+                  <span style="color: #666;"> (${place.user_ratings_total} reviews)</span>
+                </div>
+              ` : ''}
+              <div style="margin: 8px 0; color: #444; font-weight: 500;">
+                ${place.category.split('_').map(word => 
+                  word.charAt(0).toUpperCase() + word.slice(1)
+                ).join(' ')}
+              </div>
+              ${place.vicinity ? `
+                <div style="margin-top: 8px; color: #555;">
+                  📍 ${place.vicinity}
+                </div>
+              ` : ''}
+            </div>
+          `
+        });
+
+        marker.addListener('click', () => {
+          newMarkers.forEach(m => {
+            if (m.infoWindow) m.infoWindow.close();
+          });
+          
+          infoWindow.open(mapInstanceRef.current, marker);
+          handleCardClick(place);
+        });
+
+        marker.infoWindow = infoWindow;
+        return marker;
+      });
+
+      setNearbyMarkers(newMarkers);
+      mapInstanceRef.current.fitBounds(bounds);
+
+      // Count places by category
+      const counts = uniqueResults.reduce((acc, place) => {
+        acc[place.category] = (acc[place.category] || 0) + 1;
+        return acc;
+      }, {});
+
+      toast.success(
+        `Found ${uniqueResults.length} nearby attractions:\n` +
+        `${counts.religious_sites || 0} religious sites (temples, stupas, monasteries), ` +
+        `${counts.luxury_hotels || 0} luxury hotels (4+ stars)`
+      );
+      
+      setPlaces(uniqueResults);
+
     } catch (error) {
-      console.error('Error searching nearby places:', error);
-      toast.error('Failed to find nearby attractions');
+      console.error('Error in searchNearbyAttractions:', error);
+      if (error.code === 1) {
+        toast.error('Please enable location services to find nearby attractions');
+      } else {
+        toast.error('Failed to find nearby attractions. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
@@ -479,10 +746,10 @@ export default function LocationPage() {
         
         // Get address for the location
         try {
-          const response = await axios.get('https://maps.gomaps.pro/maps/api/geocode/json', {
+          const response = await axios.get('https://maps.googleapis.com/maps/api/geocode/json', {
             params: {
               latlng: `${location.lat},${location.lng}`,
-              key: GOMAPS_API_KEY
+              key: GOOGLE_MAPS_API_KEY
             }
           });
           if (response.data.results && response.data.results[0]) {
@@ -797,10 +1064,10 @@ export default function LocationPage() {
 
       // Get and set the destination address
       try {
-        const response = await axios.get('https://maps.gomaps.pro/maps/api/geocode/json', {
+        const response = await axios.get('https://maps.googleapis.com/maps/api/geocode/json', {
           params: {
             latlng: `${destination.lat},${destination.lng}`,
-            key: GOMAPS_API_KEY
+            key: GOOGLE_MAPS_API_KEY
           }
         });
         if (response.data.results && response.data.results[0]) {
@@ -821,6 +1088,153 @@ export default function LocationPage() {
       console.error('Error getting directions:', error);
       toast.error('Failed to get directions');
     }
+  };
+
+  const renderPlaceDetails = () => {
+    if (!selectedLocation) return null;
+
+    return (
+      <div className="modal-content59">
+        <button 
+          className="close-modal59"
+          onClick={() => {
+            setShowModal(false);
+            setSelectedLocation(null);
+            if (directionsRendererRef.current) {
+              directionsRendererRef.current.setMap(null);
+            }
+          }}
+        >
+          ×
+        </button>
+        <div className="modal-header59">
+          <h2>{selectedLocation.name}</h2>
+          {selectedLocation.rating && (
+            <div className="modal-rating59">
+              <span>⭐ {selectedLocation.rating.toFixed(1)}</span>
+              <span>({selectedLocation.user_ratings_total} reviews)</span>
+            </div>
+          )}
+        </div>
+        <div className="modal-body59">
+          <div className="modal-image-container59">
+            {selectedLocation.photos && selectedLocation.photos.length > 0 ? (
+              <img 
+                src={`https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photo_reference=${selectedLocation.photos[0].photo_reference}&key=${GOOGLE_MAPS_API_KEY}`}
+                alt={selectedLocation.name}
+                className="modal-image59"
+              />
+            ) : (
+              <div className="no-image-placeholder59">No Image Available</div>
+            )}
+          </div>
+          <div className="modal-details59">
+            <p className="modal-address59">📍 {selectedLocation.formatted_address || selectedLocation.vicinity}</p>
+            
+            {selectedLocation.editorial_summary && (
+              <div className="modal-description59">
+                <p>{selectedLocation.editorial_summary.overview}</p>
+              </div>
+            )}
+
+            {selectedLocation.types && (
+              <div className="modal-types59">
+                <h3>Categories:</h3>
+                <div className="type-tags59">
+                  {selectedLocation.types.map((type, index) => (
+                    <span key={index} className="type-tag59">
+                      {type.split('_').map(word => 
+                        word.charAt(0).toUpperCase() + word.slice(1)
+                      ).join(' ')}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {selectedLocation.opening_hours && (
+              <div className="modal-hours59">
+                <h3>Opening Hours:</h3>
+                <p>{selectedLocation.opening_hours.isOpen() ? 'Open Now' : 'Closed'}</p>
+                {selectedLocation.opening_hours.weekday_text && (
+                  <ul>
+                    {selectedLocation.opening_hours.weekday_text.map((text, index) => (
+                      <li key={index}>{text}</li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
+
+            {selectedLocation.formatted_phone_number && (
+              <div className="modal-phone59">
+                <p>📞 <a href={`tel:${selectedLocation.formatted_phone_number}`}>
+                  {selectedLocation.formatted_phone_number}
+                </a></p>
+              </div>
+            )}
+
+            {selectedLocation.website && (
+              <div className="modal-website59">
+                <a href={selectedLocation.website} target="_blank" rel="noopener noreferrer">
+                  Visit Website
+                </a>
+              </div>
+            )}
+
+            {selectedLocation.url && (
+              <div className="modal-maps-link59">
+                <a href={selectedLocation.url} target="_blank" rel="noopener noreferrer">
+                  View on Google Maps
+                </a>
+              </div>
+            )}
+
+            {selectedLocation.wheelchair_accessible_entrance && (
+              <div className="modal-accessibility59">
+                <p>♿ Wheelchair Accessible</p>
+              </div>
+            )}
+
+            {selectedLocation.reviews && selectedLocation.reviews.length > 0 && (
+              <div className="modal-reviews59">
+                <h3>Recent Reviews:</h3>
+                <div className="reviews-container59">
+                  {selectedLocation.reviews.slice(0, 3).map((review, index) => (
+                    <div key={index} className="review-item59">
+                      <div className="review-header59">
+                        <span className="review-author59">{review.author_name}</span>
+                        <span className="review-rating59">⭐ {review.rating}</span>
+                      </div>
+                      <p className="review-text59">{review.text}</p>
+                      <span className="review-time59">
+                        {new Date(review.time * 1000).toLocaleDateString()}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+          <div className="modal-actions59">
+            <button 
+              className="get-directions-btn59"
+              onClick={() => {
+                if (selectedLocation.geometry && selectedLocation.geometry.location) {
+                  const location = selectedLocation.geometry.location;
+                  getDirections({
+                    lat: typeof location.lat === 'function' ? location.lat() : location.lat,
+                    lng: typeof location.lng === 'function' ? location.lng() : location.lng
+                  });
+                }
+              }}
+            >
+              <span>🗺️</span> Get Directions
+            </button>
+          </div>
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -916,58 +1330,10 @@ export default function LocationPage() {
         </div>
       </div>
 
-      {/* Location Details Modal */}
+      {/* Enhanced Location Details Modal */}
       {showModal && selectedLocation && (
         <div className="modal-overlay59">
-          <div className="modal-content59">
-            <button 
-              className="close-modal59"
-              onClick={() => {
-                setShowModal(false);
-                setSelectedLocation(null);
-                if (directionsRendererRef.current) {
-                  directionsRendererRef.current.setMap(null);
-                }
-              }}
-            >
-              ×
-            </button>
-            <div className="modal-header59">
-              <h2>{selectedLocation.name}</h2>
-              {selectedLocation.rating && (
-                <div className="modal-rating59">
-                  <span>⭐ {selectedLocation.rating}</span>
-                  <span>({selectedLocation.user_ratings_total} reviews)</span>
-                </div>
-              )}
-            </div>
-            <div className="modal-body59">
-              <p>{selectedLocation.vicinity}</p>
-              {selectedLocation.photos && selectedLocation.photos.length > 0 && (
-                <img 
-                  src={`https://maps.gomaps.pro/maps/api/place/photo?maxwidth=400&photo_reference=${selectedLocation.photos[0].photo_reference}&key=${GOMAPS_API_KEY}`}
-                  alt={selectedLocation.name}
-                  className="modal-image59"
-                />
-              )}
-              <div className="modal-actions59">
-                <button 
-                  className="get-directions-btn59"
-                  onClick={() => {
-                    if (selectedLocation.geometry && selectedLocation.geometry.location) {
-                      const location = selectedLocation.geometry.location;
-                      getDirections({
-                        lat: typeof location.lat === 'function' ? location.lat() : location.lat,
-                        lng: typeof location.lng === 'function' ? location.lng() : location.lng
-                      });
-                    }
-                  }}
-                >
-                  <span>🗺️</span> Get Directions
-                </button>
-              </div>
-            </div>
-          </div>
+          {renderPlaceDetails()}
         </div>
       )}
 

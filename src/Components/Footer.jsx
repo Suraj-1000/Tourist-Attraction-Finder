@@ -1,5 +1,7 @@
 import React from "react";
 import "./Footer.css";
+import { Link } from "react-router-dom";
+
 export default function Footer(){
     return (
         <>
@@ -32,10 +34,10 @@ export default function Footer(){
             <div className="footer-title-2-heading10">About</div>
             <div className="footer-links10">
               <ul>
-                  <li>About Us</li>
-                  <li>Our Services</li>
-                  <li>Privacy Policy</li>
-                  <li>Terms & Conditions</li>
+                  <li><Link to="/about-us">About Us</Link></li>
+                  <li><Link to="/contact-us">Contact Us</Link></li>
+                  <li><Link to="/faq">FAQ</Link></li>
+                  <li><Link to="/terms-and-conditions">Terms & Conditions</Link></li>
                 </ul>
             </div>
           </div>

@@ -13,6 +13,7 @@ router.post("/", async (req, res) => {
       tripType,
       duration,
       destinations,
+      locationDetails,
       adventureActivities,
       culturalExperiences,
       relaxation,
@@ -38,12 +39,19 @@ router.post("/", async (req, res) => {
       userName,
       userEmail,
       userAddress,
-      userPhone
+      userPhone,
+      groupSize
     } = req.body;
 
     // Validate required fields
     if (!tripName || !userId || !userName || !userEmail || !userAddress) {
       return res.status(400).json({ message: "Missing required fields" });
+    }
+
+    // Validate group size for Family and Groups travel styles
+    if ((travelStyle === 'Family' || travelStyle === 'Groups') && 
+        (!groupSize || groupSize < 1)) {
+      return res.status(400).json({ message: "Group size is required for Family and Groups travel styles" });
     }
 
     // Check if trip name already exists for this user
@@ -60,6 +68,7 @@ router.post("/", async (req, res) => {
       tripType,
       duration,
       destinations,
+      locationDetails,
       adventureActivities: Array.isArray(adventureActivities) ? adventureActivities : [],
       culturalExperiences: Array.isArray(culturalExperiences) ? culturalExperiences : [],
       relaxation: Array.isArray(relaxation) ? relaxation : [],
@@ -86,13 +95,14 @@ router.post("/", async (req, res) => {
       userEmail,
       userAddress,
       userPhone,
+      groupSize: groupSize ? parseInt(groupSize) : undefined,
       status: "pending"
-  });
+    });
 
-      await newTrip.save();
-      res.status(201).json({ message: "Trip added successfully!", trip: newTrip });
+    await newTrip.save();
+    res.status(201).json({ message: "Trip added successfully!", trip: newTrip });
   } catch (error) {
-      console.error("Error saving trip:", error);
+    console.error("Error saving trip:", error);
     if (error.name === 'ValidationError') {
       return res.status(400).json({ message: error.message });
     }
@@ -204,6 +214,17 @@ router.put('/updateTrip', async (req, res) => {
     
     if (!existingTrip) {
       return res.status(404).json({ message: 'Trip not found or you do not have permission to update this trip' });
+    }
+
+    // Validate group size for Family and Groups travel styles
+    if ((updateData.travelStyle === 'Family' || updateData.travelStyle === 'Groups') && 
+        (!updateData.groupSize || updateData.groupSize < 1)) {
+      return res.status(400).json({ message: "Group size is required for Family and Groups travel styles" });
+    }
+
+    // Convert groupSize to number if present
+    if (updateData.groupSize) {
+      updateData.groupSize = parseInt(updateData.groupSize);
     }
 
     // Handle array fields

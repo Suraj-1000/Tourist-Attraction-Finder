@@ -417,4 +417,33 @@
   cursor: pointer;
   user-select: none;
   margin: 0;
+}
+
+.map-picker-container {
+  width: 100%;
+  margin: 10px 0;
+}
+
+.map-picker-container .search-box-container {
+  margin-bottom: 10px;
+}
+
+.map-picker-container .location-search-input {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.map-picker-container .selected-location {
+  margin-top: 10px;
+  padding: 10px;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.map-picker-container .selected-location p {
+  margin: 5px 0;
 } 

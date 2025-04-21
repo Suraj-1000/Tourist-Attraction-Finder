@@ -26,12 +26,76 @@ export default function Signup() {
   // Get the redirect path from location state, default to homepage if none exists
   const from = location.state?.from || '/Home';
 
+  // Validation functions
+  const validateName = (name) => {
+    const nameRegex = /^[a-zA-Z\s]{2,50}$/;
+    return nameRegex.test(name.trim());
+  };
+
+  const validateEmail = (email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email.trim());
+  };
+
+  const validatePhone = (phone) => {
+    const phoneRegex = /^(98|97)\d{8}$/;
+    return phoneRegex.test(phone.trim());
+  };
+
+  const validatePassword = (password) => {
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    return passwordRegex.test(password);
+  };
+
   // Handle form submission
   const handleSubmit = (e) => {
     e.preventDefault();
     setIsLoading(true);
 
-    if (password !== confirmPassword) {
+    // Trim all input values
+    const trimmedFirstName = firstName.trim();
+    const trimmedLastName = lastName.trim();
+    const trimmedEmail = email.trim();
+    const trimmedPhone = phone.trim();
+    const trimmedPassword = password.trim();
+    const trimmedConfirmPassword = confirmPassword.trim();
+
+    // Validate first name
+    if (!validateName(trimmedFirstName)) {
+      toast.error("First name should contain only letters and spaces (2-50 characters)");
+      setIsLoading(false);
+      return;
+    }
+
+    // Validate last name
+    if (!validateName(trimmedLastName)) {
+      toast.error("Last name should contain only letters and spaces (2-50 characters)");
+      setIsLoading(false);
+      return;
+    }
+
+    // Validate email
+    if (!validateEmail(trimmedEmail)) {
+      toast.error("Please enter a valid email address");
+      setIsLoading(false);
+      return;
+    }
+
+    // Validate phone
+    if (!validatePhone(trimmedPhone)) {
+      toast.error("Phone number must start with 98 or 97 and contain 10 digits");
+      setIsLoading(false);
+      return;
+    }
+
+    // Validate password
+    if (!validatePassword(trimmedPassword)) {
+      toast.error("Password must contain at least 8 characters, one uppercase letter, one lowercase letter, one number, and one special character");
+      setIsLoading(false);
+      return;
+    }
+
+    if (trimmedPassword !== trimmedConfirmPassword) {
       toast.error("Passwords do not match");
       setIsLoading(false);
       return;
@@ -43,7 +107,15 @@ export default function Signup() {
       return;
     }
 
-    axios.post("http://localhost:4000/signups", { firstName, lastName, email, phone, password, confirmPassword, termsAccepted })
+    axios.post("http://localhost:4000/signups", { 
+      firstName: trimmedFirstName, 
+      lastName: trimmedLastName, 
+      email: trimmedEmail, 
+      phone: trimmedPhone, 
+      password: trimmedPassword, 
+      confirmPassword: trimmedConfirmPassword, 
+      termsAccepted 
+    })
       .then((response) => {
         toast.success("Registration successful. An OTP has been sent to your email.");
         setIsOtpSent(true);

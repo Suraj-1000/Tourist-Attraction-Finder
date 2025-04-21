@@ -4,7 +4,7 @@ import axios from "axios";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { toast } from "react-hot-toast";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faUser, faHistory, faHeart, faLock, faExclamationTriangle, faTrash, faSignOutAlt, faBell, faGlobe, faDollarSign, faBookmark } from "@fortawesome/free-solid-svg-icons";
+import { faUser, faHistory, faHeart, faLock, faExclamationTriangle, faTrash, faSignOutAlt, faBell, faGlobe, faDollarSign, faBookmark, faEnvelope } from "@fortawesome/free-solid-svg-icons";
 
 export default function Header() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -186,13 +186,14 @@ export default function Header() {
           <div className={`icon1 icon_user10 dropdown10 ${userDropdownOpen ? 'active' : ''}`} onClick={() => setUserDropdownOpen((prev) => !prev)}>
               <FontAwesomeIcon icon={faUser} className="header-icon" />
             <div className={`dropdown-menu10 user-menu10 ${userDropdownOpen ? "show" : ""}`}>
-              <Link to="/AdminProfileManage"><div className="dropdown-item10"><FontAwesomeIcon icon={faUser} style={{ color: "#007bff" }}  className="icon-gap" /> Profile-Management</div></Link>  
+              <Link to="/AdminProfileManage"><div className="dropdown-item10"><FontAwesomeIcon icon={faUser} style={{ color: "#007bff" }}  className="icon-gap" /> Profile</div></Link>  
               <Link to="/AdminHistory"><div className="dropdown-item10"><FontAwesomeIcon icon={faHistory} style={{ color: "#28a745" }}  className="icon-gap" /> History</div></Link>
               <Link to="/AdminFavorites"><div className="dropdown-item10"><FontAwesomeIcon icon={faHeart} style={{ color: "red" }} className="icon-gap" /> Favorites</div></Link>
               <Link to="/AdminBookingHistory"><div className="dropdown-item10"><FontAwesomeIcon icon={faBookmark} style={{ color: "#6f42c1" }} className="icon-gap" /> Booking History</div></Link>
               <Link to="/AdminChangePass"><div className="dropdown-item10"><FontAwesomeIcon icon={faLock} style={{ color: "darkorange" }} className="icon-gap" /> Change Password</div></Link>
               <Link to="/AdminEmergency"><div className="dropdown-item10"><FontAwesomeIcon icon={faExclamationTriangle} style={{ color: "crimson" }} className="icon-gap" /> Emergency Events</div></Link>
               <div className="dropdown-item10" onClick={handleDeleteAccount}><FontAwesomeIcon icon={faTrash} style={{ color: "black" }} className="icon-gap" /> Delete Account</div>
+              <Link to="/AdminContactManagement"><div className="dropdown-item10"><FontAwesomeIcon icon={faEnvelope} style={{ color: "#17a2b8" }} className="icon-gap" /> Contact Management</div></Link>
               <div className="dropdown-item10 user-info10">
                 <div className="icon_img10">
                   <img className='img10' src={user?.image || "/images/cnp.png"} alt="User" />

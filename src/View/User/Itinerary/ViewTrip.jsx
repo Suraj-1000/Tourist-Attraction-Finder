@@ -627,6 +627,19 @@ const handleShare = async (trip) => {
     );
   };
 
+  // Add this helper function after the other helper functions
+  const formatDestination = (destination) => {
+    if (!destination) return "N/A";
+    
+    // Split by comma and take only the city and country
+    const parts = destination.split(',').map(part => part.trim());
+    if (parts.length >= 2) {
+      // Take the first part (city) and the last part (country)
+      return `${parts[0]}, ${parts[parts.length - 1]}`;
+    }
+    return destination;
+  };
+
   return (
     <>
       <Header />
@@ -736,7 +749,7 @@ const handleShare = async (trip) => {
 
                 <p className="ranking-string22"><strong>Trip Duration:</strong> {result.duration  || "N/A"}</p>
                 <p className="ranking-string22"><strong>Trip Type:</strong> {result.tripType || "N/A"}</p>
-                <p className="ranking-string22"><strong>Destinations:</strong> {result.destinations || "N/A"}</p>
+                <p className="ranking-string22"><strong>Destinations:</strong> {formatDestination(result.destinations) || "N/A"}</p>
                 <p className="ranking-string22">
                   <strong>Activity Highlights: </strong>
                   {[

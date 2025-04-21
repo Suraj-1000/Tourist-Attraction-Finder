@@ -37,6 +37,25 @@ export default function PassReset() {
       return;
     }
 
+    // Validate password strength
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    
+    if (newPassword.includes(' ')) {
+      toast.error("Password cannot contain spaces", {
+        className: 'toast-message27',
+      });
+      setIsLoading(false);
+      return;
+    }
+
+    if (!passwordRegex.test(newPassword)) {
+      toast.error("Password must contain at least 8 characters, one uppercase letter, one lowercase letter, one number, and one special character", {
+        className: 'toast-message27',
+      });
+      setIsLoading(false);
+      return;
+    }
+
     if (newPassword !== confirmPassword) {
       toast.error("Passwords do not match!", {
         className: 'toast-message27',

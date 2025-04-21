@@ -8,6 +8,12 @@ import LinkPreview from './config/LinkPreview';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
+//Static Pages
+import AboutUs from './Components/Pages/AboutUs';
+import ContactUs from './Components/Pages/ContactUs';
+import FAQ from './Components/Pages/FAQ';
+import TermsAndConditions from './Components/Pages/TermsAndConditions';
+
 //Landing Page
 import LandingPage from './View/Landing Page/LandingPage';
 
@@ -49,6 +55,7 @@ import AdminNotificationPage from './View/Admin/Management/AdminNotification';
 import AdminEmergencyPage from './View/Admin/Management/AdminEmergency';
 import AdminCurrenciesPage from './View/Admin/Management/AdminCurrency';
 import AdminLanguagePage from './View/Admin/Management/AdminLanguage';
+import ContactManagement from './View/Admin/Management/ContactManagement';
 
 //Admin Booking History
 import AdminBookingHistory from './View/Admin/Management/AdminBookingHistory';
@@ -209,6 +216,9 @@ export default function App() {
     {
       path: '/AdminEventView/:id', element: <ProtectedRoute><EventView /></ProtectedRoute>
     },
+    {
+      path: '/AdminContactManagement', element: <ContactManagement />
+    },
 
     //Payment
     {
@@ -304,6 +314,24 @@ export default function App() {
     },
     {
       path: '/Emergency', element: <EmergencyPage />
+    },
+
+    // Static Pages
+    {
+      path: '/about-us',
+      element: <AboutUs />
+    },
+    {
+      path: '/contact-us',
+      element: <ContactUs />
+    },
+    {
+      path: '/faq',
+      element: <FAQ />
+    },
+    {
+      path: '/terms-and-conditions',
+      element: <TermsAndConditions />
     },
 
    

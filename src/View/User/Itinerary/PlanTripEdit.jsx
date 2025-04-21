@@ -7,6 +7,7 @@ import Footer from "../../../Components/Footer";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { toast } from "react-hot-toast";
+import MapPicker from "../../../Components/MapPicker";
 
 export default function PlanTripUpdatePage() {
   const navigate = useNavigate();
@@ -17,6 +18,11 @@ export default function PlanTripUpdatePage() {
     tripType: "",
     duration: "",
     destinations: "",
+    locationDetails: {
+      latitude: 27.7172,
+      longitude: 85.3240,
+      formattedAddress: ""
+    },
     adventureActivities: [],
     culturalExperiences: [],
     relaxation: [],
@@ -41,11 +47,13 @@ export default function PlanTripUpdatePage() {
     userId: "",
     userName: "",
     userEmail: "",
-    userAddress: ""
+    userAddress: "",
+    groupSize: "",
   });
 
   const [isUpdating, setIsUpdating] = useState(false);
   const { id } = useParams();
+  const [errors, setErrors] = useState({});
 
   const COST_RANGES = {
     transport: {
@@ -119,7 +127,6 @@ export default function PlanTripUpdatePage() {
     }
 };
 
-
 const calculateCostBreakdown = (data) => {
   let {
       duration,
@@ -127,6 +134,7 @@ const calculateCostBreakdown = (data) => {
       transportationType,
       mealsPreferences,
       travelStyle,
+      groupSize,
       adventureActivities,
       culturalExperiences,
       relaxation,
@@ -178,6 +186,15 @@ const calculateCostBreakdown = (data) => {
   let eventsCost = includeEvents ? COST_RANGES.eventsFestivals.local : 0;
 
   let travelStyleMultiplier = COST_RANGES.travelStyles[travelStyle.toLowerCase()] || 1.0;
+
+  // Adjust multiplier based on group size for Family and Groups
+  if (travelStyle === "Family" || travelStyle === "Groups") {
+    const size = parseInt(groupSize) || 1;
+    if (size > 1) {
+      // Additional discount for larger groups
+      travelStyleMultiplier *= (1 - (Math.min(size - 1, 10) * 0.05)); // 5% discount per additional person up to 50%
+    }
+  }
 
   let adjustedTransport = (minTransport * days * travelStyleMultiplier).toFixed(2);
   let adjustedAccommodation = (minAccommodation * days * travelStyleMultiplier).toFixed(2);
@@ -303,6 +320,19 @@ const handleChange = (e) => {
     });
   };
 
+  const handleLocationSelect = (location) => {
+    // Only update the form state, don't make any API calls
+    setFormData(prev => ({
+      ...prev,
+      destinations: location.address,
+      locationDetails: {
+        latitude: location.lat,
+        longitude: location.lng,
+        formattedAddress: location.address
+      }
+    }));
+  };
+
   useEffect(() => {
     if (id) {
       fetchTripDetails(id);
@@ -365,7 +395,12 @@ const handleChange = (e) => {
           customDietaryPreference: tripData.customDietaryPreference || "",
           itinerary: Array.isArray(tripData.itinerary) ? tripData.itinerary : [],
           travelInsurance: Boolean(tripData.travelInsurance),
-          includeEvents: Boolean(tripData.includeEvents)
+          includeEvents: Boolean(tripData.includeEvents),
+          locationDetails: tripData.locationDetails || {
+            latitude: 27.7172,
+            longitude: 85.3240,
+            formattedAddress: tripData.destinations || ""
+          }
         });
       } else {
         toast.error(`No Trip Found with ID: "${id}"`);
@@ -376,8 +411,45 @@ const handleChange = (e) => {
     }
   };
 
+  const validateForm = () => {
+    const newErrors = {};
+
+    // Required fields validation
+    if (!formData.tripName?.trim()) newErrors.tripName = "Trip name is required";
+    if (!formData.startDate) newErrors.startDate = "Start date is required";
+    if (!formData.endDate) newErrors.endDate = "End date is required";
+    if (!formData.destinations?.trim()) newErrors.destinations = "Destination is required";
+    if (!formData.travelStyle) newErrors.travelStyle = "Travel style is required";
+    if (!formData.accommodationType) newErrors.accommodationType = "Accommodation type is required";
+    if (!formData.transportationType) newErrors.transportationType = "Transportation type is required";
+
+    // Group size validation for Family and Groups
+    if ((formData.travelStyle === "Family" || formData.travelStyle === "Groups") && 
+        (!formData.groupSize || formData.groupSize < 1)) {
+      newErrors.groupSize = "Please specify the group size";
+    }
+
+    // Date validation
+    if (formData.startDate && formData.endDate) {
+      const start = new Date(formData.startDate);
+      const end = new Date(formData.endDate);
+      if (end < start) {
+        newErrors.endDate = "End date cannot be before start date";
+      }
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleUpdate = async (e) => {
     e.preventDefault();
+    
+    if (!validateForm()) {
+      toast.error("Please fill in all required fields correctly");
+      return;
+    }
+
     setIsUpdating(true);
     try {
       const token = localStorage.getItem("token");
@@ -396,29 +468,28 @@ const handleChange = (e) => {
         duration = `${days} days`;
       }
 
-      // Format the data before sending
-      const formattedData = {
+      // Create the update data object
+      const updateData = {
         ...formData,
-        duration,
-        // Ensure dietary preferences is a single string value
+        duration: duration,
         dietaryPreferences: Array.isArray(formData.dietaryPreferences) 
           ? formData.dietaryPreferences[0] || "None"
           : formData.dietaryPreferences || "None",
-        // Ensure array fields are properly formatted
         transportationType: Array.isArray(formData.transportationType) 
           ? formData.transportationType[0] 
           : formData.transportationType,
-        // Ensure boolean fields are properly set
         travelInsurance: Boolean(formData.travelInsurance),
         includeEvents: Boolean(formData.includeEvents),
-        // Ensure numeric fields are properly formatted
-        budget: Number(formData.budget),
-        groupSize: Number(formData.groupSize)
+        locationDetails: formData.locationDetails || {
+          latitude: 27.7172,
+          longitude: 85.3240,
+          formattedAddress: formData.destinations || ""
+        }
       };
 
       const response = await axios.put(
         "http://localhost:4000/adminTrip/updateTrip",
-        formattedData,
+        updateData,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -481,7 +552,10 @@ const handleChange = (e) => {
           <h3 className="h3-23">Select Your Destinations</h3>
           <div className="label-input-container23">
               <label className="label23">Destination:</label>
-              <input className="input23" type="text" name="destinations" value={formData.destinations} onChange={handleChange} placeholder="Enter your destination" />
+              <MapPicker
+                onLocationSelect={handleLocationSelect}
+                initialLocation={formData.locationDetails}
+              />
           </div>
 
           <h2 className="h2-23">How Do You Want to Spend Your Time?</h2>
@@ -579,6 +653,24 @@ const handleChange = (e) => {
                   <span className="icon">👨‍👩‍👧‍👦</span> Family
               </label>
           </div>
+
+          {(formData.travelStyle === "Family" || formData.travelStyle === "Groups") && (
+            <div className="group-size-input23">
+              <label className="label23">
+                Number of People:
+                <input
+                  type="number"
+                  min="1"
+                  max="20"
+                  name="groupSize"
+                  value={formData.groupSize}
+                  onChange={handleChange}
+                  className={`input23 ${errors.groupSize ? 'error-input23' : ''}`}
+                />
+              </label>
+              {errors.groupSize && <span className="error-message23">{errors.groupSize}</span>}
+            </div>
+          )}
 
           <h2 className="h2-23">Select Your Accommodation Preferences</h2>
 
