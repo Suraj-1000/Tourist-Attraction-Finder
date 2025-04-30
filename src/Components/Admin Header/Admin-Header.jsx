@@ -175,7 +175,7 @@ export default function Header() {
       <div className="header10">
         <div className="welcome10">
           <span className="welcome-text10">Welcome Admin!,</span>
-          <span className="welcome-user"> {user ? user.firstName : "Guest"}</span>
+          <span className="welcome-user10"> {user ? user.firstName : "Guest"}</span>
         </div>
         <div className="iconcontainer10">
           <Link to="/AdminNotification" className={`icon1 ${isIconActive('/AdminNotification') ? 'active' : ''}`}>
