@@ -1,0 +1,830 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Mitr';
+}
+
+body {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+.main-container25 {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+.heading-container25 {
+    display: flex;
+    flex-direction: column;
+    align-items: center;  
+    justify-content: center;
+    padding: 60px 40px;
+    width: 100%;
+    text-align: center;
+}
+
+.title-heading25 {
+    margin-top: 85px;
+    font-size: 28px;
+    font-weight: bold;
+    color: #e63946;
+    margin-bottom: 5px;
+}
+
+.trip-table25 {
+    width: 95%;
+    margin-top: 30px;
+    border-collapse: separate;
+    border-spacing: 0;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.table-header25 {
+    background-color: #007bff;
+    color: white;
+    font-size: 18px;
+    text-align: center;
+}
+
+.table-row25:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+.table-row25:nth-child(odd) {
+    background-color: #ffffff;
+}
+
+.table-row25:hover {
+    background-color: #f1f1f1;
+    transition: background-color 0.3s ease-in-out;
+}
+
+th, td {
+    padding: 14px;
+    text-align: center;
+    border-bottom: 1px solid #ddd;
+}
+
+th:first-child,
+td:first-child {
+    border-left: 1px solid #ddd;
+}
+
+th:last-child,
+td:last-child {
+    border-right: 1px solid #ddd;
+}
+.button-container25 {
+    display: flex;
+    justify-content: center; /* Center buttons horizontally */
+    gap: 15px; /* Adds space between buttons */
+}
+
+.approve-button25, .reject-button25 {
+    padding: 10px 15px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+    transition: transform 0.2s, background-color 0.3s;
+}
+
+.approve-button25 {
+    background-color: #008000;
+    color: white;
+}
+
+.reject-button25 {
+    background-color: #AE0808;
+    color: white;
+}
+
+.approve-button25:hover {
+    background-color: #008000;
+    transform: scale(1.05);
+}
+
+.reject-button25:hover {
+    background-color: #AE0808;
+    transform: scale(1.05);
+}
+
+.approve-button25:focus, .reject-button25:focus {
+    outline: none;
+}
+
+/* Toast Styles */
+.toast-message25 {
+  font-family: 'Mitr' !important;
+  font-size: 14px !important;
+  border-radius: 6px !important;
+}
+
+.Toastify__toast--success {
+  background-color: #008000 !important;
+  color: white !important;
+  font-family: 'Mitr' !important;
+}
+
+.Toastify__toast--error {
+  background-color: #AE0808 !important;
+  color: white !important;
+  font-family: 'Mitr' !important;
+}
+
+/* Button disabled states */
+.approve-button25:disabled,
+.reject-button25:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* Loading state animation */
+@keyframes updating {
+  0% { opacity: 1; }
+  50% { opacity: 0.7; }
+  100% { opacity: 1; }
+}
+
+.approve-button25:disabled,
+.reject-button25:disabled {
+  animation: updating 1.5s infinite;
+}
+
+/* Toast container positioning */
+.Toastify__toast-container {
+  z-index: 9999;
+}
+
+.Toastify__toast-body {
+  font-family: 'Mitr' !important;
+  font-size: 14px !important;
+}
+
+.Toastify__progress-bar {
+  background: rgba(255, 255, 255, 0.7) !important;
+}
+
+.search-filter-container25 {
+    display: flex;
+    gap: 20px;
+    margin: 30px 0;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+}
+
+.search-wrapper25 {
+    position: relative;
+    width: 50%;
+}
+
+.search-input25 {
+    padding: 15px 50px 15px 20px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    width: 100%;
+    font-size: 16px;
+    transition: border-color 0.3s;
+}
+
+.search-input25:focus {
+    outline: none;
+    border-color: #007bff;
+}
+
+.search-icon25 {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    opacity: 0.5;
+}
+
+.status-filter25 {
+    padding: 15px 20px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.results-heading25 {
+    color: #333;
+    margin: 20px 0;
+    font-size: 24px;
+}
+
+.trips-section25 {
+    margin: 30px 0;
+    width: 100%;
+}
+
+.section-heading25 {
+    color: #e63946;
+    margin-bottom: 20px;
+    font-size: 20px;
+    text-align: left;
+    padding-left: 40px;
+}
+
+.cards-container25 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    padding: 0 40px;
+}
+
+.trip-card25 {
+    background: white;
+    border-radius: 10px;
+    padding: 0;
+    box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+    transition: transform 0.2s, box-shadow 0.2s;
+    margin-bottom: 20px;
+    text-align: left;
+}
+
+.trip-card25:hover {
+    transform: translateY(-5px);
+}
+
+.card-header25 {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 25px;
+    border-bottom: 1px solid #eee;
+}
+
+.card-index25 {
+    font-weight: bold;
+    font-size: 16px;
+    color: #666;
+}
+
+.card-content25 {
+    padding: 25px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.trip-title25 {
+    font-size: 20px;
+    color: #333;
+    margin: 0;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #e63946;
+    text-align: left;
+}
+
+.trip-info25 {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    text-align: left;
+}
+
+.trip-info25 p {
+    margin: 0;
+    color: #555;
+    font-size: 15px;
+    display: flex;
+    align-items: center;
+}
+
+.trip-info25 p strong {
+    min-width: 100px;
+    display: inline-block;
+}
+
+.status-badge25 {
+    padding: 8px 15px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 500;
+    text-transform: uppercase;
+}
+
+.status-pending {
+    background-color: #F25019;
+    color: white;
+}
+
+.status-approved {
+    background-color: #008000;
+    color: white;
+}
+
+.status-declined {
+    background-color: #AE0808;
+    color: white;
+}
+
+.card-actions25 {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 10px;
+}
+
+.view-details-link25 {
+    color: #007bff;
+    text-decoration: underline;
+    cursor: pointer;
+    font-size: 15px;
+}
+
+.approval-buttons25 {
+    display: flex;
+    gap: 15px;
+}
+
+.approve-button25, .reject-button25 {
+    padding: 8px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: opacity 0.3s;
+}
+
+.approve-button25 {
+    background-color: #008000;
+    color: white;
+}
+
+.reject-button25 {
+    background-color: #AE0808;
+    color: white;
+}
+
+.approve-button25:hover, .reject-button25:hover {
+    opacity: 0.9;
+}
+
+.approve-button25:disabled, .reject-button25:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Card variations */
+.pending-card {
+    border-left: 4px solid #F25019;
+}
+
+.approved-card {
+    border-left: 4px solid #008000;
+}
+
+.declined-card {
+    border-left: 4px solid #AE0808;
+}
+
+/* Modal Styles */
+.modal-overlay25 {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-content25 {
+    position: relative;
+    background: white;
+    padding: 40px;  /* Increased padding */
+    border-radius: 15px;  /* Slightly larger border radius */
+    width: 90%;
+    max-width: 900px;  /* Increased max-width */
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.modal-header25 {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 35px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid #e63946;
+    position: relative;
+}
+
+.header-right25 {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.modal-title25 {
+    font-size: 28px;  /* Larger font size */
+    color: #333;
+    margin: 0;
+    font-weight: 600;
+}
+
+.modal-status-badge25 {
+    padding: 10px 20px;  /* Increased padding */
+    border-radius: 25px;
+    font-size: 15px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.modal-section25 {
+    margin-bottom: 40px;  /* Increased margin */
+    background: #fff;
+    padding: 25px;  /* Added padding */
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+
+.modal-section25:last-child {
+    margin-bottom: 20px;
+}
+
+.modal-section25 h3 {
+    color: #e63946;
+    margin-bottom: 25px;  /* Increased margin */
+    font-size: 22px;
+    font-weight: 600;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #eee;
+}
+
+.detail-grid25 {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 30px;  /* Increased gap */
+    padding: 10px;
+}
+
+.detail-item25 {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;  /* Increased gap */
+    padding: 15px;  /* Added padding */
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+.detail-label25 {
+    font-weight: 600;
+    color: #555;
+    font-size: 15px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.detail-value25 {
+    color: #333;
+    font-size: 16px;
+    padding: 5px 0;
+}
+
+.budget25 {
+    color: #008000;
+    font-weight: bold;
+    font-size: 18px;
+}
+
+.budget-value25 {
+    background: #f0fff0;
+    color: #008000;
+    padding: 8px 15px;
+    border-radius: 20px;
+    font-weight: bold;
+    margin-left: 10px;
+    display: inline-block;
+    box-shadow: 0 2px 5px rgba(0, 128, 0, 0.1);
+}
+
+.budget-info25 {
+    background: #f8f9fa;
+    border-radius: 15px;
+    padding: 20px;
+    margin: 20px 0;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.budget-item25 {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.activities-grid25 {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 30px;  /* Increased gap */
+    padding: 10px;
+}
+
+.activity-category25 {
+    background: #f8f9fa;
+    padding: 20px;  /* Increased padding */
+    border-radius: 12px;
+    border: 1px solid #eee;
+}
+
+.activity-category25 h4 {
+    color: #333;
+    margin-bottom: 15px;
+    font-size: 18px;
+    font-weight: 600;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #ddd;
+}
+
+.activity-category25 ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.activity-category25 li {
+    padding: 8px 0;  /* Increased padding */
+    color: #555;
+    font-size: 15px;
+    border-bottom: 1px solid #eee;
+}
+
+.activity-category25 li:last-child {
+    border-bottom: none;
+}
+
+.modal-actions25 {
+    display: flex;
+    justify-content: flex-end;
+    gap: 20px;  /* Increased gap */
+    margin-top: 30px;
+    padding-top: 25px;
+    border-top: 2px solid #eee;
+}
+
+.close-modal-btn25 {
+    display: block;
+    width: 100%;
+    padding: 15px;  /* Increased padding */
+    background: #666;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    margin-top: 30px;  /* Increased margin */
+    font-size: 16px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.close-modal-btn25:hover {
+    background: #555;
+    transform: translateY(-2px);
+}
+
+/* Custom scrollbar for modal */
+.modal-content25::-webkit-scrollbar {
+    width: 8px;
+}
+
+.modal-content25::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.modal-content25::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 10px;
+}
+
+.modal-content25::-webkit-scrollbar-thumb:hover {
+    background: #666;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .modal-content25 {
+        width: 95%;
+        padding: 25px;
+    }
+
+    .detail-grid25,
+    .activities-grid25 {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+
+    .modal-title25 {
+        font-size: 24px;
+    }
+
+    .modal-section25 {
+        padding: 20px;
+    }
+
+    .activity-category25 {
+        padding: 15px;
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+    .cards-container25 {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .cards-container25 {
+        grid-template-columns: 1fr;
+    }
+}
+
+.itinerary-grid25 {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 25px;
+    padding: 10px;
+}
+
+.itinerary-day25 {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 12px;
+    border: 1px solid #eee;
+}
+
+.itinerary-day25 h4 {
+    color: #e63946;
+    margin-bottom: 15px;
+    font-size: 18px;
+    font-weight: 600;
+    padding-bottom: 10px;
+}
+
+.modal-close-icon25 {
+    cursor: pointer;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.modal-close-icon25:hover {
+    background: rgba(0, 0, 0, 0.2);
+    transform: rotate(90deg);
+}
+
+.modal-close-icon25 svg {
+    color: #333;
+}
+
+.decline-message-input25 {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    margin-bottom: 20px;
+    font-size: 14px;
+    resize: vertical;
+}
+
+.decline-message-input25:focus {
+    outline: none;
+    border-color: #e63946;
+    box-shadow: 0 0 0 2px rgba(230, 57, 70, 0.1);
+}
+
+.decline-message-input25::placeholder {
+    color: #999;
+}
+
+.cancel-button25 {
+    background-color: #008000;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-right: 10px;
+}
+
+.decline-message25 {
+    background-color: #fff3f3;
+    padding: 15px;
+    border-radius: 4px;
+    border-left: 4px solid #dc3545;
+    margin-top: 10px;
+    font-style: italic;
+}
+
+/* Update existing button styles */
+.reject-button25, .modal-decline-btn25 {
+    background: linear-gradient(135deg, #AE0808, #8B0000);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 500;
+}
+
+.approve-button25, .modal-approve-btn25 {
+    background: linear-gradient(135deg, #008000, #006400);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 500;
+}
+
+.reject-button25:hover, .modal-decline-btn25:hover {
+    background: linear-gradient(135deg, #8B0000, #AE0808);
+    transform: translateY(-2px);
+}
+
+.approve-button25:hover, .modal-approve-btn25:hover {
+    background: linear-gradient(135deg, #006400, #008000);
+    transform: translateY(-2px);
+}
+
+.reject-button25:disabled, 
+.approve-button25:disabled,
+.modal-decline-btn25:disabled,
+.modal-approve-btn25:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.modal-actions25 {
+    display: flex;
+    justify-content: flex-end;
+    gap: 15px;
+    margin-top: 20px;
+    padding: 15px;
+    border-top: 1px solid #eee;
+}
+
+.user-info-container25 {
+    padding: 1.5rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+    margin: 1rem 0;
+}
+
+.user-details-grid25 {
+    display: grid;
+    gap: 1rem;
+}
+
+.detail-item25 {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    background: white;
+    border-radius: 6px;
+    border: 1px solid #e9ecef;
+}
+
+.detail-label25 {
+    font-weight: 600;
+    color: #6c757d;
+    font-size: 0.9rem;
+}
+
+.detail-value25 {
+    font-size: 1rem;
+    color: #212529;
+}
+
+@media (max-width: 768px) {
+    .user-details-grid25 {
+        grid-template-columns: 1fr;
+    }
+}
