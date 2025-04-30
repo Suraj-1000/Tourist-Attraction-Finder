@@ -1,0 +1,28 @@
+.auth-footer {
+  position: relative;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: #f9f9f9;
+  padding: 10px 0;
+  text-align: center;
+  border-top: 1px solid #eaeaea;
+  z-index: 1000;
+}
+
+.auth-footer p {
+  margin: 0;
+  color: black;
+  font-size: 14px;
+  font-family: "Mitr", sans-serif;
+}
+
+@media (max-width: 768px) {
+  .auth-footer {
+    padding: 8px 0;
+  }
+  
+  .auth-footer p {
+    font-size: 12px;
+  }
+} 

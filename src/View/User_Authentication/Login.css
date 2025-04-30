@@ -1,0 +1,152 @@
+body {
+  margin: 0;
+  font-family: "Mitr";
+}
+
+.logo4 {
+  width: 120px;
+  height: 120px;
+  background: url("/images/Logo.png");
+  background-size: cover;
+  background-position: center;
+  position: fixed;
+  top: 20px;
+  left: 100px;
+  border-radius: 50%;
+  z-index: 1000;
+  border: 3px solid #ffffff; /* White border */
+  box-shadow: 
+    0 0 0 3px #ae0808, /* Red outline */
+    0 0 20px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+  padding: 3px; /* Space between image and border */
+  background-clip: content-box; /* Ensures the background image respects padding */
+}
+
+.main-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  margin-bottom: 100px;
+  background-color: #f9f9f9;
+}
+
+.card {
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  padding: 20px 40px;
+  align-items: center;
+  flex-direction: column;
+  width:641px;
+  height: 100%;  
+  margin-top: 100px;
+}
+
+.title {
+  color: #ae0808;
+  font-size: 24px;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+.subtitle {
+  color: #02073e;
+  font-size: 16px;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.input {
+  padding: 10px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+.password-field, .input-full {
+  position: relative;
+  width: 100%;
+}
+.password-full {
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+.eye-icon.inside {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 20px;
+  color: #ccc;
+}
+.eye-icon:hover {
+  color: #008000;
+}
+
+.button00 {
+  font-family: "Mitr";
+  background-color: #008000;
+  color: #fff;
+  border: none;
+  padding: 10px;
+  font-size: 16px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.button00:hover {
+  opacity: 0.9;
+}
+
+.link {
+  color: #02073e;
+  text-decoration: underline;
+  font-size: 14px;
+}
+
+.link:hover {
+  color:#008000;
+  text-decoration: underline;
+}
+
+.divider {
+  margin: 20px 0;
+  font-size: 14px;
+  color: #02073e;
+  text-align: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+
+.register {
+  font-size: 14px;
+  color: #02073e;
+  text-align: center;
+}
+
+.error-message {
+  color: red;
+  font-size: 14px;
+  margin-top: 10px;
+}
+
+.success-message {
+  color: green;
+  font-size: 14px;
+  margin-top: 10px;
+}

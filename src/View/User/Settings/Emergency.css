@@ -1,0 +1,379 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Mitr';
+}
+
+body {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    background-color: #f8f9fa;
+}
+
+.main-container68 {
+    width: 100%;
+    height: auto;
+    display: block;
+    text-align: center;
+    background-color: #f8f9fa;
+}
+
+.heading68 {
+    display: flex;
+    flex-direction: column;
+    align-items: center;  
+    justify-content: center;
+    padding: 40px 40px;
+    width: 100%;
+    text-align: center;
+}
+
+.title-heading68 {
+    margin-top: 100px;
+    font-size: 16px;
+    font-weight: bold;
+    color: #e63946;
+}
+
+.title-para68 {
+    font-size: 28px;
+    font-weight: 500;
+    color: #000;
+    margin: 0;
+}
+
+.h2-68{
+    text-align: center;
+    margin-top: -20px;
+}
+
+.emergency-icon68{
+    font-size: 44px;
+    margin-bottom: 2px;
+}
+
+
+/* Emergency Grid */
+.emergency-grid68 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    justify-content: center;
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+  
+  .emergency-card68 {
+    background: #fff;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    transition: transform 0.3s ease;
+    position: relative;
+    min-height: 200px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+  
+  .emergency-card68:hover {
+    transform: scale(1.05); 
+  }
+  
+  .contact-name68 {
+    font-size: 20px;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 5px;
+  }
+  
+  .contact-phone68 {
+    font-size: 18px;
+    color: #666;
+    margin-bottom: 5px;
+  }
+  
+  .contact-type68 {
+    font-size: 16px;
+    margin: 5px 0;
+  }
+  
+  .contact-relationship68 {
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 10px;
+  }
+  
+  .quick-dial68 {
+    background-color: #008000;
+    color: white;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-top: auto;
+    font-size: 14px;
+    transition: transform 0.3s ease, background-color 0.3s ease;
+  }
+  
+  .quick-dial68:hover {
+    background-color: #008000;
+    transform: scale(1.1); 
+    transition: transform 0.3s ease;
+  }
+  /* Form Styling */
+.form-heading68 {
+    font-size: 20px;
+    font-weight: bold;
+    margin-top: 25px;
+    margin-bottom: 15px;
+}
+
+.form-group68 {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    margin-top: 20px;
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.form-group68 input, .form-group68 select {
+    width: 100%;
+    max-width: 300px;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 14px;
+}
+
+.form-group68 input[type="text"] {
+    padding: 8px;
+    margin: 8px 0;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    width: 100%;
+    max-width: 300px;
+    font-size: 14px;
+}
+
+.form-group68 input[type="text"]:focus {
+  outline: none;
+  border-color: #3498db;
+}
+
+/* Special styling for type input */
+.form-group68 input[placeholder*="Type"] {
+  font-weight: bold;
+  color: #2c3e50;
+}
+
+/* Color indicators for different types */
+.type-indicator {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  margin-right: 8px;
+}
+
+.type-medical { background-color: #e74c3c; }
+.type-police { background-color: #3498db; }
+.type-fire { background-color: #f39c12; }
+.type-other { background-color: #2ecc71; }
+
+/* Buttons */
+.form-buttons68 {
+    margin-top: 15px;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+}
+
+.cancel-btn68, .save-btn68 {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    width: 80px;
+    margin-bottom: 15px;
+}
+
+.cancel-btn68 {
+    background-color: #AE0808;
+    color: white;
+    margin-right: 10px;
+}
+
+.cancel-btn68:hover {
+    background-color: #AE0808;
+}
+
+.save-btn68 {
+    background-color: #008000;
+    color: white;
+}
+
+.save-btn68:hover {
+    background-color: #008000;
+}
+
+
+.additional-resources68 {
+    background-color: white;
+    padding: 20px;
+    margin: 30px auto;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    max-width: 600px;
+  }
+  
+  .resources-heading68 {
+    font-size: 24px;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 10px;
+  }
+  
+  .resources-para68 {
+    font-size: 16px;
+    color: #666;
+    margin-bottom: 20px;
+  }
+  
+  .resource-btn68 {
+    background-color: #F25019;
+    color: white;
+    font-size: 16px;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease-in-out;
+  }
+  
+  .resource-btn68:hover {
+    background-color: #F25019;
+  }
+
+
+  .edit-icon68,
+.delete-icon68 {
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+  transition: transform 0.2s ease-in-out;
+  background-color: #f4f4f4;
+  padding: 6px; 
+  border-radius: 10px;
+}
+
+.edit-icon68:hover,
+.delete-icon68:hover {
+  transform: scale(1.1);
+}
+
+.overlay68 {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  gap: 8px;
+  opacity: 0;  /* Initially hidden */
+  transition: opacity 0.2s ease-in-out;
+}
+
+.emergency-card68:hover .overlay68 {
+  opacity: 1; /* Show overlay on hover */
+}
+
+/* Toast Styles */
+.toast-message68 {
+  font-family: 'Mitr';
+  font-size: 14px;
+  border-radius: 8px;
+}
+
+.Toastify__toast--success {
+  background: rgba(0, 128, 0, 0.9);
+  color: white;
+}
+
+.Toastify__toast--error {
+  background: rgba(174, 8, 8, 0.9);
+  color: white;
+}
+
+/* Modal Styles */
+.modal-overlay68 {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content68 {
+  background: white;
+  padding: 30px;
+  border-radius: 10px;
+  width: 90%;
+  max-width: 400px;
+  text-align: center;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.modal-content68 h2 {
+  color: #333;
+  margin-bottom: 15px;
+}
+
+.modal-content68 p {
+  color: #666;
+  margin-bottom: 20px;
+}
+
+.modal-buttons68 {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+}
+
+.modal-cancel-btn68,
+.modal-delete-btn68 {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: transform 0.2s ease;
+}
+
+.modal-cancel-btn68 {
+  background-color: #008000;
+  color: white;
+}
+
+.modal-delete-btn68 {
+  background-color: #AE0808;
+  color: white;
+}
+
+.modal-cancel-btn68:hover,
+.modal-delete-btn68:hover {
+  transform: scale(1.05);
+}
+

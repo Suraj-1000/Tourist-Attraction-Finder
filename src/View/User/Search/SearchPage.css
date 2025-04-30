@@ -1,0 +1,423 @@
+*{
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Mitr';
+}
+
+body {
+width: 100%;
+margin: 0;
+background: #fff;
+padding: 0;
+}
+
+.main-container51 {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+
+.heading51 {
+  display: flex;
+  flex-direction: column;
+  align-items: center;  
+  justify-content: center;
+  padding: 60px 40px;
+  background: #fff;
+  width: 100%;
+  text-align: center;
+}
+
+.title-heading51 {
+  margin-top: 85px;
+  font-size: 16px;
+  font-weight: bold;
+  color: #e63946;
+  margin-bottom: 10px;
+}
+
+.title-para51 {
+  font-size: 28px;
+  font-weight: 500;
+  color: #000;
+  margin: 0;
+}
+
+
+.recent-search-container51 {
+margin-top: -30px;
+display: flex;
+flex-direction: column;
+gap: 30px;
+padding: 10px;
+margin-left: 180px;
+}
+
+.recent-search-box51 {
+display: flex;
+gap: 30px;
+align-items: center;
+
+}
+
+.title-recent51 {
+font-size: 16px;
+font-weight: 500;
+color: #333;
+margin-bottom: 0;
+}
+
+.reset-button-container-51 {
+display: flex;
+align-items: center;  
+padding: 10px 40px 10px 10px;
+border: 1px solid #121111;
+border-radius: 20px;
+font-size: 16px;
+height: 40px; 
+cursor: pointer;
+background-color: #AE0808; 
+color: white; 
+gap: 20px;
+}
+
+.recent-icon51 {
+width: 20px;
+height: 20px;
+background-size: cover;
+background-repeat: no-repeat;
+background-position: center;
+background-image: url('/images/di.png');  
+margin-right: -30px; 
+}
+
+
+.recent-search-card-container51 {
+display: flex;
+gap: 20px; 
+}
+
+.recent-search-card51 {
+display: flex;
+align-items: center;
+justify-content: space-between; 
+background-color: #f4f4f4;
+border-radius: 20px; 
+height: 50px;
+padding: 0 15px;
+width: auto;
+cursor: pointer;
+}
+
+.recent-card-icon51 {
+width: 25px;
+height: 25px;
+background-size: cover;
+background-repeat: no-repeat;
+background-position: center;
+}
+
+.nearby-icon {
+background-image: url('/images/navi.png'); 
+}
+
+.similar-icon {
+background-image: url('/images/location.png'); 
+background-size: 20px 20px; 
+}
+
+.recent-card-text51 {
+font-size: 16px;
+font-weight: bold;
+color: #333;
+margin-left: 20px; 
+}
+
+
+
+.aed-container-51 {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  background-color: #f4f4f4; 
+  padding: 10px 20px; 
+  border-radius: 20px; 
+  width: fit-content; 
+  box-shadow: 0px 2px 5px rgba(59, 51, 51, 0.1);
+  margin-top: 10px;
+  margin-left: 1170px;
+  transition: background-color 0.3s ease-in-out;
+}
+
+.aed-icon {
+  display: flex;
+  align-items: center;
+  text-decoration: none; /* Removes underline from link */
+}
+
+.add-icon-img51 {
+  width: 30px;
+  height: 30px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  cursor: pointer;
+  transition: transform 0.2s ease-in-out;
+  margin-right: 8px; 
+}
+
+/* Scale effect on hover for the image only */
+.add-icon-img51:hover {
+  transform: scale(1.2); 
+}
+
+.add-media-text51 {
+  display: flex;
+  align-items: center;
+  font-size: 16px; 
+  color: black;
+}
+
+
+
+
+.picture-container51 {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 20px;
+  gap: 20px; /* Add spacing between rows */
+}
+
+.row51 {
+  display: flex;
+  align-items: center; /* Ensures everything is aligned */
+  justify-content: center;
+  width: 100%;
+  gap: 20px;
+}
+
+/* Video container */
+.video-container51 {
+  flex-shrink: 0;
+  width: 456px;
+  height: 479px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-radius: 10px;
+}
+
+/* Video styling */
+.video51 {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease-in-out;
+}
+
+/* Image container */
+.images-container51 {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  cursor: pointer;
+}
+
+/* Row of images */
+.image-row51 {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+/* Image styling */
+.image51 {
+  width: 338px;
+  height: 229px;
+  object-fit: cover;
+  border-radius: 10px;
+  transition: transform 0.3s ease-in-out;
+}
+
+/* Apply zoom-out effect on hover */
+.image51:hover,
+.video51:hover {
+  transform: scale(0.95); /* Shrink the media */
+}
+
+
+.image-wrapper51,
+.video-container51 {
+  position: relative;
+  display: inline-block;
+  overflow: hidden;  /* Add this to keep content within bounds */
+}
+
+.overlay51 {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  bottom: 0;
+  display: flex;
+  justify-content: flex-end; /* Align edit/delete icons to the right */
+  padding: 10px;
+  opacity: 0;
+  transition: opacity 0.2s ease-in-out;
+}
+
+.tags-image51, .tags-video51 {
+  position: absolute;
+  top: 4px;
+  left: 5px;
+  right: 70px;
+  font-size: 14px;
+  color: white;
+  padding: 8px 12px;
+  text-align: left;
+  font-weight: 500;
+  background-color: rgba(0, 0, 0, 0.6);
+  border-radius: 6px;
+  z-index: 0; 
+}
+
+.edit-icon51,
+.delete-icon51 {
+  position: relative; /* Change from absolute to relative */
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+  transition: transform 0.2s ease-in-out;
+  background-color: rgba(255, 255, 255, 0.9);
+  padding: 6px;
+  border-radius: 10px;
+  margin-left: 8px; /* Add spacing between icons */
+}
+
+/* Remove individual positioning for edit/delete icons */
+.edit-icon51:hover,
+.delete-icon51:hover {
+  transform: scale(1.1);
+}
+
+/* Show only the overlay with edit/delete icons on hover */
+.image-wrapper51:hover .overlay51,
+.video-container51:hover .overlay51 {
+  opacity: 1;
+}
+
+/* Toast Styles */
+.toast-message51 {
+  font-family: 'Mitr';
+  font-size: 14px;
+  border-radius: 8px;
+}
+
+.Toastify__toast--success {
+  background: rgba(0, 128, 0, 0.9) !important;
+  color: white;
+}
+
+.Toastify__toast--error {
+  background: rgba(174, 8, 8, 0.9) !important;
+  color: white;
+}
+
+/* Modal Styles */
+.modal-overlay51 {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content51 {
+  background: white;
+  padding: 30px;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 400px;
+  text-align: center;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.modal-content51 h2 {
+  color: #333;
+  margin-bottom: 15px;
+  font-size: 24px;
+  font-family: 'Mitr';
+}
+
+.modal-content51 p {
+  color: #666;
+  margin-bottom: 25px;
+  font-size: 16px;
+  font-family: 'Mitr';
+}
+
+.modal-buttons51 {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.modal-cancel-btn51,
+.modal-delete-btn51 {
+  padding: 12px 25px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 16px;
+  font-family: 'Mitr';
+  transition: all 0.3s ease;
+  min-width: 120px;
+}
+
+.modal-cancel-btn51 {
+  background-color: #008000;
+  color: white;
+}
+
+.modal-delete-btn51 {
+  background-color: #AE0808;
+  color: white;
+}
+
+.modal-cancel-btn51:hover {
+  background-color: #006400;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 128, 0, 0.2);
+}
+
+  .modal-delete-btn51:hover {
+  background-color: #8B0000;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(174, 8, 8, 0.2);
+}
+
+/* Toast Close Button */
+.Toastify__close-button {
+  color: white !important;
+  opacity: 0.8;
+}
+
+.Toastify__close-button:hover {
+  opacity: 1;
+}
+
+/* Toast Progress Bar */
+.Toastify__progress-bar {
+  background: rgba(255, 255, 255, 0.7) !important;
+}

@@ -1,0 +1,807 @@
+/* Page Layout */
+.calendar-page {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.calendar-page-header {
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.calendar-page-header h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 0.5rem;
+}
+
+.calendar-page-header p {
+    color: #666;
+    font-size: 1rem;
+}
+
+.calendar-controls {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.today-button {
+    background-color: #f8f9fa;
+    color: #333;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 8px 16px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.today-button:hover {
+    background-color: #e9ecef;
+}
+
+.date-navigator {
+    display: flex;
+    align-items: center;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.nav-arrow {
+    background: #f8f9fa;
+    border: none;
+    color: #333;
+    padding: 8px 16px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s ease;
+}
+
+.nav-arrow:hover {
+    background-color: #e9ecef;
+}
+
+.current-month {
+    padding: 8px 20px;
+    font-size: 14px;
+    font-weight: 500;
+    background-color: #fff;
+    border-left: 1px solid #ddd;
+    border-right: 1px solid #ddd;
+    cursor: pointer;
+    position: relative;
+    display: flex;
+    align-items: center;
+    transition: background-color 0.2s ease;
+}
+
+.current-month:hover {
+    background-color: #f0f0f0;
+}
+
+.current-month::after {
+    content: "▼";
+    font-size: 8px;
+    margin-left: 8px;
+    color: #666;
+}
+
+.hidden-month-picker {
+    position: absolute;
+    opacity: 0;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    cursor: pointer;
+}
+
+.calendar-container {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.calendar-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #333;
+    margin: 0;
+}
+
+.calendar-nav-btn {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: #666;
+    cursor: pointer;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    transition: all 0.3s;
+}
+
+.calendar-nav-btn:hover {
+    background: #f8f9fa;
+    color: #e63946;
+}
+
+.calendar-weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.weekday {
+    text-align: center;
+    font-weight: 500;
+    color: #666;
+    padding: 0.5rem;
+}
+
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 0.5rem;
+}
+
+.calendar-day {
+    aspect-ratio: 1;
+    padding: 0.5rem;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    min-height: 120px;
+    height: auto;
+    overflow: hidden;
+}
+
+.calendar-day:hover {
+    background: #f8f9fa;
+    border-color: #e63946;
+}
+
+.calendar-day.empty {
+    background: #f8f9fa;
+    cursor: default;
+}
+
+.calendar-day.has-bookings {
+    background: #f8f9fa;
+    border-color: #e63946;
+}
+
+/* Badge showing number of bookings if more than 2 */
+.calendar-day.has-bookings::after {
+    content: attr(data-count);
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: #e63946;
+    color: white;
+    font-size: 0.7rem;
+    font-weight: bold;
+    width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+}
+
+.calendar-day.today {
+    background: #fff3f4;
+    border: 2px solid #e63946;
+    box-shadow: 0 2px 8px rgba(230, 57, 70, 0.1);
+}
+
+.calendar-day.today:hover {
+    background: #ffe9eb;
+}
+
+.day-number {
+    font-size: 1rem;
+    color: #333;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+}
+
+/* Status dots at the top of calendar day */
+.status-dots {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 6px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    position: relative;
+}
+
+.status-dot.start {
+    background-color: #00a651;
+    border: 1px solid #007539;
+}
+
+.status-dot.end {
+    background-color: #e63946;
+    border: 1px solid #ad2b35;
+}
+
+.status-dot.in-progress {
+    background-color: #3a86ff;
+    border: 1px solid #0056b3;
+}
+
+.status-dot.single-day {
+    background-color: #ff9500;
+    border: 1px solid #cc7700;
+}
+
+.status-dot.today {
+    background-color: #9d4edd;
+    border: 1px solid #7b2cbf;
+}
+
+.booking-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 0.75rem;
+    overflow-y: auto;
+    max-height: calc(100% - 2rem);
+}
+
+.booking-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 4px;
+    border-radius: 4px;
+    background: white;
+    border: 1px solid #eee;
+    margin-bottom: 3px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.booking-item.package {
+    border-left: 3px solid #2bb673;
+}
+
+.booking-item.trip {
+    border-left: 3px solid #4361ee;
+}
+
+.booking-item.event {
+    border-left: 3px solid #f72585;
+}
+
+/* Tour status indicators */
+.booking-item.start {
+    border-top: 2px solid #00a651;
+}
+
+.booking-item.end {
+    border-bottom: 2px solid #e63946;
+}
+
+.booking-item.in-progress {
+    border-right: 3px solid #3a86ff;
+    background-color: #f0f7ff;
+}
+
+.booking-item.single-day {
+    border: 2px solid #ff9500;
+}
+
+.booking-item.today {
+    background-color: #f8f0ff;
+    border: 2px solid #9d4edd;
+}
+
+.booking-indicators {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 2px;
+}
+
+.date-indicator {
+    font-size: 0.6rem;
+    padding: 1px 3px;
+    border-radius: 2px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.date-indicator.start {
+    background-color: #e6fff2;
+    color: #00a651;
+    border: 1px solid #00a651;
+}
+
+.date-indicator.end {
+    background-color: #ffebeb;
+    color: #e63946;
+    border: 1px solid #e63946;
+}
+
+.date-indicator.in-progress {
+    background-color: #ebf5ff;
+    color: #3a86ff;
+    border: 1px solid #3a86ff;
+}
+
+.date-indicator.single {
+    background-color: #fff8eb;
+    color: #ff9500;
+    border: 1px solid #ff9500;
+}
+
+.more-bookings {
+    font-size: 0.7rem;
+    background-color: #f0f0f0;
+    color: #666;
+    padding: 2px 4px;
+    border-radius: 4px;
+    text-align: center;
+    margin-top: 2px;
+    font-style: italic;
+    cursor: pointer;
+}
+
+.more-bookings:hover {
+    background-color: #e0e0e0;
+    color: #333;
+}
+
+.booking-title {
+    font-weight: 500;
+    color: #333;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.booking-indicator {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+}
+
+.booking-indicator.package {
+    background: #2bb673;
+}
+
+.booking-indicator.trip {
+    background: #4361ee;
+}
+
+.booking-indicator.event {
+    background: #f72585;
+}
+
+.calendar-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 400px;
+}
+
+.loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #e63946;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 1rem;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.calendar-legend {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2rem;
+}
+
+.legend-section {
+    flex: 1;
+    min-width: 250px;
+}
+
+.legend-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #333;
+    margin: 0 0 0.75rem 0;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #e63946;
+}
+
+.legend-title.types {
+    border-bottom: 1px solid #4361ee;
+}
+
+.legend-items {
+    display: flex;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Status indicators are round */
+.legend-indicator.start,
+.legend-indicator.end,
+.legend-indicator.in-progress,
+.legend-indicator.single-day {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+}
+
+/* Type indicators are square with rounded corners */
+.legend-indicator.package,
+.legend-indicator.trip,
+.legend-indicator.event {
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+}
+
+/* Indicator background colors */
+.legend-indicator.package {
+    background: #2bb673;
+    border: 1px solid #1a8b57;
+}
+
+.legend-indicator.trip {
+    background: #4361ee;
+    border: 1px solid #2240c4;
+}
+
+.legend-indicator.event {
+    background: #f72585;
+    border: 1px solid #d6136f;
+}
+
+.legend-indicator.start {
+    background: #00a651;
+    border: 1px solid #007539;
+}
+
+.legend-indicator.end {
+    background: #e63946;
+    border: 1px solid #ad2b35;
+}
+
+.legend-indicator.in-progress {
+    background: #3a86ff;
+    border: 1px solid #0056b3;
+}
+
+.legend-indicator.single-day {
+    background: #ff9500;
+    border: 1px solid #cc7700;
+}
+
+.legend-item span {
+    font-size: 0.875rem;
+    color: #666;
+}
+
+.booking-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    padding: 1rem;
+}
+
+.booking-modal {
+    background: white;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 800px;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.booking-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.25rem 1.5rem;
+    background: #fff;
+    border-bottom: 1px solid #eee;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+.booking-modal-header h3 {
+    margin: 0;
+    color: #2d3436;
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.close-modal-btn {
+    background: none;
+    border: none;
+    font-size: 1.75rem;
+    color: #666;
+    cursor: pointer;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    transition: all 0.2s;
+    line-height: 1;
+}
+
+.close-modal-btn:hover {
+    background: #f8f9fa;
+    color: #e63946;
+}
+
+.booking-modal-body {
+    padding: 1.5rem;
+    overflow-y: auto;
+    flex-grow: 1;
+}
+
+.booking-details {
+    background: #fff;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    border: 1px solid #eee;
+}
+
+.booking-title {
+    padding: 1rem 1.5rem;
+    border-bottom: 2px solid #e63946;
+    background: #f8f9fa;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.booking-title h3 {
+    margin: 0;
+    font-size: 1.25rem;
+    color: #2d3436;
+    font-weight: 600;
+}
+
+.tour-status-badge {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 0.35rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.status-badge.start {
+    background: #e6fff2;
+    color: #00a651;
+    border: 1px solid #00a651;
+}
+
+.status-badge.end {
+    background: #ffebeb;
+    color: #e63946;
+    border: 1px solid #e63946;
+}
+
+.status-badge.in-progress {
+    background: #ebf5ff;
+    color: #3a86ff;
+    border: 1px solid #3a86ff;
+}
+
+.status-badge.single-day {
+    background: #fff8eb;
+    color: #ff9500;
+    border: 1px solid #ff9500;
+}
+
+.status-badge.today {
+    background: #f8f0ff;
+    color: #9d4edd;
+    border: 1px solid #9d4edd;
+}
+
+.detail-section {
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid #eee;
+}
+
+.detail-section:last-child {
+    border-bottom: none;
+}
+
+.detail-section h4 {
+    color: #2d3436;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0 0 1rem 0;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #e63946;
+}
+
+.detail-section p {
+    margin: 0.75rem 0;
+    color: #2d3436;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: baseline;
+    line-height: 1.5;
+}
+
+.detail-section p strong {
+    color: #2d3436;
+    min-width: 140px;
+    font-weight: 500;
+    margin-right: 1rem;
+}
+
+.booking-divider {
+    margin: 1.5rem 0;
+    border: none;
+    border-top: 1px solid #eee;
+}
+
+.no-bookings {
+    text-align: center;
+    color: #666;
+    padding: 3rem 2rem;
+    font-size: 1.1rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+    margin: 1rem 0;
+}
+
+.booking-type {
+    display: inline-block;
+    padding: 0.35rem 1rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.booking-type.package {
+    background: #d4f5e2;
+    color: #0e6b3e;
+}
+
+.booking-type.trip {
+    background: #d9e1ff;
+    color: #1a33a0;
+}
+
+.booking-type.event {
+    background: #ffd1e8;
+    color: #b11560;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .calendar-page {
+        padding: 1rem;
+    }
+
+    .calendar-controls {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: stretch;
+    }
+
+    .calendar-date-navigation {
+        justify-content: space-between;
+    }
+
+    .calendar-tools {
+        justify-content: space-between;
+    }
+
+    .calendar-title {
+        font-size: 1.25rem;
+    }
+
+    .calendar-nav-btn {
+        padding: 0.25rem 0.5rem;
+    }
+
+    .weekday {
+        font-size: 0.875rem;
+    }
+
+    .day-number {
+        font-size: 0.875rem;
+    }
+
+    .booking-modal {
+        width: 95%;
+        margin: 0;
+    }
+
+    .detail-section p {
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+    .detail-section p strong {
+        min-width: auto;
+    }
+
+    .legend-items {
+        gap: 1rem;
+    }
+
+    .legend-item {
+        font-size: 0.75rem;
+    }
+}

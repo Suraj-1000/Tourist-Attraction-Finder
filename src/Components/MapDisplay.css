@@ -1,0 +1,145 @@
+.map-display-container {
+  width: 100%;
+  height: 300px;
+  margin: 20px 0;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  position: relative;
+}
+
+.map-display-container.small {
+  height: 200px;
+  margin: 10px 0;
+}
+
+.map-display-container::after {
+  content: '';
+  display: block;
+  clear: both;
+}
+
+.location-address {
+  margin-top: 10px;
+  padding: 10px;
+  background-color: #f5f5f5;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.location-address p {
+  margin: 0;
+  color: #333;
+}
+
+@media (max-width: 768px) {
+  .map-display-container {
+    height: 250px;
+    margin: 15px 0;
+  }
+  
+  .map-display-container.small {
+    height: 150px;
+  }
+}
+
+.map-container {
+  position: relative;
+  width: 100%;
+  height: 400px;
+  border-radius: 8px;
+  overflow: hidden;
+  margin: 16px 0;
+}
+
+.loading-overlay,
+.error-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background-color: rgba(255, 255, 255, 0.9);
+  z-index: 1;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #3498db;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 16px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.error-overlay {
+  background-color: rgba(255, 0, 0, 0.1);
+}
+
+.error-overlay p {
+  color: #dc3545;
+  font-weight: 500;
+  text-align: center;
+  padding: 16px;
+}
+
+.location-address {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: rgba(255, 255, 255, 0.95);
+  padding: 12px 16px;
+  border-top: 1px solid #e0e0e0;
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+  text-align: center;
+  box-shadow: 0 -2px 6px rgba(0, 0, 0, 0.1);
+  z-index: 2;
+}
+
+.location-address p {
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* Styles for map controls and labels */
+.gm-style {
+  font: inherit;
+}
+
+.gm-style .gm-style-iw {
+  font-size: 14px;
+  font-weight: 400;
+}
+
+.gm-style-mtc button,
+.gm-svpc button {
+  font-size: 14px !important;
+}
+
+/* Make the map container smaller for the "small" variant */
+.map-container.small {
+  height: 250px;
+  margin: 10px 0;
+}
+
+/* Ensure text contrast on the map */
+.gm-style div,
+.gm-style span,
+.gm-style label,
+.gm-style a {
+  font-family: inherit !important;
+  color: #333 !important;
+} 

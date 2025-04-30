@@ -1,0 +1,145 @@
+.preferences-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.preferences-modal-content {
+  background-color: white;
+  width: 90%;
+  max-width: 600px;
+  border-radius: 20px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.preferences-header {
+  background: linear-gradient(135deg, #e63946 0%, #ff6b6b 100%);
+  padding: 30px;
+  text-align: center;
+  color: white;
+}
+
+.preferences-header h2 {
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+.preferences-header p {
+  font-size: 16px;
+  opacity: 0.9;
+}
+
+.preferences-body {
+  padding: 30px;
+}
+
+.preferences-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 15px;
+  margin-bottom: 30px;
+}
+
+.preference-checkbox {
+  background: #f8f9fa;
+  border: 1px solid #eee;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.preference-checkbox:hover {
+  background: #f1f3f5;
+  transform: translateY(-2px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.preference-checkbox.selected {
+  background: #e7f5e8;
+  border-color: #28a745;
+}
+
+.checkbox-container {
+  display: flex;
+  align-items: center;
+  padding: 15px;
+  cursor: pointer;
+}
+
+.preference-checkbox input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  margin-right: 12px;
+  cursor: pointer;
+}
+
+.checkbox-label {
+  font-size: 16px;
+  color: #333;
+  font-weight: 500;
+}
+
+.modal-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  padding-top: 20px;
+  width: 100%;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.save-preferences-btn, .back-button {
+  flex: 1;
+  padding: 12px 30px;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  height: 45px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.save-preferences-btn {
+  background-color: #28a745;
+  color: white;
+}
+
+.save-preferences-btn:hover:not(:disabled) {
+  background-color: #218838;
+  transform: translateY(-2px);
+}
+
+.save-preferences-btn:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.back-button {
+  background-color: #dc3545;
+  color: white;
+}
+
+.back-button:hover:not(:disabled) {
+  background-color: #c82333;
+  transform: translateY(-2px);
+}
+
+.back-button:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+  transform: none;
+} 
