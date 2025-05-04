@@ -446,4 +446,41 @@
 
 .map-picker-container .selected-location p {
   margin: 5px 0;
+}
+
+/* Required field indicator */
+.required-asterisk36 {
+  color: #ff0000;
+  margin-left: 2px;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+/* Validation error message styling */
+.error-message36 {
+  color: #ff0000;
+  font-size: 12px;
+  margin-top: 5px;
+  margin-bottom: 5px;
+}
+
+/* Error input styling */
+.error-input36 {
+  border-color: #ff0000 !important;
+  box-shadow: 0 0 0 1px #ff0000;
+}
+
+/* Helper text styling */
+.helper-text36 {
+  color: #0066cc;
+  font-size: 12px;
+  margin-top: 5px;
+  margin-bottom: 5px;
+  font-style: italic;
+}
+
+/* Valid input styling */
+.valid-input36 {
+  border-color: #28a745 !important;
+  box-shadow: 0 0 0 1px #28a745;
 } 

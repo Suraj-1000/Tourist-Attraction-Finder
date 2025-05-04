@@ -76,9 +76,13 @@ export default function AdminHomepage() {
     }
   };
 
-  const totalUsers = users.length;
+  const totalUsers = users.filter(user => user.role === "user").length;
   const totalAdmins = users.filter(user => user.role === "admin").length;
-  const totalGuides = users.filter(user => user.role === "guide").length;
+  const totalGuides = users.filter(user => 
+    user.role === "guide" && 
+    user.guideProfile && 
+    user.guideProfile.verificationStatus === "approved"
+  ).length;
   const totalMales = users.filter(user => user.gender === "Male").length;
   const totalFemales = users.filter(user => user.gender === "Female").length;
 

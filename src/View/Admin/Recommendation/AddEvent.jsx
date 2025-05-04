@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { FaStar, FaUsers, FaTicketAlt, FaMapMarkerAlt, FaCalendarAlt, FaUserTie, FaInfoCircle, FaPlus, FaTrash } from 'react-icons/fa';
 import "./AddEvent.css";
@@ -8,6 +8,11 @@ import MapPicker from "../../../Components/MapPicker";
 export default function AddEvent({ onEventAdded, onEventEdited, onClose, existingEvent }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isFreeEvent, setIsFreeEvent] = useState(existingEvent?.category === 'Religious' || false);
+  const [errors, setErrors] = useState({});
+  const [validFields, setValidFields] = useState({});
+  const [isFormModified, setIsFormModified] = useState(false);
+  const [initialFormData, setInitialFormData] = useState(null);
+  
   const [newEvent, setNewEvent] = useState({
     name: existingEvent?.name || "",
     description: existingEvent?.description || "",
@@ -66,6 +71,7 @@ export default function AddEvent({ onEventAdded, onEventEdited, onClose, existin
         image: file,
         imageUrl: URL.createObjectURL(file)
       });
+      trackFormChange();
     }
   };
 
@@ -76,6 +82,7 @@ export default function AddEvent({ onEventAdded, onEventEdited, onClose, existin
         tags: [...newEvent.tags, newTag.trim()]
       });
       setNewTag("");
+      trackFormChange();
     }
   };
 
@@ -84,6 +91,7 @@ export default function AddEvent({ onEventAdded, onEventEdited, onClose, existin
       ...newEvent,
       tags: newEvent.tags.filter((_, i) => i !== index)
     });
+    trackFormChange();
   };
 
   const handleAddStar = () => {
@@ -93,6 +101,7 @@ export default function AddEvent({ onEventAdded, onEventEdited, onClose, existin
         featuredStars: [...newEvent.featuredStars, newStar]
       });
       setNewStar({ name: "", role: "" });
+      trackFormChange();
     }
   };
 
@@ -101,6 +110,7 @@ export default function AddEvent({ onEventAdded, onEventEdited, onClose, existin
       ...newEvent,
       featuredStars: newEvent.featuredStars.filter((_, i) => i !== index)
     });
+    trackFormChange();
   };
 
   const handleAddHighlight = () => {
@@ -110,6 +120,7 @@ export default function AddEvent({ onEventAdded, onEventEdited, onClose, existin
         highlights: [...newEvent.highlights, newHighlight.trim()]
       });
       setNewHighlight("");
+      trackFormChange();
     }
   };
 
@@ -118,6 +129,7 @@ export default function AddEvent({ onEventAdded, onEventEdited, onClose, existin
       ...newEvent,
       highlights: newEvent.highlights.filter((_, i) => i !== index)
     });
+    trackFormChange();
   };
 
   const handleAddRequirement = () => {
@@ -127,6 +139,7 @@ export default function AddEvent({ onEventAdded, onEventEdited, onClose, existin
         requirements: [...newEvent.requirements, newRequirement.trim()]
       });
       setNewRequirement("");
+      trackFormChange();
     }
   };
 
@@ -135,6 +148,7 @@ export default function AddEvent({ onEventAdded, onEventEdited, onClose, existin
       ...newEvent,
       requirements: newEvent.requirements.filter((_, i) => i !== index)
     });
+    trackFormChange();
   };
 
   const calculateDays = () => {
@@ -166,6 +180,7 @@ export default function AddEvent({ onEventAdded, onEventEdited, onClose, existin
         time: "", 
         activity: "" 
       });
+      trackFormChange();
     }
   };
 
@@ -174,14 +189,87 @@ export default function AddEvent({ onEventAdded, onEventEdited, onClose, existin
       ...newEvent,
       schedule: newEvent.schedule.filter((_, i) => i !== index)
     });
+    trackFormChange();
+  };
+
+  const handlePhoneInput = (e) => {
+    const value = e.target.value;
+    // Only allow digits for phone numbers
+    if (!/^\d*$/.test(value) && value !== '') {
+      return;
+    }
+    
+    // Limit to 10 digits
+    if (value.length <= 10) {
+      setNewEvent({
+        ...newEvent,
+        contactInfo: {
+          ...newEvent.contactInfo,
+          phone: value
+        }
+      });
+      
+      // Check if phone is valid (starts with 97 or 98 and is 10 digits)
+      const isValid = /^(97|98)\d{8}$/.test(value);
+      setValidFields(prev => ({
+        ...prev,
+        phone: isValid
+      }));
+
+      // Mark form as modified
+      trackFormChange();
+    }
+  };
+
+  const handleEmailChange = (e) => {
+    const { value } = e.target;
+    setNewEvent({
+      ...newEvent,
+      contactInfo: {
+        ...newEvent.contactInfo,
+        email: value
+      }
+    });
+    
+    // Validate email format
+    const isValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+    setValidFields(prev => ({
+      ...prev,
+      email: isValid
+    }));
+
+    // Mark form as modified
+    trackFormChange();
+  };
+
+  const handleWebsiteChange = (e) => {
+    const { value } = e.target;
+    setNewEvent({
+      ...newEvent,
+      contactInfo: {
+        ...newEvent.contactInfo,
+        website: value
+      }
+    });
+    
+    // Website is optional, so it's valid if empty or matches the pattern
+    const isValid = value === '' || /^https?:\/\//.test(value);
+    setValidFields(prev => ({
+      ...prev,
+      website: isValid
+    }));
+
+    // Mark form as modified
+    trackFormChange();
   };
 
   const handleNumericInput = (e, field, subField) => {
     const value = e.target.value;
-    // Allow only numbers and commas
-    if (!/^[0-9,]*$/.test(value) && value !== '') {
+    // Only allow digits (positive numbers only)
+    if (!/^\d*$/.test(value) && value !== '') {
       return;
     }
+    
     setNewEvent(prev => ({
       ...prev,
       [field]: {
@@ -189,6 +277,59 @@ export default function AddEvent({ onEventAdded, onEventEdited, onClose, existin
         [subField]: value
       }
     }));
+    
+    // Check if the numeric value is valid (positive number)
+    const isValid = /^\d+$/.test(value) && parseInt(value) > 0;
+    
+    // Set the validation state for the specific field
+    const fieldName = field === 'ticketPrice' 
+      ? (subField === 'vip' ? 'vipTicketPrice' : 'generalTicketPrice')
+      : (subField === 'vip' ? 'vipCapacity' : 'generalCapacity');
+    
+    setValidFields(prev => ({
+      ...prev,
+      [fieldName]: isValid
+    }));
+
+    // Mark form as modified
+    setIsFormModified(true);
+  };
+
+  // Function to validate text fields
+  const validateTextField = (fieldName, value) => {
+    let isValid = false;
+    
+    // Different validation rules based on field type
+    switch(fieldName) {
+      case 'name':
+      case 'description':
+      case 'category':
+      case 'organizer':
+      case 'location':
+        // Basic required field validation
+        isValid = value.trim() !== '';
+        break;
+      case 'startDate':
+      case 'endDate':
+        // Date validation
+        isValid = value !== '';
+        break;
+      case 'startTime':
+      case 'endTime':
+        // Time validation
+        isValid = value !== '';
+        break;
+      default:
+        isValid = false;
+    }
+    
+    // Update the validation state
+    setValidFields(prev => ({
+      ...prev,
+      [fieldName]: isValid
+    }));
+    
+    return isValid;
   };
 
   const handleLocationSelect = (location) => {
@@ -201,44 +342,184 @@ export default function AddEvent({ onEventAdded, onEventEdited, onClose, existin
         formattedAddress: location.address
       }
     });
+    
+    // Validate location field
+    validateTextField('location', location.address);
+    // Mark form as modified
+    trackFormChange();
+  };
+
+  // Function to validate numeric fields
+  const validateNumericField = (field, subField, value) => {
+    // Check if it's a valid positive number
+    const isValid = /^\d+$/.test(value) && parseInt(value) > 0;
+    
+    // Set validation state based on field and subfield
+    const fieldName = field === 'ticketPrice' 
+      ? (subField === 'vip' ? 'vipTicketPrice' : 'generalTicketPrice')
+      : (subField === 'vip' ? 'vipCapacity' : 'generalCapacity');
+    
+    setValidFields(prev => ({
+      ...prev,
+      [fieldName]: isValid
+    }));
+    
+    return isValid;
+  };
+
+  // Function to track form changes
+  const trackFormChange = () => {
+    if (existingEvent) {
+      setIsFormModified(true);
+    }
+  };
+
+  // Initialize validation on component mount
+  useEffect(() => {
+    if (existingEvent) {
+      // Validate existing fields
+      validateTextField('name', existingEvent.name || '');
+      validateTextField('description', existingEvent.description || '');
+      validateTextField('category', existingEvent.category || '');
+      validateTextField('location', existingEvent.location || '');
+      validateTextField('organizer', existingEvent.organizer || '');
+      validateTextField('phone', existingEvent.contactInfo?.phone || '');
+      validateTextField('email', existingEvent.contactInfo?.email || '');
+      validateTextField('website', existingEvent.contactInfo?.website || '');
+      
+      if (existingEvent.ticketPrice?.vip) {
+        validateNumericField('ticketPrice', 'vip', existingEvent.ticketPrice.vip.toString());
+      }
+      if (existingEvent.ticketPrice?.general) {
+        validateNumericField('ticketPrice', 'general', existingEvent.ticketPrice.general.toString());
+      }
+      if (existingEvent.capacity?.vip) {
+        validateNumericField('capacity', 'vip', existingEvent.capacity.vip.toString());
+      }
+      if (existingEvent.capacity?.general) {
+        validateNumericField('capacity', 'general', existingEvent.capacity.general.toString());
+      }
+      validateTextField('startDate', existingEvent.startDate ? new Date(existingEvent.startDate).toISOString().split('T')[0] : '');
+      validateTextField('endDate', existingEvent.endDate ? new Date(existingEvent.endDate).toISOString().split('T')[0] : '');
+      validateTextField('startTime', existingEvent.startTime || '');
+      validateTextField('endTime', existingEvent.endTime || '');
+
+      // Initialize initial form data
+      setInitialFormData(JSON.parse(JSON.stringify(existingEvent)));
+      setIsFormModified(false);
+    }
+  }, [existingEvent]);
+
+  // Create a validation function that checks all required fields
+  const validateForm = () => {
+    const newErrors = {};
+    
+    // Required fields validation
+    if (!newEvent.name.trim()) newErrors.name = "Event name is required";
+    if (!newEvent.description.trim()) newErrors.description = "Event description is required";
+    if (!newEvent.category) newErrors.category = "Category is required";
+    if (!newEvent.startDate) newErrors.startDate = "Start date is required";
+    if (!newEvent.endDate) newErrors.endDate = "End date is required";
+    if (!newEvent.startTime) newErrors.startTime = "Start time is required";
+    if (!newEvent.endTime) newErrors.endTime = "End time is required";
+    if (!newEvent.location.trim()) newErrors.location = "Location is required";
+    if (!newEvent.organizer.trim()) newErrors.organizer = "Organizer is required";
+    
+    // Date validation
+    if (newEvent.startDate && newEvent.endDate) {
+      const start = new Date(newEvent.startDate);
+      const end = new Date(newEvent.endDate);
+      if (end < start) {
+        newErrors.endDate = "End date cannot be before start date";
+      }
+    }
+    
+    // Past date validation
+    const currentDate = new Date();
+    currentDate.setHours(0, 0, 0, 0); // Reset time to start of day
+    
+    if (newEvent.startDate) {
+      const startDate = new Date(newEvent.startDate);
+      if (startDate < currentDate) {
+        newErrors.startDate = "Start date cannot be in the past";
+      }
+      }
+
+      // Only validate ticket prices and capacity for paid events
+    if (!isFreeEvent && newEvent.category !== 'Religious') {
+      if (!newEvent.ticketPrice.vip.trim()) {
+        newErrors.ticketPriceVip = "VIP ticket price is required";
+      } else if (parseInt(newEvent.ticketPrice.vip) <= 0) {
+        newErrors.ticketPriceVip = "Price must be greater than 0";
+      }
+
+      if (!newEvent.ticketPrice.general.trim()) {
+        newErrors.ticketPriceGeneral = "General ticket price is required";
+      } else if (parseInt(newEvent.ticketPrice.general) <= 0) {
+        newErrors.ticketPriceGeneral = "Price must be greater than 0";
+      }
+
+      if (!newEvent.capacity.vip.trim()) {
+        newErrors.capacityVip = "VIP capacity is required";
+      } else if (parseInt(newEvent.capacity.vip) <= 0) {
+        newErrors.capacityVip = "Capacity must be greater than 0";
+      }
+
+      if (!newEvent.capacity.general.trim()) {
+        newErrors.capacityGeneral = "General capacity is required";
+      } else if (parseInt(newEvent.capacity.general) <= 0) {
+        newErrors.capacityGeneral = "Capacity must be greater than 0";
+      }
+    }
+    
+    // Validate featured stars, highlights, requirements, schedule
+    if (newEvent.featuredStars.length === 0) newErrors.featuredStars = "At least one featured star is required";
+    if (newEvent.highlights.length === 0) newErrors.highlights = "At least one highlight is required";
+    if (newEvent.requirements.length === 0) newErrors.requirements = "At least one requirement is required";
+    if (newEvent.schedule.length === 0) newErrors.schedule = "At least one schedule item is required";
+    
+    // Validate contact info
+    const phonePattern = /^(97|98)\d{8}$/;
+    if (!newEvent.contactInfo.phone.trim()) {
+      newErrors.contactPhone = "Contact phone is required";
+    } else if (!phonePattern.test(newEvent.contactInfo.phone)) {
+      newErrors.contactPhone = "Phone must start with 97 or 98 followed by 8 digits (10 digits total)";
+    }
+    
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!newEvent.contactInfo.email.trim()) {
+      newErrors.contactEmail = "Contact email is required";
+    } else if (!emailPattern.test(newEvent.contactInfo.email)) {
+      newErrors.contactEmail = "Please enter a valid email address";
+    }
+    
+    // Optional website validation - only if a value is provided
+    if (newEvent.contactInfo.website.trim() && !/^https?:\/\/.*/.test(newEvent.contactInfo.website)) {
+      newErrors.contactWebsite = "Website URL must start with http:// or https://";
+    }
+    
+    // Validate image
+    if (!existingEvent && !newEvent.image) newErrors.image = "Event image is required";
+    
+    // Validate tags
+    if (newEvent.tags.length === 0) newErrors.tags = "At least one tag is required";
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async () => {
     try {
-      // Validate required fields
-      if (!newEvent.name || !newEvent.description || !newEvent.category || 
-          !newEvent.startDate || !newEvent.endDate || !newEvent.startTime || 
-          !newEvent.endTime || !newEvent.location || !newEvent.organizer) {
+      // If no changes were made to an existing event, show error message
+      if (existingEvent && !isFormModified) {
+        toast.error("No changes detected. Please make changes before updating.");
+          return;
+        }
+
+      // Use our validation function
+      if (!validateForm()) {
         toast.error("Please fill in all required fields");
         return;
-      }
-
-      // Only validate ticket prices and capacity for paid events
-      if (!isFreeEvent) {
-        if (!newEvent.ticketPrice.vip || !newEvent.ticketPrice.general || 
-            !newEvent.capacity.vip || !newEvent.capacity.general) {
-          toast.error("Please enter ticket prices and capacity");
-          return;
-        }
-
-        // Parse and validate numbers
-        const ticketPriceData = {
-          vip: parseFloat(newEvent.ticketPrice.vip.replace(/,/g, '')),
-          general: parseFloat(newEvent.ticketPrice.general.replace(/,/g, ''))
-        };
-
-        const capacityData = {
-          vip: parseInt(newEvent.capacity.vip.replace(/,/g, '')),
-          general: parseInt(newEvent.capacity.general.replace(/,/g, ''))
-        };
-
-        if (isNaN(ticketPriceData.vip) || isNaN(ticketPriceData.general) || 
-            isNaN(capacityData.vip) || isNaN(capacityData.general) ||
-            ticketPriceData.vip < 0 || ticketPriceData.general < 0 || 
-            capacityData.vip < 0 || capacityData.general < 0) {
-          toast.error("Please enter valid numbers for ticket prices and capacity");
-          return;
-        }
       }
 
       setIsSubmitting(true);
@@ -325,25 +606,38 @@ export default function AddEvent({ onEventAdded, onEventEdited, onClose, existin
           <div className="form-section36">
             <h3>Basic Information</h3>
             <div className="form-group36">
-              <label>Event Name</label>
+              <label>Event Name <span className="required-asterisk36">*</span></label>
               <input
                 type="text"
                 placeholder="Enter event name"
                 value={newEvent.name}
-                onChange={(e) => setNewEvent({...newEvent, name: e.target.value})}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setNewEvent({...newEvent, name: value});
+                  validateTextField('name', value);
+                  trackFormChange();
+                }}
+                className={errors.name ? "error-input36" : validFields.name ? "valid-input36" : ""}
               />
+              {errors.name && <p className="error-message36">{errors.name}</p>}
             </div>
             <div className="form-group36">
-              <label>Event Description</label>
+              <label>Event Description <span className="required-asterisk36">*</span></label>
               <textarea
                 placeholder="Enter event description"
                 value={newEvent.description}
-                onChange={(e) => setNewEvent({...newEvent, description: e.target.value})}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setNewEvent({...newEvent, description: value});
+                  validateTextField('description', value);
+                }}
                 rows="4"
+                className={errors.description ? "error-input36" : validFields.description ? "valid-input36" : ""}
               />
+              {errors.description && <p className="error-message36">{errors.description}</p>}
             </div>
             <div className="form-group36">
-              <label>Category</label>
+              <label>Category <span className="required-asterisk36">*</span></label>
               <select
                 value={newEvent.category}
                 onChange={(e) => {
@@ -358,7 +652,9 @@ export default function AddEvent({ onEventAdded, onEventEdited, onClose, existin
                     capacity: category === 'Religious' ? { vip: "0", general: "0" } : newEvent.capacity
                   });
                   setIsFreeEvent(category === 'Religious');
+                  validateTextField('category', category);
                 }}
+                className={errors.category ? "error-input36" : validFields.category ? "valid-input36" : ""}
               >
                 <option value="">Select Category</option>
                 <option value="Cultural">Cultural</option>
@@ -368,6 +664,7 @@ export default function AddEvent({ onEventAdded, onEventEdited, onClose, existin
                 <option value="Food">Food</option>
                 <option value="Religious">Religious</option>
               </select>
+              {errors.category && <p className="error-message36">{errors.category}</p>}
             </div>
           </div>
 
@@ -377,38 +674,68 @@ export default function AddEvent({ onEventAdded, onEventEdited, onClose, existin
             <div className="date-time-group36">
               <div className="date-group36">
                 <div className="form-group36">
-                  <label>Start Date</label>
+                  <label>Start Date <span className="required-asterisk36">*</span></label>
                   <input
                     type="date"
                     value={newEvent.startDate}
-                    onChange={(e) => setNewEvent({...newEvent, startDate: e.target.value})}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setNewEvent({...newEvent, startDate: value});
+                      validateTextField('startDate', value);
+                      trackFormChange();
+                    }}
+                    min={new Date().toISOString().split('T')[0]}
+                    className={errors.startDate ? "error-input36" : validFields.startDate ? "valid-input36" : ""}
                   />
+                  {errors.startDate && <p className="error-message36">{errors.startDate}</p>}
                 </div>
                 <div className="form-group36">
-                  <label>End Date</label>
+                  <label>End Date <span className="required-asterisk36">*</span></label>
                   <input
                     type="date"
                     value={newEvent.endDate}
-                    onChange={(e) => setNewEvent({...newEvent, endDate: e.target.value})}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setNewEvent({...newEvent, endDate: value});
+                      validateTextField('endDate', value);
+                      trackFormChange();
+                    }}
+                    min={newEvent.startDate || new Date().toISOString().split('T')[0]}
+                    className={errors.endDate ? "error-input36" : validFields.endDate ? "valid-input36" : ""}
                   />
+                  {errors.endDate && <p className="error-message36">{errors.endDate}</p>}
                 </div>
               </div>
               <div className="time-group36">
                 <div className="form-group36">
-                  <label>Start Time</label>
+                  <label>Start Time <span className="required-asterisk36">*</span></label>
                   <input
                     type="time"
                     value={newEvent.startTime}
-                    onChange={(e) => setNewEvent({...newEvent, startTime: e.target.value})}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setNewEvent({...newEvent, startTime: value});
+                      validateTextField('startTime', value);
+                      trackFormChange();
+                    }}
+                    className={errors.startTime ? "error-input36" : validFields.startTime ? "valid-input36" : ""}
                   />
+                  {errors.startTime && <p className="error-message36">{errors.startTime}</p>}
                 </div>
                 <div className="form-group36">
-                  <label>End Time</label>
+                  <label>End Time <span className="required-asterisk36">*</span></label>
                   <input
                     type="time"
                     value={newEvent.endTime}
-                    onChange={(e) => setNewEvent({...newEvent, endTime: e.target.value})}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setNewEvent({...newEvent, endTime: value});
+                      validateTextField('endTime', value);
+                      trackFormChange();
+                    }}
+                    className={errors.endTime ? "error-input36" : validFields.endTime ? "valid-input36" : ""}
                   />
+                  {errors.endTime && <p className="error-message36">{errors.endTime}</p>}
                 </div>
               </div>
             </div>
@@ -418,20 +745,28 @@ export default function AddEvent({ onEventAdded, onEventEdited, onClose, existin
           <div className="form-section36">
             <h3>Location and Organizer</h3>
             <div className="form-group36">
-              <label>Location</label>
+              <label>Location <span className="required-asterisk36">*</span></label>
               <MapPicker
                 onLocationSelect={handleLocationSelect}
                 initialLocation={existingEvent?.locationDetails}
               />
+              {errors.location && <p className="error-message36">{errors.location}</p>}
             </div>
             <div className="form-group36">
-              <label>Organizer</label>
+              <label>Organizer <span className="required-asterisk36">*</span></label>
               <input
                 type="text"
                 placeholder="Enter organizer name"
                 value={newEvent.organizer}
-                onChange={(e) => setNewEvent({...newEvent, organizer: e.target.value})}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setNewEvent({...newEvent, organizer: value});
+                  validateTextField('organizer', value);
+                  trackFormChange();
+                }}
+                className={errors.organizer ? "error-input36" : validFields.organizer ? "valid-input36" : ""}
               />
+              {errors.organizer && <p className="error-message36">{errors.organizer}</p>}
             </div>
           </div>
 
@@ -451,6 +786,7 @@ export default function AddEvent({ onEventAdded, onEventEdited, onClose, existin
                       ticketPrice: { vip: "0", general: "0" }
                     });
                   }
+                  trackFormChange();
                 }}
               />
               <label htmlFor="freeEvent">This is a free event</label>
@@ -460,25 +796,35 @@ export default function AddEvent({ onEventAdded, onEventEdited, onClose, existin
           {/* Ticket Prices - Only show if not free event */}
           {!isFreeEvent && (
             <div className="form-section36">
-              <h3>Ticket Prices</h3>
+              <h3>Ticket Prices <span className="required-asterisk36">*</span></h3>
               <div className="price-inputs36">
                 <div className="form-group36">
-                  <label>VIP Ticket Price (NPR)</label>
+                  <label>VIP Ticket Price (NPR) <span className="required-asterisk36">*</span></label>
                   <input
                     type="text"
                     placeholder="Enter VIP ticket price"
                     value={newEvent.ticketPrice.vip}
                     onChange={(e) => handleNumericInput(e, 'ticketPrice', 'vip')}
+                    className={errors.ticketPriceVip ? "error-input36" : validFields.vipTicketPrice ? "valid-input36" : ""}
                   />
+                  {errors.ticketPriceVip ? 
+                    <p className="error-message36">{errors.ticketPriceVip}</p> : 
+                    <p className="helper-text36">Enter a positive number only</p>
+                  }
                 </div>
                 <div className="form-group36">
-                  <label>General Ticket Price (NPR)</label>
+                  <label>General Ticket Price (NPR) <span className="required-asterisk36">*</span></label>
                   <input
                     type="text"
                     placeholder="Enter general ticket price"
                     value={newEvent.ticketPrice.general}
                     onChange={(e) => handleNumericInput(e, 'ticketPrice', 'general')}
+                    className={errors.ticketPriceGeneral ? "error-input36" : validFields.generalTicketPrice ? "valid-input36" : ""}
                   />
+                  {errors.ticketPriceGeneral ? 
+                    <p className="error-message36">{errors.ticketPriceGeneral}</p> : 
+                    <p className="helper-text36">Enter a positive number only</p>
+                  }
                 </div>
               </div>
             </div>
@@ -487,25 +833,35 @@ export default function AddEvent({ onEventAdded, onEventEdited, onClose, existin
           {/* Capacity - Only show if not free event */}
           {!isFreeEvent && (
             <div className="form-section36">
-              <h3>Capacity</h3>
+              <h3>Capacity <span className="required-asterisk36">*</span></h3>
               <div className="capacity-inputs36">
                 <div className="form-group36">
-                  <label>VIP Capacity</label>
+                  <label>VIP Capacity <span className="required-asterisk36">*</span></label>
                   <input
                     type="text"
                     placeholder="Enter VIP capacity"
                     value={newEvent.capacity.vip}
                     onChange={(e) => handleNumericInput(e, 'capacity', 'vip')}
+                    className={errors.capacityVip ? "error-input36" : validFields.vipCapacity ? "valid-input36" : ""}
                   />
+                  {errors.capacityVip ? 
+                    <p className="error-message36">{errors.capacityVip}</p> : 
+                    <p className="helper-text36">Enter a positive number only</p>
+                  }
                 </div>
                 <div className="form-group36">
-                  <label>General Capacity</label>
+                  <label>General Capacity <span className="required-asterisk36">*</span></label>
                   <input
                     type="text"
                     placeholder="Enter general capacity"
                     value={newEvent.capacity.general}
                     onChange={(e) => handleNumericInput(e, 'capacity', 'general')}
+                    className={errors.capacityGeneral ? "error-input36" : validFields.generalCapacity ? "valid-input36" : ""}
                   />
+                  {errors.capacityGeneral ? 
+                    <p className="error-message36">{errors.capacityGeneral}</p> : 
+                    <p className="helper-text36">Enter a positive number only</p>
+                  }
                 </div>
               </div>
             </div>
@@ -513,7 +869,8 @@ export default function AddEvent({ onEventAdded, onEventEdited, onClose, existin
 
           {/* Featured Stars */}
           <div className="form-section36">
-            <h3>Featured Stars</h3>
+            <h3>Featured Stars <span className="required-asterisk36">*</span></h3>
+            {errors.featuredStars && <p className="error-message36">{errors.featuredStars}</p>}
             <div className="featured-stars-container36">
               <div className="featured-stars-input36">
                 <div className="form-group36">
@@ -553,7 +910,8 @@ export default function AddEvent({ onEventAdded, onEventEdited, onClose, existin
 
           {/* Highlights */}
           <div className="form-section36">
-            <h3>Event Highlights</h3>
+            <h3>Event Highlights <span className="required-asterisk36">*</span></h3>
+            {errors.highlights && <p className="error-message36">{errors.highlights}</p>}
             <div className="highlights-container36">
               <div className="highlights-input36">
                 <div className="form-group36">
@@ -583,7 +941,8 @@ export default function AddEvent({ onEventAdded, onEventEdited, onClose, existin
 
           {/* Requirements */}
           <div className="form-section36">
-            <h3>Requirements</h3>
+            <h3>Requirements <span className="required-asterisk36">*</span></h3>
+            {errors.requirements && <p className="error-message36">{errors.requirements}</p>}
             <div className="requirements-container36">
               <div className="requirements-input36">
                 <div className="form-group36">
@@ -613,7 +972,8 @@ export default function AddEvent({ onEventAdded, onEventEdited, onClose, existin
 
           {/* Schedule */}
           <div className="form-section36">
-            <h3>Event Schedule</h3>
+            <h3>Event Schedule <span className="required-asterisk36">*</span></h3>
+            {errors.schedule && <p className="error-message36">{errors.schedule}</p>}
             <div className="schedule-container36">
               <div className="schedule-input36">
                 <div className="form-group36">
@@ -672,64 +1032,57 @@ export default function AddEvent({ onEventAdded, onEventEdited, onClose, existin
           <div className="form-section36">
             <h3>Contact Information</h3>
             <div className="form-group36">
-              <label>Phone Number</label>
+              <label>Phone Number <span className="required-asterisk36">*</span></label>
               <input
                 type="tel"
-                placeholder="Enter phone number"
+                placeholder="Enter phone number starting with 97 or 98"
                 value={newEvent.contactInfo.phone}
-                onChange={(e) => setNewEvent({
-                  ...newEvent,
-                  contactInfo: {
-                    ...newEvent.contactInfo,
-                    phone: e.target.value
-                  }
-                })}
+                onChange={handlePhoneInput}
+                className={errors.contactPhone ? "error-input36" : validFields.phone ? "valid-input36" : ""}
+                maxLength={10}
               />
+              {errors.contactPhone ? 
+                <p className="error-message36">{errors.contactPhone}</p> : 
+                <p className="helper-text36">Phone must start with 97 or 98, total 10 digits</p>
+              }
             </div>
             <div className="form-group36">
-              <label>Email</label>
+              <label>Email <span className="required-asterisk36">*</span></label>
               <input
                 type="email"
                 placeholder="Enter email address"
                 value={newEvent.contactInfo.email}
-                onChange={(e) => setNewEvent({
-                  ...newEvent,
-                  contactInfo: {
-                    ...newEvent.contactInfo,
-                    email: e.target.value
-                  }
-                })}
+                onChange={handleEmailChange}
+                className={errors.contactEmail ? "error-input36" : validFields.email ? "valid-input36" : ""}
               />
+              {errors.contactEmail && <p className="error-message36">{errors.contactEmail}</p>}
             </div>
             <div className="form-group36">
               <label>Website</label>
               <input
                 type="url"
-                placeholder="Enter website URL"
+                placeholder="Enter website URL (starts with http:// or https://)"
                 value={newEvent.contactInfo.website}
-                onChange={(e) => setNewEvent({
-                  ...newEvent,
-                  contactInfo: {
-                    ...newEvent.contactInfo,
-                    website: e.target.value
-                  }
-                })}
+                onChange={handleWebsiteChange}
+                className={errors.contactWebsite ? "error-input36" : validFields.website ? "valid-input36" : ""}
               />
+              {errors.contactWebsite && <p className="error-message36">{errors.contactWebsite}</p>}
             </div>
           </div>
 
           {/* Image Upload */}
           <div className="form-section36">
-            <h3>Event Image</h3>
+            <h3>Event Image <span className="required-asterisk36">*</span></h3>
             <div className="file-input-container36">
               <div className="form-group36">
                 <label>Upload Image</label>
                 <input
                   type="file"
                   accept="image/*"
-                  className="file-input36"
+                  className={`file-input36 ${errors.image ? "error-input36" : ""}`}
                   onChange={handleImageChange}
                 />
+                {errors.image && <p className="error-message36">{errors.image}</p>}
               </div>
               {newEvent.imageUrl && (
                 <div className="image-preview36">
@@ -774,7 +1127,10 @@ export default function AddEvent({ onEventAdded, onEventEdited, onClose, existin
               type="checkbox"
               id="featuredEvent"
               checked={newEvent.featured}
-              onChange={(e) => setNewEvent({...newEvent, featured: e.target.checked})}
+              onChange={(e) => {
+                setNewEvent({...newEvent, featured: e.target.checked});
+                trackFormChange();
+              }}
             />
             <label htmlFor="featuredEvent">Featured Event</label>
           </div>

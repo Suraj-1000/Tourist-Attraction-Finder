@@ -2,12 +2,15 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { GoogleMap, useJsApiLoader, Marker } from '@react-google-maps/api';
 import './MapDisplay.css';
 
+// Use the same API key as in AdminLocation.jsx
+const GOOGLE_MAPS_API_KEY = 'AIzaSyB41DRUbKWJHPxaFjMAwdrzWzbVKartNGg';
+
 const MapDisplay = ({ latitude, longitude, formattedAddress, className }) => {
   const [map, setMap] = useState(null);
   const [marker, setMarker] = useState(null);
 
   const { isLoaded, loadError } = useJsApiLoader({
-    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
+    googleMapsApiKey: GOOGLE_MAPS_API_KEY,
     id: 'google-map-script'
   });
 
@@ -109,7 +112,7 @@ const MapDisplay = ({ latitude, longitude, formattedAddress, className }) => {
       />
       {formattedAddress && (
         <div className="location-address">
-          <p>{formattedAddress}</p>
+          <p style={{ textAlign: 'center', margin: '0', width: '100%' }}>{formattedAddress}</p>
         </div>
       )}
     </div>

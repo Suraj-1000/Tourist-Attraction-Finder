@@ -517,3 +517,22 @@ body {
   border-radius: 4px;
   font-size: 16px;
 }
+
+/* Required field indicator */
+.required {
+  color: #ff0000;
+  margin-left: 4px;
+  font-weight: bold;
+}
+
+.input23:required {
+  border-color: #666;
+}
+
+.input23:required:invalid {
+  border-color: #AE0808;
+}
+
+.input23:required:valid {
+  border-color: #008000;
+}

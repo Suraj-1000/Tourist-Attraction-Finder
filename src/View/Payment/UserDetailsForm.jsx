@@ -95,6 +95,9 @@ const UserDetailsForm = ({ onSubmit, onCancel, packageDetails }) => {
     if (packageDetails.destination) extra.destination = packageDetails.destination;
     if (packageDetails.destinations) extra.destinations = packageDetails.destinations;
     
+    // Preserve the original category instead of overriding it
+    extra.category = packageDetails.category || 'package';
+    
     // Log the extra details for debugging
     console.log("Extra details being added:", extra);
     
@@ -127,6 +130,7 @@ const UserDetailsForm = ({ onSubmit, onCancel, packageDetails }) => {
 
       // Store package details (add new fields)
       localStorage.setItem('paymentDetails', JSON.stringify({
+        _id: packageDetails._id, // Ensure we store the original _id
         title: packageDetails.title,
         price: packageDetails.price,
         duration: packageDetails.duration,

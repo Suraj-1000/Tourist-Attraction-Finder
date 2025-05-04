@@ -24,6 +24,76 @@ export default function AdminEmergencyPage() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [contactToDelete, setContactToDelete] = useState(null);
   const [isOfficial, setIsOfficial] = useState(true);
+  
+  // Store original values when editing
+  const [originalValues, setOriginalValues] = useState({
+    phone: "",
+    type: "",
+    icon: ""
+  });
+  
+  // Form validation states
+  const [errors, setErrors] = useState({
+    phone: "",
+    type: "",
+    icon: ""
+  });
+
+  // Validation functions
+  const validatePhone = (value) => {
+    if (!value.trim()) return "Phone number is required";
+    if (!/^\+?[\d\s-]+$/.test(value)) return "Phone should contain only numbers, spaces, and + or - symbols";
+    // No digit limit restriction for admin emergency contacts
+    return "";
+  };
+
+  const validateType = (value) => {
+    if (!value.trim()) return "Type is required";
+    if (!/^[A-Za-z\s]+$/.test(value)) return "Type should contain only letters and spaces";
+    return "";
+  };
+
+  const validateIcon = (value) => {
+    // Simple validation to check if the input at least contains an emoji
+    if (!value.trim()) return "Icon is required";
+    return "";
+  };
+
+  const handlePhoneChange = (e) => {
+    const value = e.target.value;
+    // Only allow numeric input, plus signs, hyphens, and spaces
+    if (!/^[\d\s\-+]*$/.test(value)) {
+      return;
+    }
+    setPhone(value);
+    setErrors(prev => ({ ...prev, phone: validatePhone(value) }));
+  };
+
+  const handleKeyPress = (e) => {
+    // Only allow numeric input (0-9), plus sign, hyphen, and space
+    const keyCode = e.which || e.keyCode;
+    const isValidKey = 
+      (keyCode >= 48 && keyCode <= 57) || // 0-9
+      keyCode === 43 || // + sign
+      keyCode === 45 || // - hyphen
+      keyCode === 32;   // space
+    
+    if (!isValidKey) {
+      e.preventDefault();
+    }
+  };
+
+  const handleTypeChange = (e) => {
+    const value = e.target.value;
+    setType(value);
+    setErrors(prev => ({ ...prev, type: validateType(value) }));
+  };
+
+  const handleIconChange = (e) => {
+    const value = e.target.value;
+    setIcon(value);
+    setErrors(prev => ({ ...prev, icon: validateIcon(value) }));
+  };
 
   const fetchContacts = async () => {
     try {
@@ -46,63 +116,100 @@ export default function AdminEmergencyPage() {
   }, []);
 
   const addOrUpdateContact = async () => {
-    if (phone && type) {
-      try {
-        const contactData = {
-          phone,
-          type,
-          icon: icon || "📞"
-        };
+    // Validate all fields before submission
+    const phoneError = validatePhone(phone);
+    const typeError = validateType(type);
+    const iconError = validateIcon(icon);
 
-        if (editingContactId) {
-          // Update existing contact
-          const response = await axios.put(
-            `http://localhost:4000/adminEmergency/${editingContactId}`,
-            contactData
-          );
-          
-          if (response.data.success) {
-            setOfficialContacts(prevContacts =>
-              prevContacts.map(contact =>
-                contact._id === editingContactId ? response.data.updatedEmergency : contact
-              )
-            );
-            toast.success('Emergency Contact updated successfully!', {
-              className: 'toast-message31',
-            });
-          } else {
-            throw new Error(response.data.message || 'Failed to update contact');
-          }
-        } else {
-          // Add new contact
-          const response = await axios.post(
-            "http://localhost:4000/adminEmergency",
-            contactData
-          );
-          
-          if (response.data.success) {
-            setOfficialContacts(prev => [...prev, response.data.newEmergency]);
-            toast.success('New Emergency contact added successfully!', {
-              className: 'toast-message31',
-            });
-          } else {
-            throw new Error(response.data.message || 'Failed to add contact');
-          }
-        }
+    const newErrors = {
+      phone: phoneError,
+      type: typeError,
+      icon: iconError
+    };
 
-        // Reset form
-        setPhone("");
-        setType("");
-        setIcon("");
-        setEditingContactId(null);
-      } catch (error) {
-        console.error("Error adding/updating contact:", error);
-        toast.error(error.response?.data?.message || 'An error occurred. Please try again.', {
+    setErrors(newErrors);
+    
+    // If updating, check if any changes were made
+    if (editingContactId) {
+      const hasChanges = 
+        phone !== originalValues.phone || 
+        type !== originalValues.type || 
+        icon !== originalValues.icon;
+      
+      if (!hasChanges) {
+        toast.error('No changes detected. Please make changes before updating.', {
           className: 'toast-message31',
         });
+        return;
       }
-    } else {
-      toast.error('Please fill in all required fields', {
+    }
+
+    // Check if there are any validation errors
+    if (phoneError || typeError || iconError) {
+      toast.error('Please fix the validation errors', {
+        className: 'toast-message31',
+      });
+      return;
+    }
+    
+    try {
+      const contactData = {
+        phone,
+        type,
+        icon: icon || "📞"
+      };
+
+      if (editingContactId) {
+        // Update existing contact
+        const response = await axios.put(
+          `http://localhost:4000/adminEmergency/${editingContactId}`,
+          contactData
+        );
+        
+        if (response.data.success) {
+          setOfficialContacts(prevContacts =>
+            prevContacts.map(contact =>
+              contact._id === editingContactId ? response.data.updatedEmergency : contact
+            )
+          );
+          toast.success('Emergency Contact updated successfully!', {
+            className: 'toast-message31',
+          });
+        } else {
+          throw new Error(response.data.message || 'Failed to update contact');
+        }
+      } else {
+        // Add new contact
+        const response = await axios.post(
+          "http://localhost:4000/adminEmergency",
+          contactData
+        );
+        
+        if (response.data.success) {
+          setOfficialContacts(prev => [...prev, response.data.newEmergency]);
+          toast.success('New Emergency contact added successfully!', {
+            className: 'toast-message31',
+          });
+        } else {
+          throw new Error(response.data.message || 'Failed to add contact');
+        }
+      }
+
+      // Reset form
+      setPhone("");
+      setType("");
+      setIcon("");
+      setEditingContactId(null);
+      
+      // Reset errors
+      setErrors({
+        phone: "",
+        type: "",
+        icon: ""
+      });
+    } catch (error) {
+      console.error("Error adding/updating contact:", error);
+      toast.error(error.response?.data?.message || 'An error occurred. Please try again.', {
         className: 'toast-message31',
       });
     }
@@ -113,6 +220,20 @@ export default function AdminEmergencyPage() {
     setType(contact.type);
     setIcon(contact.icon || "");
     setEditingContactId(contact._id);
+    
+    // Store original values for comparison
+    setOriginalValues({
+      phone: contact.phone,
+      type: contact.type,
+      icon: contact.icon || ""
+    });
+    
+    // Reset errors when editing
+    setErrors({
+      phone: "",
+      type: "",
+      icon: ""
+    });
   };
 
   const handleDelete = async (contact) => {
@@ -217,24 +338,51 @@ export default function AdminEmergencyPage() {
 
         <h2 className="form-heading31">Add/Edit Official Emergency Contact</h2>
         <div className="form-group31">
-          <input 
-            type="text" 
-            placeholder="Phone" 
-            value={phone} 
-            onChange={(e) => setPhone(e.target.value)} 
-          />
-          <input 
-            type="text" 
-            placeholder="Type (e.g., Medical, Police, Fire, Other)" 
-            value={type} 
-            onChange={(e) => setType(e.target.value)} 
-          />
-          <input 
-            type="text" 
-            placeholder="Icon (emoji)" 
-            value={icon} 
-            onChange={(e) => setIcon(e.target.value)} 
-          />
+          <div className="input-group31">
+            <label htmlFor="phone" className="required-label31">Phone Number <span className="required-asterisk31">*</span></label>
+            <input 
+              type="text" 
+              id="phone"
+              placeholder="Phone Number" 
+              value={phone} 
+              onChange={handlePhoneChange}
+              onKeyPress={handleKeyPress}
+              className={phone && (errors.phone ? "input-error31" : "input-valid31")}
+              required
+            />
+            {errors.phone && <div className="error-message31">{errors.phone}</div>}
+            {!errors.phone && phone && <div className="helper-text31">Phone number is valid</div>}
+          </div>
+
+          <div className="input-group31">
+            <label htmlFor="type" className="required-label31">Contact Type <span className="required-asterisk31">*</span></label>
+            <input 
+              type="text" 
+              id="type"
+              placeholder="Type (e.g., Medical, Police, Fire, Other)" 
+              value={type} 
+              onChange={handleTypeChange}
+              className={type && (errors.type ? "input-error31" : "input-valid31")}
+              required
+            />
+            {errors.type && <div className="error-message31">{errors.type}</div>}
+            {!errors.type && type && <div className="helper-text31">Contact type is valid</div>}
+          </div>
+
+          <div className="input-group31">
+            <label htmlFor="icon" className="required-label31">Icon (emoji) <span className="required-asterisk31">*</span></label>
+            <input 
+              type="text" 
+              id="icon"
+              placeholder="Icon (emoji)" 
+              value={icon} 
+              onChange={handleIconChange}
+              className={icon && (errors.icon ? "input-error31" : "input-valid31")}
+              required
+            />
+            {errors.icon && <div className="error-message31">{errors.icon}</div>}
+            {!errors.icon && icon && <div className="helper-text31">Icon is valid</div>}
+          </div>
         </div>
         <div className="form-buttons31">
           <button 
@@ -243,7 +391,12 @@ export default function AdminEmergencyPage() {
               setPhone(""); 
               setType(""); 
               setIcon(""); 
-              setEditingContactId(null); 
+              setEditingContactId(null);
+              setErrors({
+                phone: "",
+                type: "",
+                icon: ""
+              });
             }}
           >
             Cancel

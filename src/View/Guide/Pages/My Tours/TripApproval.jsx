@@ -33,7 +33,15 @@ export default function TripApproval() {
     const [showDeclineModal, setShowDeclineModal] = useState(false);
     const [declineMessage, setDeclineMessage] = useState("");
     const [tripToDecline, setTripToDecline] = useState(null);
+    const [currentGuideId, setCurrentGuideId] = useState(null);
 
+    // Function to get initials for avatar when no image is available
+    const getInitials = (firstName, lastName) => {
+        const firstInitial = firstName ? firstName.charAt(0).toUpperCase() : '';
+        const lastInitial = lastName ? lastName.charAt(0).toUpperCase() : '';
+        return `${firstInitial}${lastInitial}`;
+    };
+    
     const formatNumberWithCommas = (number) => {
         return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
     };
@@ -43,19 +51,39 @@ export default function TripApproval() {
           return "N/A"; 
       }
     
-      const priceInUSD = parseFloat(priceString.replace(/[^0-9.]+/g, "")); 
-    
-      if (!exchangeRates || !exchangeRates[currency]) {
-          return "Loading..."; // Exchange rates not yet loaded
-      }
-    
-      const conversionRate = exchangeRates[currency]; 
-      const convertedPrice = (priceInUSD * conversionRate).toFixed(2);
+      // Ensure priceString is actually a string
+      const priceStr = String(priceString);
       
-      return `${currency} ${formatNumberWithCommas(parseFloat(convertedPrice))}`;
+      try {
+          const priceInUSD = parseFloat(priceStr.replace(/[^0-9.]+/g, "")); 
+        
+          if (!exchangeRates || !exchangeRates[currency]) {
+              return "Loading..."; // Exchange rates not yet loaded
+          }
+        
+          const conversionRate = exchangeRates[currency]; 
+          const convertedPrice = (priceInUSD * conversionRate).toFixed(2);
+          
+          return `${currency} ${formatNumberWithCommas(parseFloat(convertedPrice))}`;
+      } catch (error) {
+          console.error("Error converting price:", error, "Price value:", priceString);
+          return "N/A";
+      }
     };
 
     useEffect(() => {
+        // Get the current guide's ID from localStorage
+        const user = JSON.parse(localStorage.getItem("user"));
+        if (user && user.id) {
+            setCurrentGuideId(user.id);
+            console.log("Current guide ID set from localStorage:", user.id);
+        } else if (user && user._id) {
+            setCurrentGuideId(user._id);
+            console.log("Current guide ID set from localStorage (_id):", user._id);
+        } else {
+            console.log("No guide ID found in localStorage:", user);
+        }
+        
         fetchTrips();
     }, []);
     
@@ -66,9 +94,70 @@ export default function TripApproval() {
     const fetchTrips = async () => {
         try {
             const response = await axios.get("http://localhost:4000/adminBookingApprove/trips");
-            setTrips(response.data);
-            setFilteredTrips(response.data);
+            console.log("All trips fetched:", response.data);
+            
+            // Get the current guide's ID from localStorage if not already set
+            let guideId = currentGuideId;
+            if (!guideId) {
+                const user = JSON.parse(localStorage.getItem("user"));
+                if (user && user.id) {
+                    guideId = user.id;
+                    setCurrentGuideId(user.id);
+                    console.log("Guide ID updated from localStorage (id):", user.id);
+                } else if (user && user._id) {
+                    guideId = user._id;
+                    setCurrentGuideId(user._id);
+                    console.log("Guide ID updated from localStorage (_id):", user._id);
+                } else {
+                    console.log("Still no guide ID found:", user);
+                }
+            }
+            
+            // Filter trips based on guideId
+            let filteredTrips = [];
+            
+            if (guideId) {
+                console.log("Filtering trips for guide ID:", guideId);
+                
+                // Debug: Log all guideIds in trips
+                response.data.forEach((trip, index) => {
+                    console.log(`Trip ${index}: tripName=${trip.tripName}, guideId=${trip.guideId}, guideIncluded=${trip.guideIncluded}`);
+                });
+                
+                filteredTrips = response.data.filter(trip => {
+                    // Case 1: Trip has no guide assigned (guideId is undefined/null)
+                    if (!trip.guideId) {
+                        console.log(`Trip ${trip.tripName}: No guide assigned, showing to all guides`);
+                        return true;
+                    }
+                    
+                    // Convert both IDs to strings for comparison to avoid type issues
+                    const tripGuideId = String(trip.guideId);
+                    const currentId = String(guideId);
+                    
+                    // Case 2: Trip is assigned to this guide
+                    const isAssignedToCurrentGuide = tripGuideId === currentId;
+                    
+                    if (isAssignedToCurrentGuide) {
+                        console.log(`Trip ${trip.tripName}: Assigned to current guide (${tripGuideId} === ${currentId})`);
+                        return true;
+                    } else {
+                        console.log(`Trip ${trip.tripName}: Not assigned to current guide (${tripGuideId} !== ${currentId})`);
+                        return false;
+                    }
+                });
+                
+                console.log(`After filtering: Found ${filteredTrips.length} trips for guide ${guideId}`);
+            } else {
+                // If no guide ID found, show all trips (admin view)
+                console.log("No guide ID found, showing all trips (admin view)");
+                filteredTrips = response.data;
+            }
+            
+            setTrips(filteredTrips);
+            setFilteredTrips(filteredTrips);
         } catch (error) {
+            console.error("Error fetching trips:", error);
             toast.error("Failed to fetch trips. Please try again later.");
         }
     };
@@ -95,6 +184,39 @@ export default function TripApproval() {
     const viewDetails = (trip) => {
         setSelectedTrip(trip);
         setShowDetailsModal(true);
+        
+        // If trip has guide, fetch guide details
+        if(trip.guideIncluded && trip.guideId) {
+            fetchGuideDetails(trip.guideId);
+        }
+    };
+
+    // Function to fetch guide details
+    const fetchGuideDetails = async (guideId) => {
+        try {
+            const token = localStorage.getItem("token");
+            if (!token) {
+                console.error("No token found");
+                return;
+            }
+
+            const response = await axios.get(`http://localhost:4000/api/guides/${guideId}`, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            });
+
+            if (response.status === 200) {
+                console.log("Guide details fetched:", response.data);
+                // Store guide details separately like ViewTripDetails.jsx does
+                setSelectedTrip(prevTrip => ({
+                    ...prevTrip,
+                    guideDetails: response.data
+                }));
+            }
+        } catch (error) {
+            console.error("Error fetching guide details:", error);
+        }
     };
 
     // Update trip status
@@ -232,6 +354,16 @@ export default function TripApproval() {
                 <div className="guide-page-header">
                     <h1 className="guide-page-title">Trip Management</h1>
                     
+                    <div className="guide-info-message">
+                        <p>
+                            <i className="info-icon">ℹ️</i> 
+                            Showing trips that are either assigned specifically to you or available to all guides. 
+                            <span className="guide-assigned-tag-info">
+                                Trips with <span className="guide-assigned-tag">Assigned to You</span> tag are exclusively for you.
+                            </span>
+                        </p>
+                    </div>
+                    
                     <div className="guide-search-filter">
                         <div className="guide-search-wrapper">
                             <input
@@ -277,6 +409,9 @@ export default function TripApproval() {
                                             <div className="guide-card-header">
                                                 <span className="guide-card-index">#{index + 1}</span>
                                                 <span className="guide-status-badge guide-status-pending">Pending</span>
+                                                {trip.guideId && String(trip.guideId) === String(currentGuideId) && (
+                                                    <span className="guide-assigned-tag">Assigned to You</span>
+                                                )}
                                             </div>
                                             <div className="guide-card-content">
                                                 <h4 className="guide-card-title">{trip.tripName}</h4>
@@ -334,6 +469,9 @@ export default function TripApproval() {
                                             <div className="guide-card-header">
                                                 <span className="guide-card-index">#{index + 1}</span>
                                                 <span className="guide-status-badge guide-status-approved">Approved</span>
+                                                {trip.guideId && String(trip.guideId) === String(currentGuideId) && (
+                                                    <span className="guide-assigned-tag">Assigned to You</span>
+                                                )}
                                             </div>
                                             <div className="guide-card-content">
                                                 <h4 className="guide-card-title">{trip.tripName}</h4>
@@ -373,6 +511,9 @@ export default function TripApproval() {
                                             <div className="guide-card-header">
                                                 <span className="guide-card-index">#{index + 1}</span>
                                                 <span className="guide-status-badge guide-status-declined">Declined</span>
+                                                {trip.guideId && String(trip.guideId) === String(currentGuideId) && (
+                                                    <span className="guide-assigned-tag">Assigned to You</span>
+                                                )}
                                             </div>
                                             <div className="guide-card-content">
                                                 <h4 className="guide-card-title">{trip.tripName}</h4>
@@ -408,9 +549,9 @@ export default function TripApproval() {
                             <div className="guide-modal-header">
                                 <h2 className="guide-modal-title">{selectedTrip.tripName}</h2>
                                 <div className="guide-modal-header-right">
-                                    <span className={`guide-modal-status-badge guide-status-${selectedTrip.status}`}>
+                                    <div className={`guide-modal-status-badge guide-status-${selectedTrip.status}`}>
                                         {selectedTrip.status.charAt(0).toUpperCase() + selectedTrip.status.slice(1)}
-                                    </span>
+                                    </div>
                                     <div className="guide-modal-close" onClick={() => setShowDetailsModal(false)}>
                                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                             <path d="M18 6L6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -418,6 +559,20 @@ export default function TripApproval() {
                                         </svg>
                                     </div>
                                 </div>
+                            </div>
+                            
+                            <div className="guide-modal-subheader">
+                                {selectedTrip.guideId && String(selectedTrip.guideId) === String(currentGuideId) ? (
+                                    <div className="guide-assignment-badge assigned">
+                                        <i className="assignment-icon">👤</i>
+                                        This trip is exclusively assigned to you
+                                    </div>
+                                ) : (
+                                    <div className="guide-assignment-badge available">
+                                        <i className="assignment-icon">👥</i>
+                                        This trip is available to all guides
+                                    </div>
+                                )}
                             </div>
                             
                             <div className="guide-modal-body">
@@ -547,6 +702,97 @@ export default function TripApproval() {
                                         <span className="guide-detail-value">{selectedTrip.transportationType}</span>
                                     </div>
                                 </div>
+
+                                {/* Guide Information Section */}
+                                {selectedTrip.guideIncluded && (
+                                    <div className="guide-modal-section">
+                                        <h3>Guide Information</h3>
+                                        <div className="guide-profile-container">
+                                            <div className="guide-header">
+                                                <div className="guide-badge">
+                                                    <span>Guide Included</span>
+                                                </div>
+                                            </div>
+                                            
+                                            {selectedTrip.guideDetails ? (
+                                                <div className="guide-details-wrapper">
+                                                    <div className="guide-profile-section">
+                                                        <div className="guide-profile-header">
+                                                            {selectedTrip.guideDetails.image ? (
+                                                                <img 
+                                                                    src={selectedTrip.guideDetails.image} 
+                                                                    alt={`${selectedTrip.guideDetails.firstName} ${selectedTrip.guideDetails.lastName}`}
+                                                                    className="guide-avatar"
+                                                                    onError={(e) => {e.target.src = "/images/default-guide-avatar.png"}}
+                                                                />
+                                                            ) : (
+                                                                <div className="guide-initials-avatar">
+                                                                    {getInitials(selectedTrip.guideDetails.firstName, selectedTrip.guideDetails.lastName)}
+                                                                </div>
+                                                            )}
+                                                            <div className="guide-name-section">
+                                                                <h4>{selectedTrip.guideDetails.firstName} {selectedTrip.guideDetails.lastName}</h4>
+                                                                <div className="guide-ratings">
+                                                                    {selectedTrip.guideDetails.guideProfile?.ratings?.average ? (
+                                                                        <div className="rating-display">
+                                                                            <span>{selectedTrip.guideDetails.guideProfile.ratings.average.toFixed(1)}</span>
+                                                                            <span className="stars-mini">
+                                                                                {[1, 2, 3, 4, 5].map((star) => (
+                                                                                    <span key={star} className={`star-mini ${star <= Math.round(selectedTrip.guideDetails.guideProfile.ratings.average) ? 'filled' : ''}`}>★</span>
+                                                                                ))}
+                                                                            </span>
+                                                                            <span className="reviews-count">({selectedTrip.guideDetails.guideProfile.ratings.total || 0})</span>
+                                                                        </div>
+                                                                    ) : (
+                                                                        <span className="no-ratings">No ratings yet</span>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    <div className="guide-compact-info">
+                                                        <div className="guide-info-row">
+                                                            {selectedTrip.guideDetails.guideProfile?.languages?.length > 0 && (
+                                                                <div className="guide-info-item">
+                                                                    <span className="info-icon">🗣️</span>
+                                                                    <span>{selectedTrip.guideDetails.guideProfile.languages.join(", ")}</span>
+                                                                </div>
+                                                            )}
+                                                            
+                                                            {selectedTrip.guideDetails.guideProfile?.regionsOfExpertise?.length > 0 && (
+                                                                <div className="guide-info-item">
+                                                                    <span className="info-icon">🗺️</span>
+                                                                    <span>{selectedTrip.guideDetails.guideProfile.regionsOfExpertise.join(", ")}</span>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                        
+                                                        <div className="guide-info-row">
+                                                            {selectedTrip.guideDetails.guideProfile?.serviceTypes?.length > 0 && (
+                                                                <div className="guide-info-item">
+                                                                    <span className="info-icon">🛎️</span>
+                                                                    <span>{selectedTrip.guideDetails.guideProfile.serviceTypes.join(", ")}</span>
+                                                                </div>
+                                                            )}
+                                                            
+                                                            {selectedTrip.guideCost && (
+                                                                <div className="guide-cost-compact">
+                                                                    <span className="guide-fee-label">Guide Fee:</span>
+                                                                    <span className="guide-fee-value">{convertPrice(selectedTrip.guideCost)}</span>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <div className="guide-not-available">
+                                                    <p>Guide details not available at the moment. The guide has been assigned but details cannot be retrieved.</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
 
                                 {selectedTrip.itinerary && selectedTrip.itinerary.length > 0 && (
                                     <div className="guide-modal-section">

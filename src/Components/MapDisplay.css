@@ -30,6 +30,7 @@
 .location-address p {
   margin: 0;
   color: #333;
+  text-align: center;
 }
 
 @media (max-width: 768px) {
@@ -143,3 +144,21 @@
   font-family: inherit !important;
   color: #333 !important;
 } 
+
+/* Center the address text while maintaining position */
+.map-address-centered {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  padding: 10px 15px;
+}
+
+.map-address-centered p {
+  text-align: center;
+  max-width: 90%;
+  margin: 0;
+  font-weight: 500;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}

@@ -18,6 +18,8 @@ export default function ItineraryPackageViewPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
     const [showUserForm, setShowUserForm] = useState(false);
+    const [guideDetails, setGuideDetails] = useState(null);
+    const [loadingGuide, setLoadingGuide] = useState(false);
     const navigate = useNavigate();
     const user = JSON.parse(localStorage.getItem("user"));
 
@@ -26,24 +28,44 @@ export default function ItineraryPackageViewPage() {
     };
 
     const formatNumberWithCommas = (number) => {
-      return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-  };
+      try {
+        if (number === null || number === undefined) return "0";
+        return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+      } catch (error) {
+        console.error("Error formatting number:", error, number);
+        return "0";
+      }
+    };
   
   const convertPrice = (priceString) => {
-    if (!priceString || isNaN(priceString)) {
-        return "N/A"; 
+    // If input is null, undefined or NaN
+    if (priceString === null || priceString === undefined) {
+      return "N/A"; 
     }
-  
-    const priceInUSD = parseFloat(priceString.replace(/[^0-9.]+/g, "")); 
-  
-    if (!exchangeRates || !exchangeRates[currency]) {
+
+    try {
+      // Ensure we're working with a string
+      const priceStr = String(priceString);
+      
+      // Extract numeric value from string
+      const priceInUSD = parseFloat(priceStr.replace(/[^0-9.]+/g, ""));
+      
+      if (isNaN(priceInUSD)) {
+        return "N/A";
+      }
+      
+      if (!exchangeRates || !exchangeRates[currency]) {
         return "Loading..."; // Exchange rates not yet loaded
+      }
+      
+      const conversionRate = exchangeRates[currency]; 
+      const convertedPrice = (priceInUSD * conversionRate).toFixed(2);
+      
+      return `${currency} ${formatNumberWithCommas(parseFloat(convertedPrice))}`;
+    } catch (error) {
+      console.error("Error converting price:", error, "Price value:", priceString);
+      return "N/A";
     }
-  
-    const conversionRate = exchangeRates[currency]; 
-    const convertedPrice = (priceInUSD * conversionRate).toFixed(2);
-    
-    return `${currency} ${formatNumberWithCommas(parseFloat(convertedPrice))}`;
   };
   
 
@@ -53,7 +75,16 @@ export default function ItineraryPackageViewPage() {
         fetchPackageDetails(packageName);
       }
     }, [packageName]);
-  
+    
+    useEffect(() => {
+      if (packageData && packageData.guideIncluded && packageData.guideId) {
+        // Only fetch guide details if guideId is a string (not already an object from the server)
+        if (typeof packageData.guideId === 'string' || typeof packageData.guideId === 'object' && !guideDetails) {
+          fetchGuideDetails(packageData.guideId);
+        }
+      }
+    }, [packageData, guideDetails]);
+
     const fetchPackageDetails = async (title) => {
       try {
         const encodedPackageName = encodeURIComponent(title);
@@ -66,6 +97,21 @@ export default function ItineraryPackageViewPage() {
         if (response.status === 200) {
           // Transform the reviews data to match AdminHistory format
           const packageData = response.data;
+          
+          // Log the guide information to debug the issue
+          console.log("Guide Information from API:", {
+            guideIncluded: packageData.guideIncluded,
+            guideId: packageData.guideId,
+            guideCost: packageData.guideCost
+          });
+          
+          // If the server populated guideId as an object, use it directly instead of fetching again
+          if (packageData.guideIncluded && packageData.guideId && typeof packageData.guideId === 'object') {
+            console.log("Guide details came pre-populated from server");
+            setGuideDetails(packageData.guideId);
+            setLoadingGuide(false);
+          }
+          
           if (packageData.reviews) {
             packageData.reviews = packageData.reviews.map(review => ({
               ...review,
@@ -82,6 +128,43 @@ export default function ItineraryPackageViewPage() {
         setError("Failed to load package details.");
       } finally {
         setLoading(false);
+      }
+    };
+    
+    const fetchGuideDetails = async (guideId) => {
+      setLoadingGuide(true);
+      try {
+        // If guideId is already an object with all the guide details, use it directly
+        if (typeof guideId === 'object' && guideId._id) {
+          console.log("Using guide details from object:", guideId.firstName, guideId.lastName);
+          setGuideDetails(guideId);
+          return;
+        }
+        
+        // Otherwise, fetch guide details from the API
+        const token = localStorage.getItem("token");
+        if (!token) {
+          console.error("No token found");
+          return;
+        }
+
+        const guideFetchId = typeof guideId === 'object' ? guideId._id : guideId;
+        console.log("Fetching guide details for ID:", guideFetchId);
+
+        const response = await axios.get(`http://localhost:4000/api/guides/${guideFetchId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+
+        if (response.status === 200) {
+          console.log("Guide details fetched from API successfully");
+          setGuideDetails(response.data);
+        }
+      } catch (error) {
+        console.error("Error fetching guide details:", error);
+      } finally {
+        setLoadingGuide(false);
       }
     };
   
@@ -104,13 +187,25 @@ export default function ItineraryPackageViewPage() {
 
   const handlePaymentSubmit = async (formData) => {
     try {
+        // Safe function to extract price value
+        const extractPrice = (priceValue) => {
+          try {
+            if (!priceValue) return "0";
+            return String(priceValue).replace(/[^0-9.-]+/g, "") || "0";
+          } catch (error) {
+            console.error("Error extracting price:", error, priceValue);
+            return "0";
+          }
+        };
+        
         const paymentDetails = {
             ...formData,
             packageDetails: {
+                _id: packageData._id,
                 title: packageData.title,
                 duration: packageData.duration,
                 tripType: packageData.tripType,
-                price: packageData.price ? packageData.price.replace(/[^0-9.-]+/g, "") : "0",
+                price: extractPrice(packageData.price),
                 category: packageData.category,
                 groupSize: packageData.groupSize,
                 difficulty: packageData.difficulty,
@@ -121,7 +216,7 @@ export default function ItineraryPackageViewPage() {
                 destinations: packageData.address || packageData.destinations || null
             },
             userId: user._id,
-            amount: packageData.price ? packageData.price.replace(/[^0-9.-]+/g, "") : "0",
+            amount: extractPrice(packageData.price),
             transactionId: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
         };
 
@@ -138,6 +233,13 @@ export default function ItineraryPackageViewPage() {
         toast.error('Failed to initialize payment. Please try again.');
         setShowUserForm(false);
     }
+  };
+
+  // Helper function to get initials from name
+  const getInitials = (firstName, lastName) => {
+    const firstInitial = firstName ? firstName.charAt(0).toUpperCase() : '';
+    const lastInitial = lastName ? lastName.charAt(0).toUpperCase() : '';
+    return `${firstInitial}${lastInitial}`;
   };
 
   const renderUserInfo = (review) => {
@@ -227,6 +329,117 @@ export default function ItineraryPackageViewPage() {
                         />
                     </div>
                 </div>
+            )}
+            
+            {/* Guide Information Section */}
+            {packageData.guideIncluded && (
+              <div className="guide-section-wrapper55">
+                <h3 className="section-heading55">Guide Information</h3>
+                <div className="guide-info-container55">
+                  <div className="guide-info-header55">
+                    <div className="guide-status55">
+                      <span className="guide-badge55">Guide Included</span>
+                    </div>
+                  </div>
+                  
+                  {loadingGuide ? (
+                    <div className="guide-loading55">
+                      <div className="loading-spinner55"></div>
+                      <p>Loading guide details...</p>
+                    </div>
+                  ) : guideDetails ? (
+                    <div className="guide-compact-wrapper55">
+                      <div className="guide-profile-header55">
+                        {guideDetails.image ? (
+                          <img 
+                            src={guideDetails.image} 
+                            alt={`${guideDetails.firstName} ${guideDetails.lastName}`}
+                            className="guide-avatar55"
+                            onError={(e) => {
+                              e.target.style.display = 'none';
+                              e.target.parentNode.innerHTML = `<div class="initials-avatar55">${getInitials(guideDetails.firstName, guideDetails.lastName)}</div>`;
+                            }}
+                          />
+                        ) : (
+                          <div className="initials-avatar55">
+                            {getInitials(guideDetails.firstName, guideDetails.lastName)}
+                          </div>
+                        )}
+                        
+                        <div className="guide-name-details55">
+                          <h4>{guideDetails.firstName} {guideDetails.lastName}</h4>
+                          <div className="guide-ratings55">
+                            {guideDetails.guideProfile?.ratings?.average ? (
+                              <div className="ratings-display55">
+                                <span className="rating-value55">{guideDetails.guideProfile.ratings.average.toFixed(1)}</span>
+                                <div className="stars-mini55">
+                                  {[1, 2, 3, 4, 5].map((star) => (
+                                    <span key={star} 
+                                      className={`star-mini55 ${star <= Math.round(guideDetails.guideProfile.ratings.average) ? 'filled' : ''}`}>★</span>
+                                  ))}
+                                </div>
+                                <span className="reviews-count55">
+                                  ({guideDetails.guideProfile.reviews?.length || 0} reviews)
+                                </span>
+                              </div>
+                            ) : (
+                              <span className="no-ratings55">No ratings yet</span>
+                            )}
+                          </div>
+                        </div>
+
+                        {packageData.guideCost && (
+                          <div className="guide-cost-badge55">
+                            {convertPrice(packageData.guideCost)}
+                          </div>
+                        )}
+                      </div>
+                      
+                      <div className="guide-attributes55">
+                        {guideDetails.guideProfile?.languages?.length > 0 && (
+                          <div className="attribute-item55">
+                            <span className="attribute-icon55">🗣️</span>
+                            <span className="attribute-text55">
+                              <strong>Languages:</strong> {guideDetails.guideProfile.languages.join(", ")}
+                            </span>
+                          </div>
+                        )}
+                        
+                        {guideDetails.guideProfile?.regionsOfExpertise?.length > 0 && (
+                          <div className="attribute-item55">
+                            <span className="attribute-icon55">🗺️</span>
+                            <span className="attribute-text55">
+                              <strong>Expertise:</strong> {guideDetails.guideProfile.regionsOfExpertise.join(", ")}
+                            </span>
+                          </div>
+                        )}
+                        
+                        {guideDetails.guideProfile?.serviceTypes?.length > 0 && (
+                          <div className="attribute-item55">
+                            <span className="attribute-icon55">🛎️</span>
+                            <span className="attribute-text55">
+                              <strong>Services:</strong> {guideDetails.guideProfile.serviceTypes.join(", ")}
+                            </span>
+                          </div>
+                        )}
+                        
+                        {guideDetails.guideProfile?.yearsOfExperience && (
+                          <div className="attribute-item55">
+                            <span className="attribute-icon55">⏱️</span>
+                            <span className="attribute-text55">
+                              <strong>Experience:</strong> {guideDetails.guideProfile.yearsOfExperience} years
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="guide-not-available55">
+                      <p>Guide details not available at the moment. The guide has been assigned but details cannot be retrieved.</p>
+                    </div>
+                  )}
+                </div>
+              </div>
             )}
 
             <h3 className="day-by-day55">Day by Day Itinerary</h3>
@@ -352,15 +565,12 @@ export default function ItineraryPackageViewPage() {
                         _id: packageData._id,
                         title: packageData.title,
                         duration: packageData.duration,
-                        tripType: packageData.tripType,
-                        price: packageData.price ? packageData.price.replace(/[^0-9.-]+/g, "") : "0",
                         category: packageData.category,
+                        price: extractPrice(packageData.price),
                         groupSize: packageData.groupSize,
                         difficulty: packageData.difficulty,
                         startDate: packageData.startDate || null,
                         endDate: packageData.endDate || null,
-                        
-                    
                         destinations: packageData.address || packageData.destinations || null
                     }}
                     onSubmit={handlePaymentSubmit}

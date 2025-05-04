@@ -72,6 +72,8 @@ router.post("/initialize-khalti", async (req, res) => {
     // Format packageDetails for storage
     const formattedPackageDetails = {
       _id: packageDetails._id ? new mongoose.Types.ObjectId(packageDetails._id) : new mongoose.Types.ObjectId(),
+      packageId: packageDetails.category === 'trip' ? null : packageDetails._id ? new mongoose.Types.ObjectId(packageDetails._id) : null,
+      tripId: packageDetails.category === 'trip' ? packageDetails._id ? new mongoose.Types.ObjectId(packageDetails._id) : null : null,
       title: packageDetails?.title,
       duration: packageDetails?.duration,
       category: packageDetails?.category,

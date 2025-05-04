@@ -336,3 +336,99 @@ body {
   font-weight: bold;
 }
 
+.input-group31 {
+  width: 100%;
+  max-width: 300px;
+  margin-bottom: px;
+  text-align: left;
+}
+
+.required-label31 {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: bold;
+  color: #333;
+  font-size: 14px;
+}
+
+.required-asterisk31 {
+  color: #e63946;
+  margin-left: 2px;
+  font-size: 16px;
+}
+
+/* Add these CSS classes for validation messages */
+.error-message31 {
+  color: #e63946;
+  font-size: 12px;
+  margin-top: 15px;
+  margin-bottom: 5px;
+  min-height: 15px;
+  text-align: left;
+}
+
+.helper-text31 {
+  color: #28a745;
+  font-size: 12px;
+  margin-top: 15px;
+  margin-bottom: 5px;
+  text-align: left;
+}
+
+.input-group31 input {
+  border: 1px solid #ccc;
+  width: 100%;
+  padding: 8px;
+  border-radius: 5px;
+  font-size: 14px;
+}
+
+.input-group31 input:focus {
+  outline: none;
+  border-color: #3498db;
+}
+
+.input-group31 input.error {
+  border-color: #e63946;
+}
+
+/* Animation for error messages */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+  20%, 40%, 60%, 80% { transform: translateX(5px); }
+}
+
+.error-message31 {
+  animation: shake 0.6s ease-in-out;
+}
+
+/* Indicator for valid input */
+.input-group31 input:valid:not(:placeholder-shown) {
+  border-color: #2ecc71;
+}
+
+/* Add a red border when input is invalid and has been interacted with */
+.input-group31 input:invalid:not(:placeholder-shown) {
+  border-color: #e63946;
+}
+
+.input-error31 {
+  border-color: #e63946 !important;
+  box-shadow: 0 0 0 1px #e63946;
+}
+
+.input-valid31 {
+  border-color: #2ecc71 !important;
+  box-shadow: 0 0 0 1px #2ecc71;
+}
+
+/* Update these styles to make them more visible */
+.input-group31 input:valid:not(:placeholder-shown) {
+  border-color: #2ecc71;
+}
+
+.input-group31 input:invalid:not(:placeholder-shown) {
+  border-color: #e63946;
+}
+

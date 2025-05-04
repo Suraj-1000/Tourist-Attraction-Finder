@@ -50,7 +50,7 @@ const generateOTP = () => {
 // POST route for signup
 router.post('/', async (req, res) => {
   try {
-    const { firstName, lastName, email, phone, password, confirmPassword, termsAccepted, role, guideProfile } = req.body;
+    const { firstName, lastName, email, phone, password, confirmPassword, termsAccepted, role, gender, dateOfBirth, address, image, guideProfile } = req.body;
 
     // Check if all fields are provided
     if (!firstName || !lastName || !email || !phone || !password || !confirmPassword || termsAccepted === undefined) {
@@ -84,7 +84,12 @@ router.post('/', async (req, res) => {
     const adminEmail = 'suraj.explore.nepal@gmail.com';
     const finalRole = email === adminEmail ? "admin" : role || "user";
     
-
+    // Check for additional required fields for guides
+    if (finalRole === 'guide') {
+      if (!gender || !dateOfBirth || !address || !image) {
+        return res.status(400).json({ message: 'Gender, date of birth, address, and profile image are required for guides' });
+      }
+    }
 
     // OTP generation and email sending
     const otp = generateOTP();
@@ -97,7 +102,11 @@ router.post('/', async (req, res) => {
       phone, 
       password, 
       role: finalRole,
-      guideProfile: role === 'guide' ? guideProfile : null,
+      gender: finalRole === 'guide' ? gender : null,
+      dateOfBirth: finalRole === 'guide' ? new Date(dateOfBirth) : null,
+      address: finalRole === 'guide' ? address : '',
+      image: finalRole === 'guide' ? image : null,
+      guideProfile: finalRole === 'guide' ? guideProfile : null,
       termsAccepted: true
     };
 
@@ -143,7 +152,7 @@ router.post('/verify-otp', async (req, res) => {
   }
 
   if (storedOtp.otp === otp) {
-    const { firstName, lastName, email, phone, password, role, guideProfile, termsAccepted } = storedOtp;
+    const { firstName, lastName, email, phone, password, role, gender, dateOfBirth, address, image, guideProfile, termsAccepted } = storedOtp;
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -155,6 +164,10 @@ router.post('/verify-otp', async (req, res) => {
       phone, 
       password: hashedPassword, 
       role,
+      gender: role === 'guide' ? gender : null,
+      dateOfBirth: role === 'guide' ? dateOfBirth : null,
+      address: role === 'guide' ? address : '',
+      image: role === 'guide' ? image : null,
       guideProfile: role === 'guide' ? {
         ...guideProfile,
         isVerified: false,
@@ -192,6 +205,8 @@ router.post('/verify-otp', async (req, res) => {
               <li>Name: ${firstName} ${lastName}</li>
               <li>Email: ${email}</li>
               <li>Phone: ${phone}</li>
+              <li>Gender: ${gender}</li>
+              <li>Address: ${address}</li>
               <li>License Number: ${guideProfile?.licenseNumber || 'Not provided'}</li>
             </ul>
             <p>Please review their application in the admin dashboard.</p>
@@ -468,6 +483,31 @@ router.post('/upload-document', uploadDocument.single('document'), async (req, r
   } catch (error) {
     console.error('Error uploading document:', error);
     res.status(500).json({ message: 'Error uploading document' });
+  }
+});
+
+// Route to get basic user info by ID (for reviews, etc.)
+router.get('/user-basic/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const user = await Signup.findById(userId).select('firstName lastName email image');
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    res.status(200).json({
+      user: {
+        id: user._id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        image: user.image
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching user info:', error);
+    res.status(500).json({ message: 'Internal server error' });
   }
 });
 

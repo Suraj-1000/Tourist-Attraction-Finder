@@ -59,6 +59,11 @@ export default function PlanTripUpdatePage() {
   const [isUpdating, setIsUpdating] = useState(false);
   const { id } = useParams();
   const [errors, setErrors] = useState({});
+  const [initialFormData, setInitialFormData] = useState(null);
+  const [isFormModified, setIsFormModified] = useState(false);
+
+  // Get current date in YYYY-MM-DD format for min date validation
+  const today = new Date().toISOString().split('T')[0];
 
   const COST_RANGES = {
     transport: {
@@ -410,6 +415,7 @@ const handleChange = (e) => {
     const updatedItinerary = [...formData.itinerary];
     updatedItinerary[index] = { ...updatedItinerary[index], [name]: value };
     setFormData({ ...formData, itinerary: updatedItinerary });
+    setIsFormModified(true);
   };
 
   const handleCheckboxChange = (e) => {
@@ -417,10 +423,12 @@ const handleChange = (e) => {
   
     setFormData((prev) => {
       const currentValues = prev[name] || []; 
-      return {
+      const updatedData = {
         ...prev,
         [name]: checked ? [...currentValues, value] : currentValues.filter((item) => item !== value),
       };
+      setIsFormModified(true);
+      return updatedData;
     });
   };
 
@@ -502,7 +510,24 @@ const handleChange = (e) => {
           setSelectedGuide(selectedGuideData);
         }
 
-        setFormData({
+        // Parse itinerary if it's a string
+        let itineraryData = [];
+        if (tripData.itinerary) {
+          if (typeof tripData.itinerary === 'string') {
+            try {
+              console.log("Parsing itinerary string:", tripData.itinerary);
+              itineraryData = JSON.parse(tripData.itinerary);
+              console.log("Parsed itinerary:", itineraryData);
+            } catch (e) {
+              console.error("Error parsing itinerary JSON:", e);
+              itineraryData = [];
+            }
+          } else if (Array.isArray(tripData.itinerary)) {
+            itineraryData = tripData.itinerary;
+          }
+        }
+
+        const formattedData = {
           ...tripData,
           startDate,
           endDate,
@@ -514,7 +539,7 @@ const handleChange = (e) => {
           nightlifeEntertainment: Array.isArray(tripData.nightlifeEntertainment) ? tripData.nightlifeEntertainment : [],
           dietaryPreferences,
           customDietaryPreference: tripData.customDietaryPreference || "",
-          itinerary: Array.isArray(tripData.itinerary) ? tripData.itinerary : [],
+          itinerary: itineraryData,
           travelInsurance: Boolean(tripData.travelInsurance),
           includeEvents: Boolean(tripData.includeEvents),
           locationDetails: tripData.locationDetails || {
@@ -525,7 +550,11 @@ const handleChange = (e) => {
           guideIncluded: guideIncluded,
           guideId: tripData.guideId || "",
           guideCost: tripData.guideCost || 0
-        });
+        };
+
+        setFormData(formattedData);
+        setInitialFormData(JSON.parse(JSON.stringify(formattedData))); // Deep copy for comparison
+        setIsFormModified(false); // Reset form modification status
       } else {
         toast.error(`No Trip Found with ID: "${id}"`);
       }
@@ -560,14 +589,45 @@ const handleChange = (e) => {
   const validateForm = () => {
     const newErrors = {};
 
+    // Only validate if the form has been modified
+    if (!isFormModified) {
+      return true;
+    }
+
     // Required fields validation
     if (!formData.tripName?.trim()) newErrors.tripName = "Trip name is required";
     if (!formData.startDate) newErrors.startDate = "Start date is required";
     if (!formData.endDate) newErrors.endDate = "End date is required";
+    
+    // Past date validation
+    const currentDate = new Date();
+    currentDate.setHours(0, 0, 0, 0); // Reset time to start of day
+    
+    if (formData.startDate) {
+      const startDate = new Date(formData.startDate);
+      if (startDate < currentDate) {
+        newErrors.startDate = "Start date cannot be in the past";
+      }
+    }
+    
+    if (formData.endDate) {
+      const endDate = new Date(formData.endDate);
+      if (endDate < currentDate) {
+        newErrors.endDate = "End date cannot be in the past";
+      }
+    }
+    
     if (!formData.destinations?.trim()) newErrors.destinations = "Destination is required";
     if (!formData.travelStyle) newErrors.travelStyle = "Travel style is required";
     if (!formData.accommodationType) newErrors.accommodationType = "Accommodation type is required";
     if (!formData.transportationType) newErrors.transportationType = "Transportation type is required";
+    if (!formData.mealsPreferences) newErrors.mealsPreferences = "Meals preference is required";
+    
+    // Make sure there's at least some data in the itinerary
+    if (!formData.itinerary || formData.itinerary.length === 0 || 
+        formData.itinerary.every(day => !day.mode && !day.highlights && !day.stay && !day.meals)) {
+      newErrors.itinerary = "Day by day itinerary must have at least basic information";
+    }
 
     // Group size validation for Family and Groups
     if ((formData.travelStyle === "Family" || formData.travelStyle === "Groups") && 
@@ -595,6 +655,15 @@ const handleChange = (e) => {
 
   const handleUpdate = async (e) => {
     e.preventDefault();
+    
+    // If no changes were made, just navigate back
+    if (!isFormModified) {
+      toast.success("No changes detected. Returning to previous page.");
+      setTimeout(() => {
+        navigate(-1);
+      }, 1500);
+      return;
+    }
     
     if (!validateForm()) {
       toast.error("Please fill in all required fields correctly");
@@ -638,6 +707,20 @@ const handleChange = (e) => {
         }
       };
 
+      // Add debug logs
+      console.log("Original Itinerary:", formData.itinerary);
+      
+      // Ensure itinerary is properly formatted as JSON string
+      if (updateData.itinerary) {
+        console.log("Itinerary before stringify:", updateData.itinerary);
+        updateData.itinerary = JSON.stringify(updateData.itinerary);
+        console.log("Itinerary after stringify:", updateData.itinerary);
+      } else {
+        console.log("No itinerary found in update data");
+      }
+
+      console.log("Sending update data:", updateData);
+
       const response = await axios.put(
         "http://localhost:4000/adminTrip/updateTrip",
         updateData,
@@ -676,14 +759,16 @@ const handleChange = (e) => {
         <form onSubmit={handleUpdate} className="form23">
           <h2 className="h2-23">Update Your Trip Details</h2>
           <div className="label-container23">
-              <label className="label23">Trip Name:
+              <label className="label23">Trip Name: <span className="required">*</span>
                   <input className="input23" type="text" name="tripName" value={formData.tripName} onChange={handleChange} />
               </label>
-              <label className="label23">Start Date:
-                  <input className="input23" type="date" name="startDate" value={formData.startDate} onChange={handleChange} />
+              <label className="label23">Start Date: <span className="required">*</span>
+                  <input className="input23" type="date" name="startDate" value={formData.startDate} onChange={handleChange} min={today} />
+                  {errors.startDate && <p className="error-message23">{errors.startDate}</p>}
               </label>
-              <label className="label23">End Date:
-                  <input className="input23" type="date" name="endDate" value={formData.endDate} onChange={handleChange} />
+              <label className="label23">End Date: <span className="required">*</span>
+                  <input className="input23" type="date" name="endDate" value={formData.endDate} onChange={handleChange} min={formData.startDate || today} />
+                  {errors.endDate && <p className="error-message23">{errors.endDate}</p>}
               </label>
               <label className="label23">Days:
                   <input className="input23" type="text" name="duration" value={formData.duration} readOnly />
@@ -702,7 +787,7 @@ const handleChange = (e) => {
 
           <h3 className="h3-23">Select Your Destinations</h3>
           <div className="label-input-container23">
-              <label className="label23">Destination:</label>
+              <label className="label23">Destination: <span className="required">*</span></label>
               <MapPicker
                 onLocationSelect={handleLocationSelect}
                 initialLocation={formData.locationDetails}
@@ -757,7 +842,7 @@ const handleChange = (e) => {
 
           </div>
 
-          <h3 className="h3-23">Travel Style:</h3>
+          <h3 className="h3-23">Travel Style: <span className="required">*</span></h3>
           <div className="travel-style-options23">
               <label className="travel-style-label23">
                   <input 
@@ -825,7 +910,7 @@ const handleChange = (e) => {
 
           <h2 className="h2-23">Select Your Accommodation Preferences</h2>
 
-          <h3 className="h3-23">Accommodation Type:</h3>
+          <h3 className="h3-23">Accommodation Type: <span className="required">*</span></h3>
           <div className="accommodation-options23">
               <label className="radio-label23">
                   <input className="radio-input23" type="radio" name="accommodationType" value="Guesthouses" checked={formData.accommodationType === "Guesthouses"} onChange={handleChange} />
@@ -865,7 +950,8 @@ const handleChange = (e) => {
               </label>
           </div>
 
-          <h3 className="h3-23">Meals Preferences:</h3>
+          <h3 className="h3-23">Meals Preferences: <span className="required">*</span></h3>
+          {errors.mealsPreferences && <p className="error-message23">{errors.mealsPreferences}</p>}
           <div className="meals-preferences-options23">
               <label className="radio-label23">
                   <input type="radio" name="mealsPreferences" value="All-Inclusive" checked={formData.mealsPreferences === "All-Inclusive"} onChange={handleChange} />
@@ -956,7 +1042,7 @@ const handleChange = (e) => {
 
           <h2 className="h2-23">Select Your Transportation Preferences</h2>
 
-          <h3 className="h3-23">Transportation Type:</h3>
+          <h3 className="h3-23">Transportation Type: <span className="required">*</span></h3>
           <div className="transportation-options23">
               <label className="radio-label23">
                   <input className="radio-input23" type="radio" name="transportationType" value="Flights" checked={formData.transportationType === "Flights"}   onChange={handleChange} />
@@ -978,7 +1064,8 @@ const handleChange = (e) => {
           </div>
 
           <h2 className="h2-23">Create your Day by Day Itinerary:</h2>
-          <h3 className="h3-23">Day by Day Itinerary:</h3>
+          <h3 className="h3-23">Day by Day Itinerary: <span className="required">*</span></h3>
+          {errors.itinerary && <p className="error-message23">{errors.itinerary}</p>}
           {formData.itinerary.map((day, index) => (
             <div key={index} className="itinerary-day-item23">
               <div className="itinerary-input-group23">

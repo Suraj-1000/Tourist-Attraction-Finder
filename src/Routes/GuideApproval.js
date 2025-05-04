@@ -8,7 +8,8 @@ const router = express.Router();
 router.get('/pending', verifyToken, async (req, res) => {
   try {
     const guides = await Signup.find({
-      role: 'guide'
+      role: 'guide',
+      'guideProfile.verificationStatus': 'pending'
     }).select('-password').sort({ createdAt: -1 });
 
     res.status(200).json(guides);
@@ -30,6 +31,21 @@ router.get('/approved', verifyToken, async (req, res) => {
     res.status(200).json(guides);
   } catch (error) {
     console.error('Error fetching approved guides:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// Get all rejected guides
+router.get('/rejected', verifyToken, async (req, res) => {
+  try {
+    const guides = await Signup.find({
+      role: 'guide',
+      'guideProfile.verificationStatus': 'rejected'
+    }).select('-password').sort({ createdAt: -1 });
+
+    res.status(200).json(guides);
+  } catch (error) {
+    console.error('Error fetching rejected guides:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 });

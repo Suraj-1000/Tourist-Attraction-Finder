@@ -15,7 +15,7 @@ import adminSearchAttractionRouter from './Routes/SearchAttractions.js';
 import adminPackageRouter from './Routes/Packages.js';
 import adminAddTripRouter from './Routes/PlanTrips.js';
 import adminTripRouter from './Routes/PlanTrips.js';
-import adminBookingApproveRouter from './Routes/BookingApproval.js'
+import adminBookingApproveRouter from './Routes/TripApproval.js'
 import adminUpdateProfileRouter from './Routes/ProfileManages.js'
 import adminEmergencyRouter from './Routes/Emergencys.js'
 import DeleteAccountRouter from './Routes/DeleteAccount.js';

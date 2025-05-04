@@ -64,6 +64,105 @@ body {
 
 .search-box59 {
   display: flex;
+  gap: 10px;
+  width: 100%;
+  margin-bottom: 15px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.search-input-container {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+.clear-search-btn {
+  position: absolute;
+  right: 10px;
+  background: none;
+  border: none;
+  color: #777;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 5;
+}
+
+.clear-search-btn:hover {
+  color: #333;
+}
+
+*{
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Mitr';
+}
+
+body {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+.main-container59 {
+  width: 100%;
+  height: auto;
+  display: block;
+  padding: 2rem;
+  background-color: #f8f9fa;
+}
+
+.heading59 {
+  text-align: center;
+  margin-bottom: 2rem;
+  margin-top: 100px;
+}
+
+.title-heading59 {
+  color: #e63946;
+  font-size: 16px;
+  margin-bottom: 10px;
+}
+
+.title-para59 {
+  font-size: 28px;
+  font-weight: 500;
+  color: #000;
+  margin: 0;
+}
+
+/* Top Search Bar Styles */
+.top-search-bar59 {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
+}
+
+.search-info59 {
+  margin-bottom: 1rem;
+}
+
+.search-info59 h2 {
+  color: #2b2d42;
+  font-size: 24px;
+  margin-bottom: 0.5rem;
+}
+
+.search-info59 p {
+  color: #6c757d;
+  font-size: 16px;
+}
+
+.search-box59 {
+  display: flex;
   align-items: center;
   gap: 10px;
   margin-top: 15px;
@@ -138,14 +237,13 @@ body {
   position: fixed;
   top: 0;
   left: 0;
-  right: 0;
-  bottom: 0;
+  width: 100%;
+  height: 100%;
   background-color: rgba(0, 0, 0, 0.7);
   display: flex;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
   z-index: 1000;
-  padding: 20px;
 }
 
 .modal-content59 {
@@ -589,4 +687,530 @@ body {
 
 .duration59::before {
   content: "⏱️";
+}
+
+/* Add styles for the redesigned location modal */
+.location-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1200;
+  background-color: rgba(0, 0, 0, 0.75);
+  animation: fadeIn 0.3s ease-in-out;
+  padding: 20px;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.modal-content {
+  background-color: #fff;
+  border-radius: 16px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25);
+  width: 90%;
+  max-width: 1100px;
+  max-height: 85vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(50px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.close-modal-btn {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.9);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 24px;
+  color: #333;
+  z-index: 10;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  transition: all 0.2s ease;
+}
+
+.close-modal-btn:hover {
+  background-color: #fff;
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.modal-gallery {
+  width: 100%;
+  height: 40vh;
+  max-height: 400px;
+  position: relative;
+  overflow: hidden;
+  background-color: #f8f8f8;
+}
+
+.photo-gallery {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.main-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  transition: transform 0.3s ease;
+}
+
+.main-photo:hover {
+  transform: scale(1.02);
+}
+
+.photo-thumbnails {
+  position: absolute;
+  bottom: 15px;
+  right: 15px;
+  display: flex;
+  gap: 10px;
+}
+
+.photo-thumbnail {
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 2px solid white;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.photo-thumbnail:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 5px 12px rgba(0, 0, 0, 0.3);
+}
+
+.more-photos {
+  width: 60px;
+  height: 60px;
+  border-radius: 8px;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
+}
+
+.no-photo {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f0f0f0;
+}
+
+.no-photo-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: #777;
+}
+
+.no-photo-icon {
+  font-size: 40px;
+  margin-bottom: 10px;
+  opacity: 0.5;
+}
+
+.modal-details-container {
+  flex: 1;
+  padding: 25px 30px;
+  overflow-y: auto;
+  max-height: 60vh;
+}
+
+.modal-header {
+  margin-bottom: 20px;
+}
+
+.location-name {
+  font-size: 28px;
+  font-weight: 700;
+  color: #222;
+  margin: 0 0 8px 0;
+  line-height: 1.2;
+}
+
+.rating-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.star-rating-display {
+  display: flex;
+  align-items: center;
+}
+
+.star-full, .star-half {
+  color: #FFC107;
+  font-size: 20px;
+  line-height: 1;
+}
+
+.star-empty {
+  color: #E0E0E0;
+  font-size: 20px;
+  line-height: 1;
+}
+
+.rating-number {
+  margin-left: 5px;
+  font-weight: 600;
+  color: #666;
+}
+
+.review-count {
+  color: #666;
+  font-size: 14px;
+}
+
+.price-level-display {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.price-symbols {
+  color: #4CAF50;
+  font-weight: 600;
+}
+
+.price-label {
+  color: #666;
+  font-size: 14px;
+}
+
+.type-badge {
+  display: inline-block;
+  padding: 5px 12px;
+  background-color: #f0f4f9;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #3a6ea5;
+  margin-top: 5px;
+}
+
+.location-address {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 20px;
+  padding: 12px 15px;
+  background-color: #f8f9fa;
+  border-radius: 12px;
+}
+
+.address-icon {
+  font-size: 18px;
+  color: #e74c3c;
+}
+
+.address-text {
+  font-size: 15px;
+  color: #333;
+  line-height: 1.4;
+  flex: 1;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 25px;
+}
+
+.action-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  border: none;
+}
+
+.get-directions {
+  background-color: #4285F4;
+  color: white;
+}
+
+.get-directions:hover {
+  background-color: #3367d6;
+  box-shadow: 0 4px 12px rgba(66, 133, 244, 0.3);
+}
+
+.visit-website {
+  background-color: #fbfbfb;
+  color: #333;
+  border: 1px solid #ddd;
+}
+
+.visit-website:hover {
+  background-color: #f2f2f2;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.call {
+  background-color: #4CAF50;
+  color: white;
+}
+
+.call:hover {
+  background-color: #3d8b40;
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+}
+
+.view-on-google {
+  background-color: #fbfbfb;
+  color: #333;
+  border: 1px solid #ddd;
+}
+
+.view-on-google:hover {
+  background-color: #f2f2f2;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.action-icon {
+  font-size: 16px;
+}
+
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.feature-item {
+  padding: 15px;
+  background-color: #f9f9f9;
+  border-radius: 12px;
+}
+
+.feature-item h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  margin: 0 0 12px 0;
+}
+
+.modal-hours-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.open-status {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 5px;
+}
+
+.open-status.open {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+}
+
+.open-status.closed {
+  background-color: #ffebee;
+  color: #c62828;
+}
+
+.hours-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.hour-item {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  color: #555;
+}
+
+.hour-item span {
+  font-weight: 500;
+}
+
+.categories-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.category-tag {
+  padding: 5px 10px;
+  background-color: #eff6fd;
+  border-radius: 6px;
+  font-size: 12px;
+  color: #3a6ea5;
+}
+
+.accessibility-container {
+  display: flex;
+  gap: 10px;
+}
+
+.accessibility-tag {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background-color: #f1f8e9;
+  border-radius: 6px;
+  font-size: 13px;
+  color: #33691e;
+}
+
+.wheelchair-icon {
+  font-size: 16px;
+}
+
+.reviews-section {
+  margin-top: 30px;
+}
+
+.reviews-section h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+  margin: 0 0 15px 0;
+}
+
+.reviews-container {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.review-card {
+  padding: 15px;
+  background-color: #f9f9f9;
+  border-radius: 12px;
+}
+
+.review-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.reviewer-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.reviewer-name {
+  font-weight: 600;
+  font-size: 14px;
+  color: #333;
+}
+
+.review-date {
+  font-size: 12px;
+  color: #777;
+  margin-top: 3px;
+}
+
+.review-rating {
+  font-size: 16px;
+}
+
+.review-rating .filled {
+  color: #FFC107;
+}
+
+.review-rating .empty {
+  color: #E0E0E0;
+}
+
+.review-text {
+  font-size: 14px;
+  color: #555;
+  line-height: 1.5;
+}
+
+.more-reviews-link {
+  display: block;
+  text-align: center;
+  margin-top: 15px;
+  font-size: 14px;
+  color: #4285F4;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.more-reviews-link:hover {
+  text-decoration: underline;
+}
+
+/* Responsive design for the modal */
+@media screen and (max-width: 768px) {
+  .modal-content {
+    width: 95%;
+    max-height: 90vh;
+  }
+  
+  .modal-gallery {
+    height: 30vh;
+  }
+  
+  .features-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .photo-thumbnails {
+    display: none;
+  }
+  
+  .modal-actions {
+    flex-direction: column;
+  }
+  
+  .action-button {
+    width: 100%;
+    justify-content: center;
+  }
 }

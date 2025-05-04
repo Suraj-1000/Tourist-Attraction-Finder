@@ -58,71 +58,73 @@ const sendNewPackageEmail = async (userEmail, packageDetails) => {
   }
 };
 
-// Add validation helper function
-const validateLocationDetails = (locationDetails) => {
-  const defaultLocation = {
-    latitude: 27.7172,
-    longitude: 85.3240,
-    formattedAddress: "Kathmandu, Nepal"
-  };
-
-  if (!locationDetails) return defaultLocation;
-
+// Helper functions for validation
+function validateLocationDetails(locationDetails) {
+  if (!locationDetails) return undefined;
+  
   try {
-    const location = typeof locationDetails === 'string' ? JSON.parse(locationDetails) : locationDetails;
+    // If it's already an object, return it
+    if (typeof locationDetails === 'object') return locationDetails;
     
-    const latitude = parseFloat(location.latitude);
-    const longitude = parseFloat(location.longitude);
-
-    if (isNaN(latitude) || isNaN(longitude) || !isFinite(latitude) || !isFinite(longitude)) {
-      return defaultLocation;
-    }
-
-    return {
-      latitude,
-      longitude,
-      formattedAddress: location.formattedAddress || defaultLocation.formattedAddress
-    };
+    // If it's a string, try to parse it
+    return JSON.parse(locationDetails);
   } catch (error) {
-    console.error("Error parsing locationDetails:", error);
-    return defaultLocation;
+    console.error('Error parsing locationDetails:', error);
+    return undefined;
   }
-};
+}
 
-// Add itinerary validation helper
-const validateItinerary = (itinerary) => {
+function validateItinerary(itinerary) {
   if (!itinerary) return [];
   
   try {
-    // If itinerary is already an array, return it
-    if (Array.isArray(itinerary)) {
-      return itinerary;
-    }
+    // If it's already an array, return it
+    if (Array.isArray(itinerary)) return itinerary;
     
-    // If itinerary is a string, try to parse it
-    if (typeof itinerary === 'string') {
-      return JSON.parse(itinerary);
-    }
-    
-    // If itinerary is an object, wrap it in an array
-    if (typeof itinerary === 'object') {
-      return [itinerary];
-    }
-    
-    return [];
+    // If it's a string, try to parse it
+    return JSON.parse(itinerary);
   } catch (error) {
-    console.error("Error parsing itinerary:", error);
+    console.error('Error parsing itinerary:', error);
     return [];
   }
-};
+}
 
 // Route to Add a New Itinerary Package
 router.post("/Add-Package", upload.single("image"), async (req, res) => {
   try {
-    const packageData = {
-      ...req.body,
-      imageUrl: req.file ? req.file.path : null,
-    };
+    const { guideIncluded, guideId, guideCost, price, ...packageData } = req.body;
+    
+    // Set image URL from the uploaded file
+    packageData.imageUrl = req.file ? req.file.path : null;
+
+    // Convert and add guide information with proper types
+    packageData.guideIncluded = guideIncluded === 'true';
+    
+    if (packageData.guideIncluded && guideId) {
+      packageData.guideId = guideId;
+      packageData.guideCost = Number(guideCost) || 0;
+    }
+    
+    // Ensure price is a number, not a string with formatting
+    if (price) {
+      // Handle the case where price might come with 'NPR' prefix or formatting
+      try {
+        // Strip out any non-numeric characters except decimal point
+        const numericPrice = price.toString().replace(/[^0-9.]/g, '');
+        packageData.price = numericPrice;
+        console.log("💲 Parsed Price:", numericPrice);
+      } catch (err) {
+        console.error("❌ Error parsing price:", err);
+        packageData.price = price; // Fallback to original value
+      }
+    }
+    
+    // Log guide information for debugging
+    console.log("📝 Guide Information:", {
+      guideIncluded: packageData.guideIncluded,
+      guideId: packageData.guideId,
+      guideCost: packageData.guideCost
+    });
 
     // Validate and parse locationDetails
     packageData.locationDetails = validateLocationDetails(packageData.locationDetails);
@@ -229,6 +231,10 @@ router.get("/package", async (req, res) => {
       .populate({
         path: 'reviews.userId',
         select: 'firstName lastName email'
+      })
+      .populate({
+        path: 'guideId',
+        select: 'firstName lastName email guideProfile image'
       });
 
     if (!packageData) {
@@ -263,7 +269,7 @@ router.put('/updatePackage', upload.single('image'), async (req, res) => {
     console.log("🔹 Request Body:", req.body);
     console.log("🔹 Uploaded File:", req.file);
 
-    const { title, itinerary, locationDetails, ...updateData } = req.body;
+    const { title, itinerary, locationDetails, reviews, guideIncluded, guideId, guideCost, __v, duration, price, ...updateData } = req.body;
 
     if (!title) {
       return res.status(400).json({ message: 'Package title is required for update' });
@@ -274,6 +280,45 @@ router.put('/updatePackage', upload.single('image'), async (req, res) => {
 
     // Validate and parse itinerary
     updateData.itinerary = validateItinerary(itinerary);
+
+    // Ensure duration is a string
+    if (duration) {
+      updateData.duration = Array.isArray(duration) ? duration[0] : duration;
+    }
+
+    // Ensure price is a number, not a string with formatting
+    if (price) {
+      // Handle the case where price might come with 'NPR' prefix or formatting
+      try {
+        // Strip out any non-numeric characters except decimal point
+        const numericPrice = price.toString().replace(/[^0-9.]/g, '');
+        updateData.price = numericPrice;
+        console.log("💲 Parsed Price:", numericPrice);
+      } catch (err) {
+        console.error("❌ Error parsing price:", err);
+        updateData.price = price; // Fallback to original value
+      }
+    }
+
+    // Don't update reviews field from form submission to avoid type errors
+    // Reviews should be managed separately through a dedicated API
+
+    // Handle guide information with proper type conversion
+    updateData.guideIncluded = guideIncluded === 'true';
+    
+    if (updateData.guideIncluded && guideId) {
+      // Only include guideId if guideIncluded is true
+      updateData.guideId = guideId;
+    } else if (!updateData.guideIncluded) {
+      // If guide is not included, remove guideId and set guideCost to 0
+      updateData.guideId = null;
+      updateData.guideCost = 0;
+    }
+    
+    // Convert guideCost to number if present
+    if (updateData.guideIncluded && guideCost) {
+      updateData.guideCost = Number(guideCost) || 0;
+    }
 
     // If an image is uploaded, update the imageUrl
     if (req.file) {
@@ -287,6 +332,11 @@ router.put('/updatePackage', upload.single('image'), async (req, res) => {
     }
 
     console.log("📝 Final Update Data:", updateData);
+    console.log("📝 Guide Information:", {
+      guideIncluded: updateData.guideIncluded,
+      guideId: updateData.guideId,
+      guideCost: updateData.guideCost
+    });
 
     const updatedPackage = await Package.findOneAndUpdate(
       { title: { $regex: new RegExp(title, 'i') } },
@@ -302,7 +352,7 @@ router.put('/updatePackage', upload.single('image'), async (req, res) => {
     res.json(updatedPackage);
   } catch (error) {
     console.error('❌ Error updating package:', error);
-    res.status(500).json({ message: 'Internal Server Error', error });
+    res.status(500).json({ message: 'Internal Server Error', error: error.message });
   }
 });
 

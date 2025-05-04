@@ -73,6 +73,9 @@ export default function PlanYourTripPage() {
   const [approvedGuides, setApprovedGuides] = useState([]);
   const [selectedGuide, setSelectedGuide] = useState(null);
 
+  // Get current date in YYYY-MM-DD format for min date validation
+  const today = new Date().toISOString().split('T')[0];
+
   useEffect(() => {
     const fetchUserData = async () => {
       try {
@@ -521,6 +524,31 @@ const handleChange = (e) => {
     if (!formData.travelStyle) newErrors.travelStyle = "Travel style is required";
     if (!formData.accommodationType) newErrors.accommodationType = "Accommodation type is required";
     if (!formData.transportationType) newErrors.transportationType = "Transportation type is required";
+    if (!formData.mealsPreferences) newErrors.mealsPreferences = "Meals preference is required";
+    
+    // Past date validation
+    const currentDate = new Date();
+    currentDate.setHours(0, 0, 0, 0); // Reset time to start of day
+    
+    if (formData.startDate) {
+      const startDate = new Date(formData.startDate);
+      if (startDate < currentDate) {
+        newErrors.startDate = "Start date cannot be in the past";
+      }
+    }
+    
+    if (formData.endDate) {
+      const endDate = new Date(formData.endDate);
+      if (endDate < currentDate) {
+        newErrors.endDate = "End date cannot be in the past";
+      }
+    }
+    
+    // Make sure there's at least some data in the itinerary
+    if (!formData.itinerary || formData.itinerary.length === 0 || 
+        formData.itinerary.every(day => !day.mode && !day.highlights && !day.stay && !day.meals)) {
+      newErrors.itinerary = "Day by day itinerary must have at least basic information";
+    }
 
     // Group size validation for Family and Groups
     if ((formData.travelStyle === "Family" || formData.travelStyle === "Groups") && 
@@ -533,7 +561,7 @@ const handleChange = (e) => {
       newErrors.guideId = "Please select a guide";
     }
 
-    // Date validation
+    // Date validation (ensuring end date is after start date)
     if (formData.startDate && formData.endDate) {
       const start = new Date(formData.startDate);
       const end = new Date(formData.endDate);
@@ -650,35 +678,37 @@ const handleChange = (e) => {
               <label className="label21">
                 Trip Name: <span className="required">*</span>
                 <input 
-                  className="input21" 
+                  className={`input21 ${errors.tripName ? 'error-input' : ''}`}
                   type="text" 
                   name="tripName" 
                   value={formData.tripName} 
                   onChange={handleChange}
-                  required 
                 />
+                {errors.tripName && <p className="error-message21">{errors.tripName}</p>}
               </label>
               <label className="label21">
                 Start Date: <span className="required">*</span>
                 <input 
-                  className="input21" 
+                  className={`input21 ${errors.startDate ? 'error-input' : ''}`}
                   type="date" 
                   name="startDate" 
                   value={formData.startDate} 
                   onChange={handleChange}
-                  required 
+                  min={today}
                 />
+                {errors.startDate && <p className="error-message21">{errors.startDate}</p>}
               </label>
               <label className="label21">
                 End Date: <span className="required">*</span>
                 <input 
-                  className="input21" 
+                  className={`input21 ${errors.endDate ? 'error-input' : ''}`}
                   type="date" 
                   name="endDate" 
                   value={formData.endDate} 
                   onChange={handleChange}
-                  required 
+                  min={formData.startDate || today}
                 />
+                {errors.endDate && <p className="error-message21">{errors.endDate}</p>}
               </label>
               <label className="label21">Days:
                   <input className="input21" type="text" name="duration" value={formData.duration} readOnly />
@@ -700,11 +730,12 @@ const handleChange = (e) => {
           
           <h3 className="h3-21">Select Your Destinations</h3>
           <div className="label-input-container23">
-              <label className="label23">Destination:</label>
+              <label className="label23">Destination: <span className="required">*</span></label>
               <MapPicker
                 onLocationSelect={handleLocationSelect}
                 initialLocation={formData.locationDetails}
               />
+              {errors.destinations && <p className="error-message21">{errors.destinations}</p>}
           </div>
 
 
@@ -757,7 +788,8 @@ const handleChange = (e) => {
 
           </div>
 
-          <h3 className="h3-21">Travel Style:</h3>
+          <h3 className="h3-21">Travel Style: <span className="required">*</span></h3>
+          {errors.travelStyle && <p className="error-message21">{errors.travelStyle}</p>}
           <div className="travel-style-options21">
               <label className="travel-style-label21">
                   <input 
@@ -825,7 +857,8 @@ const handleChange = (e) => {
 
           <h2 className="h2-21">Select Your Accommodation Preferences</h2>
 
-          <h3 className="h3-21">Accommodation Type:</h3>
+          <h3 className="h3-21">Accommodation Type: <span className="required">*</span></h3>
+          {errors.accommodationType && <p className="error-message21">{errors.accommodationType}</p>}
           <div className="accommodation-options21">
               <label className="radio-label21">
                   <input className="radio-input21" type="radio" name="accommodationType" value="Guesthouses" onChange={handleCheckboxChange} />
@@ -865,7 +898,8 @@ const handleChange = (e) => {
               </label>
           </div>
 
-          <h3 className="h3-21">Meals Preferences:</h3>
+          <h3 className="h3-21">Meals Preferences: <span className="required">*</span></h3>
+          {errors.mealsPreferences && <p className="error-message21">{errors.mealsPreferences}</p>}
           <div className="meals-preferences-options21">
               <label className="radio-label21">
                   <input type="radio" name="mealsPreferences" value="All-Inclusive" onChange={handleCheckboxChange} />
@@ -995,7 +1029,7 @@ const handleChange = (e) => {
                       </option>
                     ))}
                   </select>
-                  {errors.guideId && <span className="error-message" style={{ color: 'red', fontSize: '14px', display: 'block', marginTop: '5px' }}>{errors.guideId}</span>}
+                  {errors.guideId && <span className="error-message21" style={{ color: 'red', fontSize: '14px', display: 'block', marginTop: '5px' }}>{errors.guideId}</span>}
                 </div>
               ) : (
                 <p className="no-guides-message" style={{ color: '#666', fontStyle: 'italic' }}>No guides available. Please try again later.</p>
@@ -1025,7 +1059,8 @@ const handleChange = (e) => {
 
           <h2 className="h2-21">Select Your Transportation Preferences</h2>
 
-          <h3 className="h3-21">Transportation Type:</h3>
+          <h3 className="h3-21">Transportation Type: <span className="required">*</span></h3>
+          {errors.transportationType && <p className="error-message21">{errors.transportationType}</p>}
           <div className="transportation-options21">
               <label className="radio-label21">
                   <input className="radio-input21" type="radio" name="transportationType" value="Flights" onChange={handleChange} />
@@ -1048,7 +1083,8 @@ const handleChange = (e) => {
 
 
           <h2 className="h2-21">Create your Day by Day Itinerary:</h2>
-          <h3 className="h3-21">Day by Day Itinerary:</h3>
+          <h3 className="h3-21">Day by Day Itinerary: <span className="required">*</span></h3>
+          {errors.itinerary && <p className="error-message21">{errors.itinerary}</p>}
           {formData.itinerary.map((day, index) => (
             <div key={index} className="itinerary-day-item21">
               <div className="itinerary-input-group21">
@@ -1112,7 +1148,6 @@ const handleChange = (e) => {
                     name="userName" 
                     value={formData.userName} 
                     onChange={handleChange}
-                    required 
                   />
                 </label>
               </div>
@@ -1124,7 +1159,6 @@ const handleChange = (e) => {
                     name="userEmail" 
                     value={formData.userEmail} 
                     onChange={handleChange}
-                    required 
                   />
                 </label>
               </div>
@@ -1136,7 +1170,6 @@ const handleChange = (e) => {
                     name="userAddress" 
                     value={formData.userAddress} 
                     onChange={handleChange}
-                    required 
                   />
                 </label>
               </div>

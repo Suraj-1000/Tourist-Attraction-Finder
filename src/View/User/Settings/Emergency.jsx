@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 import "./Emergency.css";
@@ -20,6 +20,96 @@ export default function EmergencyPage() {
   const [contactToDelete, setContactToDelete] = useState(null);
   const user = JSON.parse(localStorage.getItem("user"));
 
+  // Store original values when editing
+  const [originalValues, setOriginalValues] = useState({
+    name: "",
+    phone: "",
+    type: "",
+    relationship: ""
+  });
+
+  // Form validation states
+  const [errors, setErrors] = useState({
+    name: "",
+    phone: "",
+    type: "",
+    relationship: ""
+  });
+
+  // Validation functions
+  const validateName = (value) => {
+    if (!value.trim()) return "Full name is required";
+    if (!/^[A-Za-z\s]+$/.test(value)) return "Name should contain only letters and spaces";
+    return "";
+  };
+
+  const validatePhone = (value) => {
+    if (!value.trim()) return "Phone number is required";
+    if (!/^(97|98)\d{8}$/.test(value)) return "Phone must start with 97 or 98 followed by 8 digits";
+    return "";
+  };
+
+  const validateType = (value) => {
+    if (!value.trim()) return "Type is required";
+    if (!/^[A-Za-z\s]+$/.test(value)) return "Type should contain only letters and spaces";
+    return "";
+  };
+
+  const validateRelationship = (value) => {
+    if (!value.trim()) return "Relationship is required";
+    if (!/^[A-Za-z\s]+$/.test(value)) return "Relationship should contain only letters and spaces";
+    return "";
+  };
+
+  const handleNameChange = (e) => {
+    const value = e.target.value;
+    setName(value);
+    setErrors(prev => ({ ...prev, name: validateName(value) }));
+  };
+
+  const handlePhoneChange = (e) => {
+    const value = e.target.value;
+    // Only allow numeric input
+    if (!/^\d*$/.test(value)) {
+      return;
+    }
+    
+    // Limit to 10 digits
+    if (value.length > 10) {
+      return;
+    }
+    
+    setPhone(value);
+    setErrors(prev => ({ ...prev, phone: validatePhone(value) }));
+  };
+
+  const handleKeyPress = (e) => {
+    // Only allow numeric input (0-9)
+    const keyCode = e.which || e.keyCode;
+    if (keyCode < 48 || keyCode > 57) {
+      e.preventDefault();
+    }
+    
+    // If phone number doesn't start with 97 or 98
+    const currentValue = e.target.value;
+    if (currentValue.length === 0 && (e.key !== '9')) {
+      e.preventDefault();
+    } else if (currentValue.length === 1 && currentValue === '9' && (e.key !== '7' && e.key !== '8')) {
+      e.preventDefault();
+    }
+  };
+
+  const handleTypeChange = (e) => {
+    const value = e.target.value;
+    setType(value);
+    setErrors(prev => ({ ...prev, type: validateType(value) }));
+  };
+
+  const handleRelationshipChange = (e) => {
+    const value = e.target.value;
+    setRelationship(value);
+    setErrors(prev => ({ ...prev, relationship: validateRelationship(value) }));
+  };
 
   const fetchOfficialContacts = async () => {
     try {
@@ -69,7 +159,45 @@ export default function EmergencyPage() {
       return;
     }
 
-    if (name && phone && type && relationship) {
+    // Validate all fields before submission
+    const nameError = validateName(name);
+    const phoneError = validatePhone(phone);
+    const typeError = validateType(type);
+    const relationshipError = validateRelationship(relationship);
+
+    const newErrors = {
+      name: nameError,
+      phone: phoneError,
+      type: typeError,
+      relationship: relationshipError
+    };
+
+    // If updating, check if any changes were made
+    if (editingContactId) {
+      const hasChanges = 
+        name !== originalValues.name || 
+        phone !== originalValues.phone || 
+        type !== originalValues.type || 
+        relationship !== originalValues.relationship;
+      
+      if (!hasChanges) {
+        toast.error('No changes detected. Please make changes before updating.', {
+          className: 'toast-message68',
+        });
+        return;
+      }
+    }
+
+    setErrors(newErrors);
+
+    // Check if there are any validation errors
+    if (nameError || phoneError || typeError || relationshipError) {
+      toast.error('Please fix the validation errors', {
+        className: 'toast-message68',
+      });
+      return;
+    }
+
       try {
         const contactData = {
           name,
@@ -126,14 +254,17 @@ export default function EmergencyPage() {
         setType("");
         setRelationship("");
         setEditingContactId(null);
+      
+      // Reset errors
+      setErrors({
+        name: "",
+        phone: "",
+        type: "",
+        relationship: ""
+      });
       } catch (error) {
         console.error("Error adding/updating contact:", error);
         toast.error('An error occurred. Please try again.', {
-          className: 'toast-message68',
-        });
-      }
-    } else {
-      toast.error('Please fill in all required fields', {
         className: 'toast-message68',
       });
     }
@@ -145,6 +276,22 @@ export default function EmergencyPage() {
     setType(contact.type);
     setRelationship(contact.relationship);
     setEditingContactId(contact._id);
+    
+    // Store original values for comparison
+    setOriginalValues({
+      name: contact.name,
+      phone: contact.phone,
+      type: contact.type,
+      relationship: contact.relationship
+    });
+    
+    // Reset errors when editing
+    setErrors({
+      name: "",
+      phone: "",
+      type: "",
+      relationship: ""
+    });
   };
 
   const handleDelete = async (contact) => {
@@ -282,33 +429,87 @@ export default function EmergencyPage() {
 
         <h2 className="form-heading68">Add/Edit Personal Emergency Contact</h2>
         <div className="form-group68">
+          <div className="input-group68">
+            <label htmlFor="name" className="required-label68">Full Name <span className="required-asterisk68">*</span></label>
           <input 
             type="text" 
+              id="name"
             placeholder="Full Name" 
             value={name} 
-            onChange={(e) => setName(e.target.value)} 
+              onChange={handleNameChange}
+              className={name && (errors.name ? "input-error68" : "input-valid68")}
+              required
           />
+            {errors.name && <div className="error-message68">{errors.name}</div>}
+            {!errors.name && name && <div className="helper-text68">Name is valid</div>}
+          </div>
+
+          <div className="input-group68">
+            <label htmlFor="phone" className="required-label68">Phone Number <span className="required-asterisk68">*</span></label>
           <input 
             type="text" 
-            placeholder="Phone" 
+              id="phone"
+              placeholder="Must start with 97 or 98" 
             value={phone} 
-            onChange={(e) => setPhone(e.target.value)} 
-          />
+              onChange={handlePhoneChange}
+              onKeyPress={handleKeyPress}
+              className={phone && (errors.phone ? "input-error68" : "input-valid68")}
+              maxLength={10}
+              required
+            />
+            {errors.phone && <div className="error-message68">{errors.phone}</div>}
+            {!errors.phone && phone && <div className="helper-text68">Phone number is valid</div>}
+          </div>
+
+          <div className="input-group68">
+            <label htmlFor="type" className="required-label68">Contact Type <span className="required-asterisk68">*</span></label>
           <input 
             type="text" 
-            placeholder="Type (e.g., Medical, Police, Fire, Other)" 
+              id="type"
+              placeholder="Type (e.g., Medical, Police, Family)" 
             value={type} 
-            onChange={(e) => setType(e.target.value)} 
-          />
+              onChange={handleTypeChange}
+              className={type && (errors.type ? "input-error68" : "input-valid68")}
+              required
+            />
+            {errors.type && <div className="error-message68">{errors.type}</div>}
+            {!errors.type && type && <div className="helper-text68">Contact type is valid</div>}
+          </div>
+
+          <div className="input-group68">
+            <label htmlFor="relationship" className="required-label68">Relationship <span className="required-asterisk68">*</span></label>
           <input 
             type="text" 
+              id="relationship"
             placeholder="Relationship" 
             value={relationship} 
-            onChange={(e) => setRelationship(e.target.value)} 
+              onChange={handleRelationshipChange}
+              className={relationship && (errors.relationship ? "input-error68" : "input-valid68")}
+              required
           />
+            {errors.relationship && <div className="error-message68">{errors.relationship}</div>}
+            {!errors.relationship && relationship && <div className="helper-text68">Relationship is valid</div>}
+          </div>
         </div>
         <div className="form-buttons68">
-          <button className="cancel-btn68" onClick={() => { setName(""); setPhone(""); setType(""); setRelationship(""); setEditingContactId(null); }}>Cancel</button>
+          <button 
+            className="cancel-btn68" 
+            onClick={() => { 
+              setName(""); 
+              setPhone(""); 
+              setType(""); 
+              setRelationship(""); 
+              setEditingContactId(null);
+              setErrors({
+                name: "",
+                phone: "",
+                type: "",
+                relationship: ""
+              });
+            }}
+          >
+            Cancel
+          </button>
           <button className="save-btn68" onClick={addOrUpdateContact}>{editingContactId ? "Update" : "Save"}</button>
         </div>
 

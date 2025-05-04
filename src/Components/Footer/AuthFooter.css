@@ -8,6 +8,7 @@
   text-align: center;
   border-top: 1px solid #eaeaea;
   z-index: 1000;
+  margin-top: 20px;
 }
 
 .auth-footer p {

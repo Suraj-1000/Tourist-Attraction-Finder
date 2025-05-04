@@ -1101,6 +1101,7 @@ td:last-child {
     justify-content: center;
     align-items: center;
     z-index: 1000;
+    backdrop-filter: blur(3px);
 }
 
 .guide-modal-content {
@@ -1110,6 +1111,7 @@ td:last-child {
     max-width: 800px;
     max-height: 90vh;
     overflow-y: auto;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
 }
 
 .guide-modal-header {
@@ -1118,11 +1120,15 @@ td:last-child {
     align-items: center;
     padding: 1.5rem;
     border-bottom: 2px solid #e63946;
+    background-color: #ffffff;
+    position: sticky;
+    top: 0;
+    z-index: 10;
 }
 
 .guide-modal-title {
-    font-size: 1.5rem;
-    font-weight: 600;
+    font-size: 1.8rem;
+    font-weight: 700;
     color: #333;
     margin: 0;
 }
@@ -1130,18 +1136,24 @@ td:last-child {
 .guide-modal-header-right {
     display: flex;
     align-items: center;
-    gap: 1rem;
+    gap: 1.5rem;
 }
 
 .guide-modal-close {
     cursor: pointer;
-    padding: 0.5rem;
+    background-color: #f7f7f7;
     border-radius: 50%;
-    transition: all 0.3s;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
 }
 
 .guide-modal-close:hover {
-    background: rgba(0, 0, 0, 0.1);
+    background-color: #e0e0e0;
+    transform: rotate(90deg);
 }
 
 .guide-modal-body {
@@ -1150,15 +1162,11 @@ td:last-child {
 
 .guide-modal-section {
     margin-bottom: 2rem;
-}
-
-.guide-modal-section h3 {
-    color: #333;
-    font-size: 1.25rem;
-    font-weight: 600;
-    margin-bottom: 1rem;
-    padding-bottom: 0.5rem;
-    border-bottom: 1px solid #eee;
+    background: white;
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    border: 1px solid #f0f0f0;
 }
 
 .guide-detail-grid {
@@ -1437,4 +1445,517 @@ td:last-child {
 
 .Toastify__progress-bar {
     background: rgba(255, 255, 255, 0.7) !important;
+}
+
+/* Styles for Guide Information Section */
+.guide-detail-item[style] {
+    transition: all 0.3s ease;
+}
+
+.guide-detail-item[style]:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.guide-detail-value[style] {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.guide-detail-value[style]::before {
+    content: '✓';
+    display: inline-block;
+    margin-right: 3px;
+}
+
+.guide-detail-grid[style] {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 15px;
+}
+
+@media (max-width: 768px) {
+    .guide-detail-grid[style] {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Guide Information Section Styles */
+.guide-profile-container {
+    background: white;
+    border-radius: 12px;
+    padding: 25px;
+    margin: 15px 0;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    border: 1px solid #e0e0e0;
+}
+
+.guide-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #eaeaea;
+}
+
+.guide-badge {
+    display: flex;
+    align-items: center;
+}
+
+.guide-badge span {
+    background-color: #d4edda;
+    color: #28a745;
+    padding: 8px 15px;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+}
+
+.guide-badge span::before {
+    content: "✓";
+    margin-right: 5px;
+    font-weight: bold;
+}
+
+.guide-details-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.guide-profile-section {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 10px;
+}
+
+.guide-avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 3px solid white;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.guide-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.guide-name-section {
+    display: flex;
+    flex-direction: column;
+}
+
+.guide-name-section h4 {
+    margin: 0;
+    font-size: 18px;
+    color: #333;
+}
+
+.guide-id {
+    margin: 5px 0 0;
+    font-size: 14px;
+    color: #6c757d;
+}
+
+.guide-info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 15px;
+}
+
+.guide-info-item {
+    display: flex;
+    gap: 12px;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+}
+
+.info-icon {
+    font-size: 24px;
+    display: flex;
+    align-items: center;
+}
+
+.info-content {
+    display: flex;
+    flex-direction: column;
+}
+
+.info-content h5 {
+    margin: 0;
+    font-size: 16px;
+    color: #555;
+}
+
+.info-content p {
+    margin: 5px 0 0;
+    font-size: 14px;
+    color: #333;
+}
+
+.guide-cost-section {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 15px 20px;
+    background: linear-gradient(135deg, #f9f9f9, #e9ecef);
+    border-radius: 10px;
+    border-left: 4px solid #28a745;
+}
+
+.cost-label {
+    font-weight: 600;
+    font-size: 16px;
+    color: #333;
+}
+
+.cost-value {
+    font-weight: 700;
+    font-size: 18px;
+    color: #28a745;
+    background: rgba(255, 255, 255, 0.7);
+    padding: 4px 12px;
+    border-radius: 20px;
+}
+
+.cost-duration {
+    font-size: 14px;
+    color: #666;
+    font-style: italic;
+}
+
+.guide-not-available {
+    padding: 20px;
+    background-color: #f8d7da;
+    color: #721c24;
+    border-radius: 8px;
+    text-align: center;
+}
+
+/* Media Queries for Guide Section */
+@media (max-width: 768px) {
+    .guide-info-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .guide-profile-section {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .guide-cost-section {
+        flex-direction: column;
+        text-align: center;
+    }
+}
+
+/* Refined Status Badge Styles */
+.guide-modal-status-badge {
+    font-size: 0.95rem;
+    font-weight: 600;
+    padding: 0.5rem 1.25rem;
+    border-radius: 30px;
+    text-transform: capitalize;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 100px;
+}
+
+.guide-status-pending {
+    background-color: #FFF3CD;
+    color: #856404;
+    border: 1px solid #FFE8A1;
+}
+
+.guide-status-approved {
+    background-color: #D4EDDA;
+    color: #155724;
+    border: 1px solid #C3E6CB;
+}
+
+.guide-status-declined {
+    background-color: #F8D7DA;
+    color: #721C24;
+    border: 1px solid #F5C6CB;
+}
+
+/* Section Heading Styles */
+.guide-modal-section h3 {
+    color: #333;
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid #eee;
+    position: relative;
+}
+
+.guide-modal-section h3::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: -1px;
+    width: 60px;
+    height: 3px;
+    background-color: #e63946;
+    border-radius: 2px;
+}
+
+/* Status Badge Icon */
+.guide-status-pending::before {
+    content: '⏳';
+    margin-right: 5px;
+    font-size: 0.9rem;
+}
+
+.guide-status-approved::before {
+    content: '✓';
+    margin-right: 5px;
+    font-size: 0.9rem;
+}
+
+.guide-status-declined::before {
+    content: '✕';
+    margin-right: 5px;
+    font-size: 0.9rem;
+}
+
+/* Guide Assigned Tag and Info Message Styles */
+.guide-info-message {
+    background-color: #f0f8ff;
+    border-left: 4px solid #007bff;
+    padding: 15px 20px;
+    margin: 20px 0;
+    border-radius: 6px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+.guide-info-message p {
+    margin: 0;
+    color: #333;
+    font-size: 15px;
+    line-height: 1.5;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.info-icon {
+    font-size: 18px;
+    margin-right: 5px;
+}
+
+.guide-assigned-tag-info {
+    display: block;
+    margin-top: 5px;
+    font-style: italic;
+    color: #555;
+}
+
+.guide-assigned-tag {
+    background-color: #e6f7ff;
+    color: #0066cc;
+    padding: 4px 8px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid #b3e0ff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.guide-card-header .guide-assigned-tag {
+    margin-left: auto;
+    font-size: 11px;
+    padding: 2px 8px;
+}
+
+.guide-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    padding: 15px 25px;
+    border-bottom: 1px solid #eee;
+    flex-wrap: wrap;
+}
+
+/* Guide Assignment Badge in Modal */
+.guide-modal-subheader {
+    padding: 0 1.5rem;
+    margin-top: -0.5rem;
+    margin-bottom: 1rem;
+}
+
+.guide-assignment-badge {
+    font-size: 14px;
+    padding: 8px 15px;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: fit-content;
+}
+
+.guide-assignment-badge.assigned {
+    background-color: #e6f7ff;
+    color: #0066cc;
+    border-left: 3px solid #0066cc;
+}
+
+.guide-assignment-badge.available {
+    background-color: #f6f6f6;
+    color: #555;
+    border-left: 3px solid #888;
+}
+
+.assignment-icon {
+    font-size: 16px;
+}
+
+.guide-initials-avatar {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    background-color: #e63946;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 24px;
+    font-weight: 600;
+    color: white;
+    border: 2px solid #e8ecef;
+}
+
+/* Compact Guide Profile Styles */
+.guide-profile-header {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 10px;
+}
+
+.guide-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.guide-initials-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background-color: #2e5984;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 18px;
+}
+
+.guide-name-section {
+    display: flex;
+    flex-direction: column;
+}
+
+.guide-name-section h4 {
+    margin: 0 0 5px 0;
+    font-size: 16px;
+}
+
+.guide-ratings {
+    display: flex;
+    align-items: center;
+}
+
+.rating-display {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 14px;
+}
+
+.stars-mini {
+    display: flex;
+}
+
+.star-mini {
+    color: #ccc;
+    font-size: 14px;
+}
+
+.star-mini.filled {
+    color: #ffc107;
+}
+
+.reviews-count {
+    font-size: 12px;
+    color: #666;
+}
+
+.no-ratings {
+    font-size: 12px;
+    color: #888;
+    font-style: italic;
+}
+
+.guide-compact-info {
+    border-top: 1px solid #eee;
+    padding-top: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.guide-info-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.guide-info-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 14px;
+}
+
+.info-icon {
+    font-size: 16px;
+}
+
+.guide-cost-compact {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 14px;
+}
+
+.guide-fee-label {
+    font-weight: bold;
+}
+
+.guide-fee-value {
+    color: #2e5984;
 }

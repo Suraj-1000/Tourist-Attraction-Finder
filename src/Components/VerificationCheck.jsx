@@ -5,7 +5,8 @@ import { toast } from 'react-hot-toast';
 import './VerificationCheck.css';
 
 const VerificationCheck = ({ children }) => {
-  const [isVerified, setIsVerified] = useState(false);
+  const [verificationStatus, setVerificationStatus] = useState('pending');
+  const [rejectionReason, setRejectionReason] = useState('');
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
@@ -26,9 +27,11 @@ const VerificationCheck = ({ children }) => {
 
         if (response.status === 200) {
           const userData = response.data;
-          setIsVerified(
-            userData.guideProfile?.verificationStatus === 'approved'
-          );
+          setVerificationStatus(userData.guideProfile?.verificationStatus || 'pending');
+          
+          if (userData.guideProfile?.rejectionReason) {
+            setRejectionReason(userData.guideProfile.rejectionReason);
+          }
         }
         setLoading(false);
       } catch (error) {
@@ -44,20 +47,43 @@ const VerificationCheck = ({ children }) => {
     return <div className="verification-loading">Loading...</div>;
   }
 
-  if (!isVerified) {
+  if (verificationStatus !== 'approved') {
     return (
-      <div className="verification-pending">
+      <div className={`verification-pending ${verificationStatus}`}>
         <div className="pending-container">
           <div className="pending-icon-wrapper">
             <img 
-              src="/images/pending-verification.svg" 
-              alt="Verification Pending" 
+              src={
+                verificationStatus === 'rejected' 
+                  ? "/images/rejected-verification.svg" 
+                  : "/images/pending-verification.svg"
+              } 
+              alt={`Verification ${verificationStatus}`} 
               className="pending-icon"
-              onError={(e) => {e.target.src = 'https://cdn-icons-png.flaticon.com/512/1828/1828833.png'}}
+              onError={(e) => {
+                e.target.src = verificationStatus === 'rejected' 
+                  ? 'https://cdn-icons-png.flaticon.com/512/1828/1828843.png' 
+                  : 'https://cdn-icons-png.flaticon.com/512/1828/1828833.png'
+              }}
             />
           </div>
-          <h2>Account Verification Pending</h2>
-          <p>Your account is awaiting for admin approval.</p>
+          {verificationStatus === 'rejected' ? (
+            <>
+              <h2>Account Verification Rejected</h2>
+              <p>Your guide account verification was not approved.</p>
+              {rejectionReason && (
+                <div className="rejection-reason">
+                  <h3>Reason for Rejection:</h3>
+                  <p>{rejectionReason}</p>
+                </div>
+              )}
+            </>
+          ) : (
+            <>
+              <h2>Account Verification Pending</h2>
+              <p>Your account is awaiting admin approval.</p>
+            </>
+          )}
           <button 
             className="guide-back-button"
             onClick={() => navigate('/guide/profile')}

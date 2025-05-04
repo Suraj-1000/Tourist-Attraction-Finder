@@ -2,6 +2,9 @@ import express from 'express';
 import Package from '../Models/Package.js';
 import Event from '../Models/Event.js';
 import mongoose from 'mongoose';
+import Signup from '../Models/Signup.js';
+import jwt from 'jsonwebtoken';
+import { verifyToken } from '../config/auth.js';
 
 const router = express.Router();
 
@@ -341,6 +344,193 @@ router.delete('/:reviewId', async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error deleting review',
+      error: error.message
+    });
+  }
+});
+
+// Add guide review
+router.post('/guide', async (req, res) => {
+  try {
+    const { itemId, guideName, userId, rating, review, bookingId, bookingDetails } = req.body;
+    
+    // Validate required fields
+    if (!itemId || !userId || !rating || !review) {
+      return res.status(400).json({
+        success: false,
+        message: 'Missing required fields'
+      });
+    }
+    
+    // Check if the guide exists
+    const guide = await Signup.findById(itemId);
+    if (!guide || guide.role !== 'guide') {
+      return res.status(404).json({
+        success: false,
+        message: 'Guide not found'
+      });
+    }
+    
+    // Check if user exists
+    const user = await Signup.findById(userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+    
+    // Check if the user has already reviewed this guide
+    const hasReviewed = guide.guideProfile.reviews.some(
+      existingReview => String(existingReview.touristId) === String(userId)
+    );
+    
+    if (hasReviewed) {
+      return res.status(400).json({
+        success: false,
+        message: 'You have already reviewed this guide'
+      });
+    }
+    
+    // Create the review data with proper field mapping
+    // Note: frontend sends 'review' but model expects 'comment'
+    const reviewData = {
+      touristId: userId,
+      rating: Number(rating),
+      comment: review.trim(), // Map 'review' to 'comment'
+      date: new Date(),
+      reply: null
+    };
+    
+    // Calculate the new average rating
+    const currentReviews = guide.guideProfile.reviews || [];
+    const currentTotalRating = guide.guideProfile.ratings.average * currentReviews.length;
+    const newTotalRating = currentTotalRating + rating;
+    const newAverage = newTotalRating / (currentReviews.length + 1);
+    
+    // Update the guide's profile with the new review
+    await Signup.findByIdAndUpdate(
+      itemId,
+      {
+        $push: { 'guideProfile.reviews': reviewData },
+        $set: {
+          'guideProfile.ratings.average': newAverage,
+          'guideProfile.ratings.total': currentReviews.length + 1
+        }
+      },
+      { new: true }
+    );
+    
+    // If bookingId is provided, mark the booking as having a guide review
+    if (bookingId) {
+      try {
+        // Import the PurchasedItem model dynamically
+        const PurchasedItem = (await import('../Models/purchasedItemModel.js')).default;
+        
+        // Update the booking to set hasGuideReview flag
+        await PurchasedItem.findByIdAndUpdate(
+          bookingId,
+          { 
+            $set: { 
+              hasGuideReview: true,
+              guideReview: {
+                rating: Number(rating),
+                review: review.trim(),
+                createdAt: new Date()
+              }
+            } 
+          }
+        );
+        
+        console.log(`Updated booking ${bookingId} with guide review`);
+      } catch (updateError) {
+        // Log the error but don't fail the request
+        console.error('Error updating booking with guide review:', updateError);
+      }
+    }
+    
+    return res.status(200).json({
+      success: true,
+      message: 'Guide review submitted successfully',
+      review: reviewData
+    });
+    
+  } catch (error) {
+    console.error('Error submitting guide review:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to submit guide review',
+      error: error.message
+    });
+  }
+});
+
+// Guide reply to a review
+router.post('/guide/reply/:reviewId', verifyToken, async (req, res) => {
+  try {
+    const { reviewId } = req.params;
+    const { reply } = req.body;
+    
+    console.log('User from middleware:', req.user ? req.user._id : 'No user');
+    console.log('UserId from middleware:', req.userId);
+    
+    // VerifyToken middleware already authenticated the user
+    // Use either req.userId (set by our modified middleware) or req.user._id
+    const guideId = req.userId || (req.user ? req.user._id : null);
+    
+    if (!guideId) {
+      return res.status(401).json({
+        success: false,
+        message: 'User ID not found in token'
+      });
+    }
+    
+    if (!reply || typeof reply !== 'string') {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Reply text is required' 
+      });
+    }
+
+    // Find the guide
+    const guide = await Signup.findOne({
+      _id: guideId,
+      role: 'guide'
+    });
+
+    if (!guide) {
+      return res.status(403).json({ 
+        success: false, 
+        message: 'Only guides can reply to reviews' 
+      });
+    }
+
+    // Find the review in the guide's profile
+    const reviewIndex = guide.guideProfile.reviews.findIndex(
+      review => review._id.toString() === reviewId
+    );
+
+    if (reviewIndex === -1) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Review not found' 
+      });
+    }
+
+    // Update the review with the reply
+    guide.guideProfile.reviews[reviewIndex].reply = reply;
+    await guide.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Reply added successfully',
+      review: guide.guideProfile.reviews[reviewIndex]
+    });
+  } catch (error) {
+    console.error('Error adding reply to review:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Internal server error',
       error: error.message
     });
   }

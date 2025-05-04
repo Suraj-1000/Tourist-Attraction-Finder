@@ -969,6 +969,22 @@ body {
 
 .review-btn63 .fa-star {
   margin-right: 5px;
+  color: gold;
+}
+
+/* Guide Review Button Styles */
+.guide-review-btn {
+  background-color: #2e5984;
+}
+
+.guide-review-btn:hover {
+  background-color: #1e3c5a;
+  transform: translateY(-2px);
+  box-shadow: 0 2px 8px rgba(46, 89, 132, 0.3);
+}
+
+.guide-review-btn .fa-crown {
+  color: gold;
 }
 
 /* Star Rating Styles */

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import "./addPackage.css";
@@ -7,9 +7,106 @@ import Footer from "../../../Components/Footer/AuthFooter";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import MapPicker from "../../../Components/MapPicker";
+import { Formik, Form, Field, ErrorMessage, FieldArray } from "formik";
+import * as Yup from "yup";
+
+// Constant for guide pricing fallback
+const COST_RANGES = {
+  guide: {
+    perDay: 2000 // Default guide cost per day (NPR)
+  }
+};
+
+// Validation schema using Yup
+const PackageSchema = Yup.object().shape({
+  title: Yup.string()
+    .min(5, "Title must be at least 5 characters")
+    .required("Title is required"),
+  highlight: Yup.string()
+    .min(10, "Highlight must be at least 10 characters")
+    .required("Highlight is required"),
+  address: Yup.string()
+    .min(5, "Address must be at least 5 characters")
+    .required("Address is required"),
+  startDate: Yup.date()
+    .min(new Date().toISOString().split('T')[0], "Start date must be today or a future date")
+    .required("Start date is required"),
+  endDate: Yup.date()
+    .min(
+      Yup.ref('startDate'),
+      "End date must be same day or after start date"
+    )
+    .required("End date is required"),
+  category: Yup.string()
+    .matches(/^[a-zA-Z\s,&-]+$/, "Category can only contain letters, spaces, commas, & and -")
+    .required("Category is required"),
+  price: Yup.string()
+    .matches(/^[1-9]\d*(\.\d{1,2})?$/, "Price must be a positive number with up to 2 decimal places")
+    .required("Price is required"),
+  groupSize: Yup.string()
+    .matches(/^\d+$/, "Group size must be a number")
+    .required("Group size is required"),
+  difficulty: Yup.string()
+    .matches(/^[a-zA-Z\s-]+$/, "Difficulty can only contain letters, spaces and -")
+    .required("Difficulty is required"),
+  overview: Yup.string()
+    .min(20, "Overview must be at least 20 characters")
+    .required("Overview is required"),
+  included: Yup.string()
+    .min(10, "Included items must be at least 10 characters")
+    .required("Included items are required"),
+  additionalInfo: Yup.string()
+    .min(10, "Additional information must be at least 10 characters")
+    .required("Additional information is required"),
+  operator: Yup.string()
+    .min(3, "Operator must be at least 3 characters")
+    .required("Operator is required"),
+  ageRestriction: Yup.string()
+    .min(5, "Age restriction must be at least 5 characters")
+    .required("Age restriction is required"),
+  pickupDetails: Yup.string()
+    .min(10, "Pickup details must be at least 10 characters")
+    .required("Pickup details are required"),
+  accessibility: Yup.string()
+    .min(10, "Accessibility must be at least 10 characters")
+    .required("Accessibility is required"),
+  cancellationPolicy: Yup.string()
+    .min(10, "Cancellation policy must be at least 10 characters")
+    .required("Cancellation policy is required"),
+  guideId: Yup.string()
+    .test('guide-validation', "Please select a guide", function(value) {
+      // If guideIncluded is true, then guideId is required
+      return !this.parent.guideIncluded || (this.parent.guideIncluded && value);
+    }),
+  itinerary: Yup.array().of(
+    Yup.object().shape({
+      mode: Yup.string().required("Mode is required"),
+      highlights: Yup.string().required("Highlights are required"),
+      stay: Yup.string().required("Stay is required"),
+      meals: Yup.string().required("Meals are required"),
+      costBreakdown: Yup.string().required("Cost breakdown is required")
+    })
+  )
+});
+
+// Custom Label component for required fields
+const RequiredLabel = ({ text }) => (
+  <span className="required-label">
+    {text} <span className="required">*</span>
+  </span>
+);
 
 export default function AddPackagePage() {
-  const [formData, setFormData] = useState({
+  const [approvedGuides, setApprovedGuides] = useState([]);
+  const [selectedGuide, setSelectedGuide] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
+  const navigate = useNavigate();
+  const formRef = useRef(null);
+
+  // Initial form values
+  const initialValues = {
     title: "",
     image: "",
     highlight: "",
@@ -19,7 +116,6 @@ export default function AddPackagePage() {
       longitude: 85.3240,
       formattedAddress: ""
     },
-    reviews: "",
     tripType: "",
     startDate: "",
     endDate: "",
@@ -33,62 +129,59 @@ export default function AddPackagePage() {
     included: "",
     additionalInfo: "",
     operator: "",
-    physicalFitness: "",
     ageRestriction: "",
     pickupDetails: "",
     accessibility: "",
     cancellationPolicy: "",
-  });
-
-  const [loading, setLoading] = useState(false); // Add loading state
-  const navigate = useNavigate();
-  const [errors, setErrors] = useState({});
-
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-
-    if (e.target.name === "startDate" || e.target.name === "endDate") {
-      calculateDurationAndTripType(e.target.name, e.target.value);
-    }
+    guideIncluded: false,
+    guideId: "",
+    guideCost: 0
   };
 
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    setFormData({ ...formData, image: file });
-  };
+  useEffect(() => {
+    fetchApprovedGuides();
+  }, []);
 
-  const calculateDurationAndTripType = (field, value) => {
-    let { startDate, endDate } = formData;
-    if (field === "startDate") startDate = value;
-    if (field === "endDate") endDate = value;
+  const fetchApprovedGuides = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        console.log("No token found, user may need to login");
+        return;
+      }
 
-    if (startDate && endDate) {
-      const start = new Date(startDate);
-      const end = new Date(endDate);
-      const timeDiff = end - start;
-      const days = timeDiff / (1000 * 60 * 60 * 24); // Convert milliseconds to days
+      const response = await axios.get("http://localhost:4000/api/guides/approved", {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
 
-      if (days >= 0) {
-        const duration = `${days + 1} days`; // Include the last day
-        const tripType = days + 1 <= 3 ? "Short Trip" : "Long Trip";
-
-        setFormData((prev) => ({
-          ...prev,
-          duration,
-          tripType,
-          itinerary: generateItinerary(days + 1),
-        }));
-      } else {
-        setFormData((prev) => ({
-          ...prev,
-          duration: "",
-          tripType: "",
-          itinerary: [],
-        }));
+      if (response.status === 200) {
+        setApprovedGuides(response.data);
+      }
+    } catch (error) {
+      console.error("Error fetching guides:", error);
+      // Don't show an error toast as this is not critical for form operation
+      // Fallback to empty guides array which is already the default
+      if (error.response && error.response.status === 401) {
+        console.log("Authentication issue with guides API - user may need to re-login");
+        // You could redirect to login or handle silently
       }
     }
   };
 
+  // Calculate duration in days
+  const calculateDurationInDays = (startDate, endDate) => {
+    if (startDate && endDate) {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+      const timeDiff = end - start;
+      return Math.max(Math.floor(timeDiff / (1000 * 60 * 60 * 24)) + 1, 1); // At least 1 day
+    }
+    return 1;
+  };
+
+  // Generate itinerary for the specified number of days
   const generateItinerary = (days) => {
     return Array.from({ length: days }, (_, index) => ({
       day: `Day ${index + 1}`,
@@ -100,112 +193,125 @@ export default function AddPackagePage() {
     }));
   };
 
-  const handleItineraryChange = (index, e) => {
-    const { name, value } = e.target;
-    setFormData(prev => {
-      const updatedItinerary = [...prev.itinerary];
-      updatedItinerary[index] = { 
-        ...updatedItinerary[index], 
-        [name]: value 
-      };
-      
-      // Log the updated itinerary for debugging
-      console.log("Updated itinerary:", updatedItinerary);
-      
-      return {
-        ...prev,
-        itinerary: updatedItinerary
-      };
+  // Helper function to parse price values safely
+  const parsePrice = (priceString) => {
+    if (!priceString) return 0;
+    
+    try {
+      // Extract numeric value from string
+      const numericValue = priceString.toString().replace(/[^0-9.]+/g, "");
+      return parseInt(numericValue) || 0;
+    } catch (error) {
+      console.error("Error parsing price:", error, priceString);
+      return 0;
+    }
+  };
+
+  // Calculate total price
+  const calculateTotalPrice = (values) => {
+    let basePrice = parsePrice(values.price);
+    let guideCost = values.guideIncluded ? parsePrice(values.guideCost) : 0;
+    
+    const totalPrice = basePrice + guideCost;
+    return totalPrice > 0 ? `NPR ${totalPrice.toLocaleString()}` : "NPR 0";
+  };
+  
+  // Get total price as a number
+  const getTotalPriceValue = (values) => {
+    let basePrice = parsePrice(values.price);
+    let guideCost = values.guideIncluded ? parsePrice(values.guideCost) : 0;
+    return basePrice + guideCost;
+  };
+
+  const handleLocationSelect = (location, setFieldValue) => {
+    setFieldValue('address', location.address);
+    setFieldValue('locationDetails', {
+      latitude: location.lat,
+      longitude: location.lng,
+      formattedAddress: location.address
     });
   };
 
-  const handleLocationSelect = (location) => {
-    setFormData(prev => ({
-      ...prev,
-      address: location.address,
-      locationDetails: {
-        latitude: location.lat,
-        longitude: location.lng,
-        formattedAddress: location.address
-      }
-    }));
+  const handleImageChange = (event, setFieldValue) => {
+    const file = event.target.files[0];
+    if (file) {
+      setImageFile(file);
+      setFieldValue('image', file);
+      
+      // Create preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
-  const validateForm = () => {
-    const newErrors = {};
-
-    // Required fields validation
-    if (!formData.title?.trim()) newErrors.title = "Title is required";
-    if (!formData.highlight?.trim()) newErrors.highlight = "Highlight is required";
-    if (!formData.address?.trim()) newErrors.address = "Address is required";
-    if (!formData.startDate) newErrors.startDate = "Start date is required";
-    if (!formData.endDate) newErrors.endDate = "End date is required";
-    if (!formData.category?.trim()) newErrors.category = "Category is required";
-    if (!formData.overview?.trim()) newErrors.overview = "Overview is required";
-    if (!formData.included?.trim()) newErrors.included = "Included items are required";
-    if (!formData.operator?.trim()) newErrors.operator = "Operator is required";
-
-    // Price validation
-    if (!formData.price) {
-      newErrors.price = "Price is required";
-    } else {
-      const price = parseFloat(formData.price.replace(/[^0-9.-]+/g, ""));
-      if (isNaN(price) || price < 0) {
-        newErrors.price = "Price must be a positive number";
-      }
+  const handleSubmit = async (values, { setSubmitting }) => {
+    console.log("AddPackage: handleSubmit function called", values);
+    
+    // Skip validation for certain fields if needed
+    let canProceed = true;
+    let validationIssues = [];
+    
+    // Basic validations critical for server-side processing
+    if (!values.title || values.title.length < 5) {
+      validationIssues.push("Title is required and must be at least 5 characters");
+      canProceed = false;
     }
-
-    // Group size validation
-    if (formData.groupSize) {
-      const size = parseInt(formData.groupSize);
-      if (isNaN(size) || size < 1) {
-        newErrors.groupSize = "Group size must be a positive number";
-      }
+    
+    if (!values.price || isNaN(parseFloat(values.price))) {
+      validationIssues.push("Price is required and must be a valid number");
+      canProceed = false;
     }
-
-    // Date validation
-    if (formData.startDate && formData.endDate) {
-      const start = new Date(formData.startDate);
-      const end = new Date(formData.endDate);
-      if (end < start) {
-        newErrors.endDate = "End date cannot be before start date";
-      }
+    
+    if (!imageFile) {
+      validationIssues.push("Please select an image for the package");
+      canProceed = false;
     }
-
-    // Image validation
-    if (!formData.image) {
-      newErrors.image = "Package image is required";
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    if (!validateForm()) {
-      toast.error("Please fill in all required fields correctly", {
+    
+    if (!canProceed) {
+      console.log("Validation issues:", validationIssues);
+      toast.error(validationIssues.join(", "), {
         position: "top-center",
-        autoClose: 3000,
+        autoClose: 5000,
         className: 'toast-message19'
       });
+      setSubmitting(false);
+      
+      // Now it's appropriate to scroll to the first error on form submission
+      const formErrors = formRef.current?.errors || {};
+      if (Object.keys(formErrors).length > 0) {
+        const firstErrorField = Object.keys(formErrors)[0];
+        const errorElement = document.querySelector(`[name="${firstErrorField}"]`);
+        if (errorElement) {
+          // Only scroll on actual form submission
+          errorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }
+      
       return;
     }
-
+    
     setLoading(true);
+    setSubmitting(true);
+    
     try {
       const formDataToSubmit = new FormData();
       
+      // Calculate the total price (base price + guide cost)
+      const totalPrice = getTotalPriceValue(values);
+      
       // Add all form data fields
-      Object.keys(formData).forEach(key => {
+      Object.keys(values).forEach(key => {
         if (key === 'locationDetails') {
-          formDataToSubmit.append(key, JSON.stringify(formData[key]));
-        } else if (key === 'image' && formData[key]) {
-          formDataToSubmit.append('image', formData[key]);
+          formDataToSubmit.append(key, JSON.stringify(values[key]));
+        } else if (key === 'image') {
+          // Skip this field - we'll handle image separately
+          // Do nothing here
         } else if (key === 'itinerary') {
           // Ensure itinerary is properly stringified
-          const itineraryData = formData.itinerary.map(day => ({
+          const itineraryData = values.itinerary.map(day => ({
             day: day.day,
             mode: day.mode || '',
             highlights: day.highlights || '',
@@ -214,13 +320,42 @@ export default function AddPackagePage() {
             costBreakdown: day.costBreakdown || ''
           }));
           formDataToSubmit.append('itinerary', JSON.stringify(itineraryData));
+        } else if (key === 'guideIncluded') {
+          // Ensure guideIncluded is sent as a boolean string
+          formDataToSubmit.append(key, values[key] ? 'true' : 'false');
+        } else if (key === 'guideId') {
+          // Only include guideId if guideIncluded is true
+          if (values.guideIncluded && values[key]) {
+            formDataToSubmit.append(key, values[key]);
+          }
+        } else if (key === 'guideCost') {
+          // Only include guideCost if guideIncluded is true, send as number
+          if (values.guideIncluded) {
+            formDataToSubmit.append(key, Number(values[key]) || 0);
+          }
+        } else if (key === 'price') {
+          // Use the total price instead of base price - numeric only
+          formDataToSubmit.append(key, totalPrice.toString());
+          // Also send the base price separately for reference - numeric only
+          formDataToSubmit.append('basePrice', parsePrice(values.price).toString());
         } else {
-          formDataToSubmit.append(key, formData[key]);
+          formDataToSubmit.append(key, values[key]);
         }
       });
+      
+      // Handle image file separately - use the state variable directly
+      if (imageFile) {
+        formDataToSubmit.append('image', imageFile);
+      }
 
       // Log the form data for debugging
-      console.log("Submitting itinerary data:", formData.itinerary);
+      console.log("Submitting package data with guide information:");
+      console.log("Guide Included:", values.guideIncluded);
+      console.log("Guide ID:", values.guideId);
+      console.log("Guide Cost:", values.guideCost);
+      console.log("Base Price:", values.price);
+      console.log("Total Price (numeric only):", totalPrice);
+      console.log("Image file present:", !!imageFile);
 
       const response = await axios.post(
         'http://localhost:4000/adminPackage/Add-Package',
@@ -243,26 +378,26 @@ export default function AddPackagePage() {
         const notificationPromises = users.map(async (user) => {
           const notification = {
             type: 'package-added',
-            message: `A new travel package "${formData.title}" has been added!`,
+            message: `A new travel package "${values.title}" has been added!`,
             userEmail: user.email,
             recipientType: 'user',
             read: false,
             details: {
-              title: formData.title,
-              category: formData.category,
-              duration: formData.duration,
-              price: formData.price,
-              highlight: formData.highlight,
+              title: values.title,
+              category: values.category,
+              duration: values.duration,
+              price: values.price,
+              highlight: values.highlight,
               image: response.data.imageUrl, // Use the image URL from the response
-              address: formData.address,
-              tripType: formData.tripType,
-              startDate: formData.startDate,
-              endDate: formData.endDate,
-              groupSize: formData.groupSize,
-              difficulty: formData.difficulty,
-              overview: formData.overview,
-              included: formData.included,
-              additionalInfo: formData.additionalInfo
+              address: values.address,
+              tripType: values.tripType,
+              startDate: values.startDate,
+              endDate: values.endDate,
+              groupSize: values.groupSize,
+              difficulty: values.difficulty,
+              overview: values.overview,
+              included: values.included,
+              additionalInfo: values.additionalInfo
             }
           };
 
@@ -275,29 +410,29 @@ export default function AddPackagePage() {
             subject: "New Travel Package Added!",
             html: `
               <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                <h2 style="color: #2c3e50;">New Package Alert: ${formData.title}</h2>
+                <h2 style="color: #2c3e50;">New Package Alert: ${values.title}</h2>
                 <p style="color: #34495e;">Dear ${user.firstName},</p>
                 <p style="color: #34495e;">We're excited to announce a new travel package that might interest you!</p>
                 
                 <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;">
                   <h3 style="color: #2c3e50;">Package Details:</h3>
                   <ul style="list-style: none; padding: 0;">
-                    <li style="margin-bottom: 8px;"><strong>Title:</strong> ${formData.title}</li>
-                    <li style="margin-bottom: 8px;"><strong>Category:</strong> ${formData.category}</li>
-                    <li style="margin-bottom: 8px;"><strong>Duration:</strong> ${formData.duration}</li>
-                    <li style="margin-bottom: 8px;"><strong>Trip Type:</strong> ${formData.tripType}</li>
-                    <li style="margin-bottom: 8px;"><strong>Price:</strong> ${formData.price}</li>
-                    <li style="margin-bottom: 8px;"><strong>Group Size:</strong> ${formData.groupSize}</li>
-                    <li style="margin-bottom: 8px;"><strong>Difficulty:</strong> ${formData.difficulty}</li>
+                    <li style="margin-bottom: 8px;"><strong>Title:</strong> ${values.title}</li>
+                    <li style="margin-bottom: 8px;"><strong>Category:</strong> ${values.category}</li>
+                    <li style="margin-bottom: 8px;"><strong>Duration:</strong> ${values.duration}</li>
+                    <li style="margin-bottom: 8px;"><strong>Trip Type:</strong> ${values.tripType}</li>
+                    <li style="margin-bottom: 8px;"><strong>Price:</strong> ${values.price}</li>
+                    <li style="margin-bottom: 8px;"><strong>Group Size:</strong> ${values.groupSize}</li>
+                    <li style="margin-bottom: 8px;"><strong>Difficulty:</strong> ${values.difficulty}</li>
                   </ul>
                 </div>
 
                 <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;">
                   <h3 style="color: #2c3e50;">Overview:</h3>
-                  <p style="color: #34495e;">${formData.overview}</p>
+                  <p style="color: #34495e;">${values.overview}</p>
                   
                   <h4 style="color: #2c3e50; margin-top: 15px;">Highlights:</h4>
-                  <p style="color: #34495e;">${formData.highlight}</p>
+                  <p style="color: #34495e;">${values.highlight}</p>
                 </div>
                 
                 <div style="text-align: center; margin-top: 20px;">
@@ -360,7 +495,52 @@ export default function AddPackagePage() {
       });
     } finally {
       setLoading(false);
+      setSubmitting(false);
     }
+  };
+
+  // Helper function to scroll to the first error
+  const scrollToError = (errors, touched) => {
+    // Only scroll to errors when form is submitted, not during typing
+    // Implementation kept for reference but not used during data entry
+    console.log("Error checking without scrolling");
+    
+    // We removed the scrolling behavior to avoid disrupting form input
+    // Original code is left commented for reference
+    /*
+    if (Object.keys(errors).length > 0 && Object.keys(touched).length > 0) {
+      // Get the first error field name
+      const firstErrorField = Object.keys(errors).find(fieldName => touched[fieldName]);
+      
+      if (firstErrorField) {
+        // Find the error element in the DOM
+        const errorElement = document.querySelector(`[name="${firstErrorField}"]`);
+        
+        // Special handling for itinerary array errors
+        if (!errorElement && firstErrorField === 'itinerary') {
+          // Find the first itinerary field with an error
+          const itineraryErrors = errors.itinerary;
+          if (Array.isArray(itineraryErrors)) {
+            for (let i = 0; i < itineraryErrors.length; i++) {
+              if (itineraryErrors[i] && touched.itinerary && touched.itinerary[i]) {
+                const itineraryField = Object.keys(itineraryErrors[i])[0];
+                const itineraryErrorElement = document.querySelector(`[name="itinerary[${i}].${itineraryField}"]`);
+                if (itineraryErrorElement) {
+                  itineraryErrorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                  return;
+                }
+              }
+            }
+          }
+        }
+        
+        // Scroll to the error element if found
+        if (errorElement) {
+          errorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }
+    }
+    */
   };
 
   return (
@@ -384,345 +564,606 @@ export default function AddPackagePage() {
           <p className="title-para19">Create Your Perfect Travel Package, Effortlessly!</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="form19">
+        <Formik
+          initialValues={initialValues}
+          validationSchema={PackageSchema}
+          onSubmit={handleSubmit}
+          innerRef={formRef}
+        >
+          {({ values, errors, touched, handleChange, handleBlur, setFieldValue, isSubmitting }) => {
+            // Handle date changes (start and end dates)
+            const handleDateChange = (e) => {
+              const { name, value } = e.target;
+              handleChange(e);
+              
+              const { startDate, endDate } = name === "startDate" 
+                ? { startDate: value, endDate: values.endDate }
+                : { startDate: values.startDate, endDate: value };
+                
+              if (startDate && endDate) {
+                const start = new Date(startDate);
+                const end = new Date(endDate);
+                const timeDiff = end - start;
+                const days = timeDiff / (1000 * 60 * 60 * 24);
+                
+                if (days >= 0) {
+                  const duration = `${days + 1} days`; // Include the last day
+                  const tripType = days + 1 <= 3 ? "Short Trip" : "Long Trip";
+                  const newItinerary = generateItinerary(days + 1);
+                  
+                  setFieldValue("duration", duration);
+                  setFieldValue("tripType", tripType);
+                  setFieldValue("itinerary", newItinerary);
+                  
+                  // Update guide cost if applicable
+                  if (values.guideIncluded && values.guideId) {
+                    const selectedGuide = approvedGuides.find(guide => guide._id === values.guideId);
+                    if (selectedGuide && selectedGuide.guideProfile && selectedGuide.guideProfile.pricing) {
+                      const perDayCost = selectedGuide.guideProfile?.pricing?.perDay || COST_RANGES.guide.perDay;
+                      setFieldValue("guideCost", perDayCost * (days + 1));
+                    }
+                  }
+                }
+              }
+            };
+            
+            // Handle guide selection
+            const handleGuideChange = (e) => {
+              const { checked, name, value } = e.target;
+              
+              if (name === "guideIncluded") {
+                setFieldValue("guideIncluded", checked);
+                if (!checked) {
+                  setFieldValue("guideId", "");
+                  setFieldValue("guideCost", 0);
+                  setSelectedGuide(null);
+                }
+              } else if (name === "guideId") {
+                setFieldValue("guideId", value);
+                
+                if (!value) {
+                  setSelectedGuide(null);
+                  setFieldValue("guideCost", 0);
+                } else {
+                  const selectedGuide = approvedGuides.find(guide => guide._id === value);
+                  if (selectedGuide) {
+                    setSelectedGuide(selectedGuide);
+                    
+                    // Calculate guide cost
+                    if (values.startDate && values.endDate) {
+                      const days = calculateDurationInDays(values.startDate, values.endDate);
+                      const perDayCost = selectedGuide.guideProfile?.pricing?.perDay || COST_RANGES.guide.perDay;
+                      setFieldValue("guideCost", perDayCost * days);
+                    }
+                  }
+                }
+              }
+            };
+            
+            // Check for errors and scroll to them - modify this to not scroll during typing
+            useEffect(() => {
+              // Disable automatic scrolling during input
+              // Only log errors but don't scroll to them
+              if (Object.keys(errors).length > 0 && Object.keys(touched).length > 0) {
+                console.log("Form has errors, but not scrolling to maintain focus");
+              }
+              // The following line is commented out to prevent automatic scrolling
+              // scrollToError(errors, touched);
+            }, [errors, touched]);
+            
+            return (
+              <Form className="form19">
           <h2 className="h2-19">Create New Itinerary Package</h2>
 
-          <label className="label19">
-            Title: <span className="required">*</span>
-            <input 
-              className={`input19 ${errors.title ? 'error-input' : ''}`}
+                {/* Title field */}
+                <div className="label19">
+                  <RequiredLabel text="Title:" />
+                  <Field
+                    className={`input19 ${errors.title && touched.title ? 'error-input' : touched.title ? 'valid-input' : ''}`}
               type="text" 
               name="title" 
-              value={formData.title} 
-              onChange={handleChange} 
-            />
-            {errors.title && <span className="error-message">{errors.title}</span>}
-          </label>
-          <label className="label19">
-            Image: <span className="required">*</span>
+                  />
+                  <ErrorMessage name="title" component="span" className="error-message" />
+                </div>
+
+                {/* Image field */}
+                <div className="label19">
+                  <RequiredLabel text="Image:" />
             <input 
               type="file" 
-              name="image" 
-              onChange={handleFileChange}
-              className={errors.image ? 'error-input' : ''}
-            />
-            {errors.image && <span className="error-message">{errors.image}</span>}
-          </label>
-          <label className="label19">
-            Highlight: <span className="required">*</span>
-            <input 
-              className={`input19 ${errors.highlight ? 'error-input' : ''}`}
+                    onChange={(e) => handleImageChange(e, setFieldValue)}
+                    className={errors.image && touched.image ? 'error-input' : ''}
+                  />
+                  <ErrorMessage name="image" component="span" className="error-message" />
+                  {imagePreview && (
+                    <img src={imagePreview} alt="Preview" className="image-preview" style={{ maxWidth: '200px', marginTop: '10px' }} />
+                  )}
+                </div>
+
+                {/* Highlight field */}
+                <div className="label19">
+                  <RequiredLabel text="Highlight:" />
+                  <Field
+                    className={`input19 ${errors.highlight && touched.highlight ? 'error-input' : touched.highlight ? 'valid-input' : ''}`}
               type="text" 
               name="highlight" 
-              value={formData.highlight} 
-              onChange={handleChange} 
-            />
-            {errors.highlight && <span className="error-message">{errors.highlight}</span>}
-          </label>
-          <label className="label19">
-            Overview: <span className="required">*</span>
-            <textarea 
-              className={`textarea19 ${errors.overview ? 'error-input' : ''}`}
+                  />
+                  <ErrorMessage name="highlight" component="span" className="error-message" />
+                </div>
+
+                {/* Overview field */}
+                <div className="label19">
+                  <RequiredLabel text="Overview:" />
+                  <Field
+                    as="textarea"
+                    className={`textarea19 ${errors.overview && touched.overview ? 'error-input' : touched.overview ? 'valid-input' : ''}`}
               name="overview" 
-              value={formData.overview} 
-              onChange={handleChange} 
-            />
-            {errors.overview && <span className="error-message">{errors.overview}</span>}
-          </label>
+                  />
+                  <ErrorMessage name="overview" component="span" className="error-message" />
+                </div>
 
           <h3 className="h3-19">Quick Info:</h3>
-          <label className="label19">
-            Address: <span className="required">*</span>
-            <input 
-              className={`input19 ${errors.address ? 'error-input' : ''}`}
+                
+                {/* Address field */}
+                <div className="label19">
+                  <RequiredLabel text="Address:" />
+                  <Field
+                    className={`input19 ${errors.address && touched.address ? 'error-input' : touched.address ? 'valid-input' : ''}`}
               type="text" 
               name="address" 
-              value={formData.address} 
-              onChange={handleChange} 
-            />
-            {errors.address && <span className="error-message">{errors.address}</span>}
-          </label>
+                  />
+                  <ErrorMessage name="address" component="span" className="error-message" />
+                </div>
+
+                {/* Map picker */}
           <div className="map-section19">
             <h3 className="h3-19">Select Location on Map</h3>
             <div className="map-container19">
               <MapPicker
-                onLocationSelect={handleLocationSelect}
-                initialLocation={formData.locationDetails}
+                      onLocationSelect={(location) => handleLocationSelect(location, setFieldValue)}
+                      initialLocation={values.locationDetails}
               />
             </div>
           </div>
-          <label className="label19">
-            Reviews: <span className="required">*</span>
-            <input 
-              className={`input19 ${errors.reviews ? 'error-input' : ''}`}
-              type="text" 
-              name="reviews" 
-              value={formData.reviews} 
-              onChange={handleChange} 
-            />
-            {errors.reviews && <span className="error-message">{errors.reviews}</span>}
-          </label>
-          <label className="label19">
-            Trip Type: <span className="required">*</span>
-            <input 
-              className={`input19 ${errors.tripType ? 'error-input' : ''}`}
+
+                {/* Trip type field */}
+                <div className="label19">
+                  <RequiredLabel text="Trip Type:" />
+                  <Field
+                    className={`input19 ${errors.tripType && touched.tripType ? 'error-input' : touched.tripType ? 'valid-input' : ''}`}
               type="text" 
               name="tripType" 
-              value={formData.tripType} 
               readOnly 
-            />
-            {errors.tripType && <span className="error-message">{errors.tripType}</span>}
-          </label>
+                  />
+                  <ErrorMessage name="tripType" component="span" className="error-message" />
+                </div>
 
-          <label className="label19">
-            Start Date: <span className="required">*</span>
-            <input 
-              className={`input19 ${errors.startDate ? 'error-input' : ''}`}
+                {/* Date fields */}
+                <div className="label19">
+                  <RequiredLabel text="Start Date:" />
+                  <Field
+                    className={`input19 ${errors.startDate && touched.startDate ? 'error-input' : touched.startDate ? 'valid-input' : ''}`}
               type="date" 
               name="startDate" 
-              value={formData.startDate} 
-              onChange={handleChange} 
-            />
-            {errors.startDate && <span className="error-message">{errors.startDate}</span>}
-          </label>
-          <label className="label19">
-            End Date: <span className="required">*</span>
-            <input 
-              className={`input19 ${errors.endDate ? 'error-input' : ''}`}
+                    onChange={handleDateChange}
+                    min={new Date().toISOString().split('T')[0]}
+                  />
+                  <ErrorMessage name="startDate" component="span" className="error-message" />
+                </div>
+                
+                <div className="label19">
+                  <RequiredLabel text="End Date:" />
+                  <Field
+                    className={`input19 ${errors.endDate && touched.endDate ? 'error-input' : touched.endDate ? 'valid-input' : ''}`}
               type="date" 
               name="endDate" 
-              value={formData.endDate} 
-              onChange={handleChange} 
-            />
-            {errors.endDate && <span className="error-message">{errors.endDate}</span>}
-          </label>
-          <label className="label19">
-            Duration: <span className="required">*</span>
-            <input 
-              className={`input19 ${errors.duration ? 'error-input' : ''}`}
+                    onChange={handleDateChange}
+                    min={values.startDate || new Date().toISOString().split('T')[0]}
+                  />
+                  <ErrorMessage name="endDate" component="span" className="error-message" />
+                </div>
+                
+                <div className="label19">
+                  <RequiredLabel text="Duration:" />
+                  <Field
+                    className={`input19 ${errors.duration && touched.duration ? 'error-input' : touched.duration ? 'valid-input' : ''}`}
               type="text" 
               name="duration" 
-              value={formData.duration} 
               readOnly 
-            />
-            {errors.duration && <span className="error-message">{errors.duration}</span>}
-          </label>
+                  />
+                  <ErrorMessage name="duration" component="span" className="error-message" />
+                </div>
 
-          <label className="label19">
-            Category: <span className="required">*</span>
-            <input 
-              className={`input19 ${errors.category ? 'error-input' : ''}`}
+                {/* Category field */}
+                <div className="label19">
+                  <RequiredLabel text="Category:" />
+                  <Field
+                    className={`input19 ${errors.category && touched.category ? 'error-input' : touched.category ? 'valid-input' : ''}`}
               type="text" 
               name="category" 
-              value={formData.category} 
-              onChange={handleChange} 
-            />
-            {errors.category && <span className="error-message">{errors.category}</span>}
-          </label>
-          <label className="label19">
-            Price: <span className="required">*</span>
-            <input 
-              className={`input19 ${errors.price ? 'error-input' : ''}`}
-              type="text" 
-              name="price" 
-              value={formData.price} 
-              onChange={handleChange}
-              placeholder="Enter price (positive number)" 
-            />
-            {errors.price && <span className="error-message">{errors.price}</span>}
-          </label>
-          <label className="label19">
-            Group Size: <span className="required">*</span>
-            <input 
-              className={`input19 ${errors.groupSize ? 'error-input' : ''}`}
+                  />
+                  <ErrorMessage name="category" component="span" className="error-message" />
+                </div>
+
+                {/* Group size field */}
+                <div className="label19">
+                  <RequiredLabel text="Group Size:" />
+                  <Field
+                    className={`input19 ${errors.groupSize && touched.groupSize ? 'error-input' : touched.groupSize ? 'valid-input' : ''}`}
               type="text" 
               name="groupSize" 
-              value={formData.groupSize} 
-              onChange={handleChange} 
-            />
-            {errors.groupSize && <span className="error-message">{errors.groupSize}</span>}
-          </label>
-          <label className="label19">
-            Difficulty: <span className="required">*</span>
-            <input 
-              className={`input19 ${errors.difficulty ? 'error-input' : ''}`}
+                  />
+                  <ErrorMessage name="groupSize" component="span" className="error-message" />
+                </div>
+                
+                {/* Difficulty field */}
+                <div className="label19">
+                  <RequiredLabel text="Difficulty:" />
+                  <Field
+                    className={`input19 ${errors.difficulty && touched.difficulty ? 'error-input' : touched.difficulty ? 'valid-input' : ''}`}
               type="text" 
               name="difficulty" 
-              value={formData.difficulty} 
-              onChange={handleChange} 
-            />
-            {errors.difficulty && <span className="error-message">{errors.difficulty}</span>}
-          </label>
-          
-          <label className="label19">
-            Age Restriction: <span className="required">*</span>
-            <input 
-              className={`input19 ${errors.ageRestriction ? 'error-input' : ''}`}
+                  />
+                  <ErrorMessage name="difficulty" component="span" className="error-message" />
+                </div>
+
+                {/* Age restriction field */}
+                <div className="label19">
+                  <RequiredLabel text="Age Restriction:" />
+                  <Field
+                    className={`input19 ${errors.ageRestriction && touched.ageRestriction ? 'error-input' : touched.ageRestriction ? 'valid-input' : ''}`}
               type="text" 
               name="ageRestriction" 
-              value={formData.ageRestriction} 
-              onChange={handleChange} 
-            />
-            {errors.ageRestriction && <span className="error-message">{errors.ageRestriction}</span>}
-          </label>
-          <label className="label19">
-            Pickup Details: <span className="required">*</span>
-            <textarea 
-              className={`textarea19 ${errors.pickupDetails ? 'error-input' : ''}`}
+                  />
+                  <ErrorMessage name="ageRestriction" component="span" className="error-message" />
+                </div>
+
+                {/* Pickup details field */}
+                <div className="label19">
+                  <RequiredLabel text="Pickup Details:" />
+                  <Field
+                    as="textarea"
+                    className={`textarea19 ${errors.pickupDetails && touched.pickupDetails ? 'error-input' : touched.pickupDetails ? 'valid-input' : ''}`}
               name="pickupDetails" 
-              value={formData.pickupDetails} 
-              onChange={handleChange} 
-            />
-            {errors.pickupDetails && <span className="error-message">{errors.pickupDetails}</span>}
-          </label>
-          <label className="label19">
-            Accessibility: <span className="required">*</span>
-            <textarea 
-              className={`textarea19 ${errors.accessibility ? 'error-input' : ''}`}
+                  />
+                  <ErrorMessage name="pickupDetails" component="span" className="error-message" />
+                </div>
+
+                {/* Accessibility field */}
+                <div className="label19">
+                  <RequiredLabel text="Accessibility:" />
+                  <Field
+                    as="textarea"
+                    className={`textarea19 ${errors.accessibility && touched.accessibility ? 'error-input' : touched.accessibility ? 'valid-input' : ''}`}
               name="accessibility" 
-              value={formData.accessibility} 
-              onChange={handleChange} 
-            />
-            {errors.accessibility && <span className="error-message">{errors.accessibility}</span>}
-          </label>
-          <label className="label19">
-            Cancellation Policy: <span className="required">*</span>
-            <textarea 
-              className={`textarea19 ${errors.cancellationPolicy ? 'error-input' : ''}`}
+                  />
+                  <ErrorMessage name="accessibility" component="span" className="error-message" />
+                </div>
+
+                {/* Cancellation policy field */}
+                <div className="label19">
+                  <RequiredLabel text="Cancellation Policy:" />
+                  <Field
+                    as="textarea"
+                    className={`textarea19 ${errors.cancellationPolicy && touched.cancellationPolicy ? 'error-input' : touched.cancellationPolicy ? 'valid-input' : ''}`}
               name="cancellationPolicy" 
-              value={formData.cancellationPolicy} 
-              onChange={handleChange} 
-            />
-            {errors.cancellationPolicy && <span className="error-message">{errors.cancellationPolicy}</span>}
-          </label>
-        
-          <label className="label19">
-            Operator: <span className="required">*</span>
-            <input 
-              className={`input19 ${errors.operator ? 'error-input' : ''}`}
+                  />
+                  <ErrorMessage name="cancellationPolicy" component="span" className="error-message" />
+                </div>
+
+                {/* Operator field */}
+                <div className="label19">
+                  <RequiredLabel text="Operator:" />
+                  <Field
+                    className={`input19 ${errors.operator && touched.operator ? 'error-input' : touched.operator ? 'valid-input' : ''}`}
               type="text" 
               name="operator" 
-              value={formData.operator} 
-              onChange={handleChange} 
-            />
-            {errors.operator && <span className="error-message">{errors.operator}</span>}
-          </label>
+                  />
+                  <ErrorMessage name="operator" component="span" className="error-message" />
+                </div>
 
           <h3 className="h3-19">Day by Day Itinerary:</h3>
-          {formData.itinerary.map((day, index) => (
+                
+                {/* Itinerary fields */}
+                <FieldArray name="itinerary">
+                  {() => (
+                    values.itinerary.map((day, index) => (
             <div key={index}>
-              <label className="label19">
-                Day: <span className="required">*</span>
-                <input 
-                  className={`input19 ${errors.itinerary ? 'error-input' : ''}`}
+                        <div className="label19">
+                          <RequiredLabel text={`Day: ${index + 1}`} />
+                          <Field
+                            className="input19"
                   type="text" 
-                  name="day" 
-                  value={day.day} 
+                            name={`itinerary[${index}].day`}
                   readOnly 
-                />
-                {errors.itinerary && <span className="error-message">{errors.itinerary}</span>}
-              </label>
-              <label className="label19">
-                Mode: <span className="required">*</span>
-                <input 
-                  className={`input19 ${errors.itinerary ? 'error-input' : ''}`}
+                          />
+                        </div>
+                        
+                        <div className="label19">
+                          <RequiredLabel text={`Mode: ${index + 1}`} />
+                          <Field
+                            className={`input19 ${
+                              errors.itinerary && 
+                              errors.itinerary[index] && 
+                              errors.itinerary[index].mode && 
+                              touched.itinerary && 
+                              touched.itinerary[index] && 
+                              touched.itinerary[index].mode 
+                                ? 'error-input' 
+                                : touched.itinerary && 
+                                  touched.itinerary[index] && 
+                                  touched.itinerary[index].mode 
+                                    ? 'valid-input' 
+                                    : ''
+                            }`}
                   type="text" 
-                  name="mode" 
-                  value={day.mode} 
-                  onChange={(e) => handleItineraryChange(index, e)} 
-                />
-                {errors.itinerary && <span className="error-message">{errors.itinerary}</span>}
-              </label>
-              <label className="label19">
-                Highlights: <span className="required">*</span>
-                <input 
-                  className={`input19 ${errors.itinerary ? 'error-input' : ''}`}
+                            name={`itinerary[${index}].mode`}
+                          />
+                          <ErrorMessage name={`itinerary[${index}].mode`} component="span" className="error-message" />
+                        </div>
+                        
+                        <div className="label19">
+                          <RequiredLabel text={`Highlights: ${index + 1}`} />
+                          <Field
+                            className={`input19 ${
+                              errors.itinerary && 
+                              errors.itinerary[index] && 
+                              errors.itinerary[index].highlights && 
+                              touched.itinerary && 
+                              touched.itinerary[index] && 
+                              touched.itinerary[index].highlights 
+                                ? 'error-input' 
+                                : touched.itinerary && 
+                                  touched.itinerary[index] && 
+                                  touched.itinerary[index].highlights 
+                                    ? 'valid-input' 
+                                    : ''
+                            }`}
                   type="text" 
-                  name="highlights" 
-                  value={day.highlights} 
-                  onChange={(e) => handleItineraryChange(index, e)} 
-                />
-                {errors.itinerary && <span className="error-message">{errors.itinerary}</span>}
-              </label>
-              <label className="label19">
-                Stay: <span className="required">*</span>
-                <input 
-                  className={`input19 ${errors.itinerary ? 'error-input' : ''}`}
+                            name={`itinerary[${index}].highlights`}
+                          />
+                          <ErrorMessage name={`itinerary[${index}].highlights`} component="span" className="error-message" />
+                        </div>
+                        
+                        <div className="label19">
+                          <RequiredLabel text={`Stay: ${index + 1}`} />
+                          <Field
+                            className={`input19 ${
+                              errors.itinerary && 
+                              errors.itinerary[index] && 
+                              errors.itinerary[index].stay && 
+                              touched.itinerary && 
+                              touched.itinerary[index] && 
+                              touched.itinerary[index].stay 
+                                ? 'error-input' 
+                                : touched.itinerary && 
+                                  touched.itinerary[index] && 
+                                  touched.itinerary[index].stay 
+                                    ? 'valid-input' 
+                                    : ''
+                            }`}
                   type="text" 
-                  name="stay" 
-                  value={day.stay} 
-                  onChange={(e) => handleItineraryChange(index, e)} 
-                />
-                {errors.itinerary && <span className="error-message">{errors.itinerary}</span>}
-              </label>
-              <label className="label19">
-                Meals: <span className="required">*</span>
-                <input 
-                  className={`input19 ${errors.itinerary ? 'error-input' : ''}`}
+                            name={`itinerary[${index}].stay`}
+                          />
+                          <ErrorMessage name={`itinerary[${index}].stay`} component="span" className="error-message" />
+                        </div>
+                        
+                        <div className="label19">
+                          <RequiredLabel text={`Meals: ${index + 1}`} />
+                          <Field
+                            className={`input19 ${
+                              errors.itinerary && 
+                              errors.itinerary[index] && 
+                              errors.itinerary[index].meals && 
+                              touched.itinerary && 
+                              touched.itinerary[index] && 
+                              touched.itinerary[index].meals 
+                                ? 'error-input' 
+                                : touched.itinerary && 
+                                  touched.itinerary[index] && 
+                                  touched.itinerary[index].meals 
+                                    ? 'valid-input' 
+                                    : ''
+                            }`}
                   type="text" 
-                  name="meals" 
-                  value={day.meals} 
-                  onChange={(e) => handleItineraryChange(index, e)} 
-                />
-                {errors.itinerary && <span className="error-message">{errors.itinerary}</span>}
-              </label>
-              <label className="label19">
-                Cost Breakdown: <span className="required">*</span>
-                <textarea 
-                  className={`textarea19 ${errors.itinerary ? 'error-input' : ''}`}
-                  name="costBreakdown" 
-                  value={day.costBreakdown} 
-                  onChange={(e) => handleItineraryChange(index, e)} 
-                />
-                {errors.itinerary && <span className="error-message">{errors.itinerary}</span>}
-              </label>
+                            name={`itinerary[${index}].meals`}
+                          />
+                          <ErrorMessage name={`itinerary[${index}].meals`} component="span" className="error-message" />
+                        </div>
+                        
+                        <div className="label19">
+                          <RequiredLabel text={`Cost Breakdown: ${index + 1}`} />
+                          <Field
+                            as="textarea"
+                            className={`textarea19 ${
+                              errors.itinerary && 
+                              errors.itinerary[index] && 
+                              errors.itinerary[index].costBreakdown && 
+                              touched.itinerary && 
+                              touched.itinerary[index] && 
+                              touched.itinerary[index].costBreakdown 
+                                ? 'error-input' 
+                                : touched.itinerary && 
+                                  touched.itinerary[index] && 
+                                  touched.itinerary[index].costBreakdown 
+                                    ? 'valid-input' 
+                                    : ''
+                            }`}
+                            name={`itinerary[${index}].costBreakdown`}
+                          />
+                          <ErrorMessage name={`itinerary[${index}].costBreakdown`} component="span" className="error-message" />
             </div>
-          ))}
+                      </div>
+                    ))
+                  )}
+                </FieldArray>
 
-          <label className="label19">
-            What's Included: <span className="required">*</span>
-            <textarea 
-              className={`textarea19 ${errors.included ? 'error-input' : ''}`}
+                {/* What's included field */}
+                <div className="label19">
+                  <RequiredLabel text="What's Included:" />
+                  <Field
+                    as="textarea"
+                    className={`textarea19 ${errors.included && touched.included ? 'error-input' : touched.included ? 'valid-input' : ''}`}
               name="included" 
-              value={formData.included} 
-              onChange={handleChange} 
-            />
-            {errors.included && <span className="error-message">{errors.included}</span>}
-          </label>
-          <label className="label19">
-            Additional Information: <span className="required">*</span>
-            <textarea 
-              className={`textarea19 ${errors.additionalInfo ? 'error-input' : ''}`}
-              name="additionalInfo" 
-              value={formData.additionalInfo} 
-              onChange={handleChange} 
-            />
-            {errors.additionalInfo && <span className="error-message">{errors.additionalInfo}</span>}
-          </label>
+                  />
+                  <ErrorMessage name="included" component="span" className="error-message" />
+                </div>
 
-          <div className="button-container19">
-            <Link to="/ItineraryPackage"><button type="button" className="cancel-btn19">Cancel</button></Link>
-            <button type="submit" className="create-btn19">
-              {loading ? "Adding..." : "Create"}
-            </button>
+                {/* Additional info field */}
+                <div className="label19">
+                  <RequiredLabel text="Additional Information:" />
+                  <Field
+                    as="textarea"
+                    className={`textarea19 ${errors.additionalInfo && touched.additionalInfo ? 'error-input' : touched.additionalInfo ? 'valid-input' : ''}`}
+              name="additionalInfo" 
+                  />
+                  <ErrorMessage name="additionalInfo" component="span" className="error-message" />
+                </div>
+
+                {/* Guide selection */}
+          <div className="guide-checkbox-container">
+            <label className="guide-checkbox-label">
+                    <Field
+                type="checkbox"
+                name="guideIncluded"
+                      onChange={handleGuideChange}
+                className="guide-checkbox-input"
+              />
+              <span className="guide-checkbox-text">Include a professional guide for your trip</span>
+            </label>
           </div>
 
-          <style jsx>{`
-            .required {
-              color: red;
-              margin-left: 2px;
-            }
-            .error-input {
-              border: 1px solid red;
-            }
-            .error-message {
-              color: red;
-              font-size: 0.8rem;
-              margin-top: 4px;
-              display: block;
-            }
-          `}</style>
-        </form>
+                {values.guideIncluded && (
+            <div className="guide-selection19">
+              <h3 className="h3-19">Select a guide:</h3>
+              {approvedGuides.length > 0 ? (
+                <div className="select-wrapper19">
+                        <Field
+                          as="select"
+                    name="guideId"
+                          onChange={handleGuideChange}
+                          className={`input19 ${errors.guideId && touched.guideId ? 'error-input' : touched.guideId ? 'valid-input' : ''}`}
+                  >
+                    <option value="">Select a guide</option>
+                    {approvedGuides.map((guide) => (
+                      <option key={guide._id} value={guide._id}>
+                        {guide.firstName} {guide.lastName} - NPR {guide.guideProfile?.pricing?.perDay || COST_RANGES.guide.perDay}/day
+                      </option>
+                    ))}
+                        </Field>
+                        <ErrorMessage name="guideId" component="span" className="error-message" />
+                </div>
+              ) : (
+                <p className="no-guides-message19">No guides available. Please try again later.</p>
+              )}
+
+              {selectedGuide && (
+                <div className="guide-details19">
+                  <h4 className="guide-details-heading">Guide Details:</h4>
+                  <div className="guide-details-grid">
+                    <p><strong>Name:</strong> {selectedGuide.firstName} {selectedGuide.lastName}</p>
+                    <p><strong>Languages:</strong> {selectedGuide.guideProfile?.languages?.join(", ") || "Not specified"}</p>
+                    <p><strong>Regions:</strong> {selectedGuide.guideProfile?.regionsOfExpertise?.join(", ") || "Not specified"}</p>
+                    <p><strong>Services:</strong> {selectedGuide.guideProfile?.serviceTypes?.join(", ") || "Not specified"}</p>
+                    <p><strong>Price/Day:</strong> NPR {selectedGuide.guideProfile?.pricing?.perDay || COST_RANGES.guide.perDay}</p>
+                          <p><strong>Total Cost:</strong> NPR {values.guideCost || "0.00"} ({values.duration})</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+                {/* Price section */}
+          <div className="price-section19">
+            <h4 className="price-heading19">Package Pricing</h4>
+            <div className="price-input-section19">
+                    <div className="label19">
+                      <RequiredLabel text="Base Package Price (NPR):" />
+                      <Field
+                        className={`input19 ${errors.price && touched.price ? 'error-input' : touched.price ? 'valid-input' : ''}`}
+                  type="text" 
+                  name="price" 
+                  placeholder="Enter base price" 
+                        pattern="[1-9][0-9]*\.?[0-9]{0,2}"
+                        title="Please enter a positive number with up to 2 decimal places"
+                        onKeyPress={(e) => {
+                          const validChars = /[0-9.]/;
+                          if (!validChars.test(e.key) || 
+                              (e.key === '.' && e.target.value.includes('.')) || 
+                              (e.key === '0' && e.target.value.length === 0)) {
+                            e.preventDefault();
+                          }
+                        }}
+                      />
+                      <ErrorMessage name="price" component="span" className="error-message" />
+                    </div>
+            </div>
+            
+            <div className="pricing-summary19">
+              <div className="price-line19">
+                <span className="price-label19">Base Price:</span>
+                      <span className="price-value19">NPR {parsePrice(values.price).toLocaleString()}</span>
+              </div>
+              
+                    {values.guideIncluded && selectedGuide && (
+                <div className="price-line19">
+                  <span className="price-label19">Guide Cost ({selectedGuide.firstName} {selectedGuide.lastName}):</span>
+                        <span className="price-value19">NPR {parsePrice(values.guideCost).toLocaleString()}</span>
+                </div>
+              )}
+              
+              <div className="price-line19 total-price-line19">
+                <span className="price-label19">Total Package Price:</span>
+                      <span className="price-value19 total-price-value19">{calculateTotalPrice(values)}</span>
+              </div>
+              
+              <div className="price-note19">
+                <p>Note: The total price (base price + guide cost) will be displayed to users.</p>
+              </div>
+            </div>
+          </div>
+
+                {/* Form buttons */}
+          <div className="button-container19">
+                  <Link to="/ItineraryPackage">
+                    <button type="button" className="cancel-btn19">Cancel</button>
+                  </Link>
+                  <button 
+                    type="button" 
+                    className="create-btn19" 
+                    disabled={isSubmitting || loading}
+                    onClick={() => {
+                      // Submit form manually
+                      if (formRef.current) {
+                        console.log("Manually submitting form");
+                        
+                        // Before submission, check for errors and only scroll if there are errors
+                        const hasErrors = Object.keys(formRef.current.errors || {}).length > 0;
+                        
+                        // Submit the form
+                        formRef.current.handleSubmit();
+                        
+                        // If there are errors, only then scroll to the first error
+                        // This prevents scrolling during regular typing/input
+                        if (hasErrors) {
+                          setTimeout(() => {
+                            const firstErrorField = Object.keys(formRef.current.errors)[0];
+                            const errorElement = document.querySelector(`[name="${firstErrorField}"]`);
+                            if (errorElement) {
+                              errorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            }
+                          }, 100);
+                        }
+                      }
+                    }}
+                  >
+                    {isSubmitting || loading ? "Adding..." : "Create"}
+            </button>
+          </div>
+              </Form>
+            );
+          }}
+        </Formik>
       </div>
       <Footer />
     </>

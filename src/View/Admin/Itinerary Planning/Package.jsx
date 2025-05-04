@@ -75,6 +75,46 @@ const convertPrice = (priceString) => {
     initializePage();
   }, [user?._id]);
 
+  const fetchFavorites = async () => {
+    if (!user) return;
+
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        console.log("No token found");
+        return;
+      }
+
+      const response = await axios.get('http://localhost:4000/user-favorites', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (response.data.success) {
+        const dbFavorites = response.data.data;
+        setFavorites(dbFavorites.map(fav => fav.itemDetails));
+      }
+    } catch (error) {
+      if (error.response?.status === 401) {
+        toast.error('Please login to access favorites', {
+          position: "top-right",
+          autoClose: 3000,
+          className: 'toast-message17'
+        });
+        // Optionally redirect to login page or handle expired token
+      } else {
+        console.error('Error fetching favorites:', error);
+        toast.error('Failed to load favorites', {
+          position: "top-right",
+          autoClose: 3000,
+          className: 'toast-message17'
+        });
+      }
+    }
+  };
+
   const fetchPackageRatings = async (packages) => {
     try {
       const promises = packages.map(async (pkg) => {

@@ -698,4 +698,210 @@ body {
   background-color: #45a049;
 }
 
+.personal-info-section {
+  margin-bottom: 30px;
+  padding: 15px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+}
+
+.personal-info-section h4 {
+  margin-bottom: 15px;
+  font-size: 16px;
+  color: #333;
+  border-bottom: 1px solid #e0e0e0;
+  padding-bottom: 10px;
+}
+
+.gender-selection {
+  margin-bottom: 20px;
+}
+
+.gender-selection label {
+  display: block;
+  margin-bottom: 10px;
+}
+
+.radio-group {
+  display: flex;
+  gap: 20px;
+}
+
+.radio-option {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.radio-option input[type="radio"] {
+  margin-right: 8px;
+}
+
+.radio-label {
+  font-size: 14px;
+}
+
+.profile-image-upload {
+  margin-top: 15px;
+}
+
+.profile-image-upload label {
+  display: block;
+  margin-bottom: 10px;
+}
+
+.preview-image {
+  width: 100px;
+  height: 100px;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 2px solid #ddd;
+}
+
+/* Style adjustments for existing elements */
+.document-preview {
+  margin-top: 15px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.preview-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background-color: #f5f5f5;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.preview-content {
+  padding: 15px;
+  display: flex;
+  justify-content: center;
+}
+
+.remove-file {
+  background: none;
+  border: none;
+  color: #ff5252;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+
+.preview-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: #757575;
+}
+
+.preview-placeholder svg {
+  margin-bottom: 8px;
+  font-size: 24px;
+}
+
+.upload-button1 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #f0f0f0;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 8px 16px;
+  color: #333;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.upload-button1:hover {
+  background-color: #e0e0e0;
+}
+
+/* For responsive design */
+@media (max-width: 768px) {
+  .radio-group {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .preview-image {
+    width: 80px;
+    height: 80px;
+  }
+}
+
+/* Required Field Indicator */
+.required-field {
+  color: #e63946;
+  margin-left: 2px;
+}
+
+/* Error and validation messages */
+.error-message {
+  color: #e63946;
+  font-size: 12px;
+  margin-top: 5px;
+  margin-bottom: 5px;
+  min-height: 15px;
+  text-align: left;
+}
+
+.valid-message {
+  color: #28a745;
+  font-size: 12px;
+  margin-top: 5px;
+  margin-bottom: 5px;
+  text-align: left;
+}
+
+/* Validation styling for inputs */
+.input-field0:focus {
+  border-color: #007bff; /* Blue focus color */
+  outline: none; /* Remove default outline */
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25); /* Subtle blue glow */
+}
+
+/* Add more margin for error messages in array inputs */
+.input-with-remove {
+  margin-bottom: 20px;
+}
+
+/* Adjust the guide details section to better accommodate validation messages */
+.guide-details {
+  max-height: none; /* Remove the height limit */
+  overflow-y: auto;
+}
+
+.languages-section,
+.regions-section,
+.service-types,
+.license-section {
+  margin-bottom: 30px;
+}
+
+/* Adjust spacing for the personal info section */
+.personal-info-section .input-group0,
+.personal-info-section .gender-selection {
+  margin-bottom: 20px;
+}
+
+/* Make the terms and conditions section more visible */
+.terms1 {
+  padding: 15px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  margin: 20px 0;
+}
+
+/* Add red border for invalid inputs with JavaScript */
+/* These styles will be applied dynamically through the style attribute */
+
+/* Ensure the error messages don't push layout too much */
+.input-group0 {
+  position: relative;
+  margin-bottom: 25px;
+}
+
 

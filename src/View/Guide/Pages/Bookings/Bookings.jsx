@@ -24,8 +24,17 @@ export default function Bookings() {
   const [editingBooking, setEditingBooking] = useState(null);
   const [activeTab, setActiveTab] = useState('all');
   const ticketRefs = useRef({});
+  const [currentGuideId, setCurrentGuideId] = useState(null);
 
   useEffect(() => {
+    // Get current guide ID from localStorage
+    const user = JSON.parse(localStorage.getItem('user'));
+    if (user && user.id) {
+      setCurrentGuideId(user.id);
+    } else if (user && user._id) {
+      setCurrentGuideId(user._id);
+    }
+    
     fetchBookings();
   }, []);
 
@@ -38,12 +47,71 @@ export default function Bookings() {
       setLoading(true);
       const user = JSON.parse(localStorage.getItem('user'));
       
-      // Fetch bookings for the specific guide
+      // Fetch all bookings
       const response = await axios.get(`http://localhost:4000/payments/all-bookings`);
       
       if (response.data.success) {
-        setBookings(response.data.bookings);
-        setHeading(`Displaying ${response.data.bookings.length} bookings:`);
+        // Get the current guide's ID if not already set
+        let guideId = currentGuideId;
+        if (!guideId) {
+          if (user && user.id) {
+            guideId = user.id;
+            setCurrentGuideId(user.id);
+          } else if (user && user._id) {
+            guideId = user._id;
+            setCurrentGuideId(user._id);
+          }
+        }
+
+        // Filter bookings based on guideId
+        let filteredBookings = [];
+        
+        if (guideId) {
+          console.log("Filtering bookings for guide ID:", guideId);
+
+          filteredBookings = response.data.bookings.filter(booking => {
+            // Get package details and determine if it's a trip
+            const packageDetails = booking.paymentDetails?.packageDetails || {};
+            const category = (packageDetails.category || '').toLowerCase();
+            const isTrip = category.includes('short trip') || category.includes('long trip');
+            
+            // Case 1: Booking has no guide assigned (guideId is undefined/null)
+            if (!booking.guideId) {
+              console.log(`Booking ${booking.bookingId}, ${booking.packageName}: No guide assigned, showing to all guides`);
+              return true; // Show to all guides
+            }
+            
+            // Convert both IDs to strings for comparison to avoid type issues
+            const bookingGuideId = String(booking.guideId);
+            const currentId = String(guideId);
+            
+            // Debug trip bookings specifically
+            if (isTrip) {
+              console.log(`TRIP BOOKING: ${booking.packageName}, guideId=${bookingGuideId}, currentGuideId=${currentId}, match=${bookingGuideId === currentId}`);
+              
+              // Additional debugging for trip guide details
+              if (booking.tripGuideDetails) {
+                console.log(`Trip guide details found: name=${booking.tripGuideDetails.guideName}, email=${booking.tripGuideDetails.guideEmail}`);
+              }
+            }
+            
+            // Case 2: Booking is assigned to this guide
+            const isAssigned = bookingGuideId === currentId;
+            if (isAssigned) {
+              console.log(`Booking ${booking.bookingId}, ${booking.packageName}: Assigned to current guide (${bookingGuideId} === ${currentId})`);
+              return true;
+            } else {
+              console.log(`Booking ${booking.bookingId}, ${booking.packageName}: Not assigned to current guide (${bookingGuideId} !== ${currentId})`);
+              return false;
+            }
+          });
+        } else {
+          // If no guide ID found, show all bookings (admin view)
+          filteredBookings = response.data.bookings;
+        }
+        
+        setBookings(filteredBookings);
+        setHeading(`Displaying ${filteredBookings.length} bookings:`);
       } else {
         toast.error('Failed to load booking history');
         setBookings([]);
@@ -306,6 +374,14 @@ export default function Bookings() {
       duration = packageDetails.duration || 'N/A';
     }
 
+    // Check if booking is specifically assigned to the current guide
+    const isAssignedToCurrentGuide = booking.guideId && currentGuideId && 
+                                   String(booking.guideId) === String(currentGuideId);
+
+    // Determine if this is a trip based on category
+    const isTripBooking = packageDetails.category && 
+                        packageDetails.category.toLowerCase().includes('trip');
+
     return (
       <div key={booking.bookingId} className="booking-card" ref={el => ticketRefs.current[booking.bookingId] = el}>
         <div className="booking-header">
@@ -326,9 +402,17 @@ export default function Bookings() {
               </button>
             </div>
           ) : (
-            <span className={`status-badge ${booking.status.toLowerCase()}`}>
-              {booking.status}
-            </span>
+            <div className="booking-header-right">
+              {isAssignedToCurrentGuide && (
+                <span className="guide-assigned-tag">Assigned to You</span>
+              )}
+              {isTripBooking && (
+                <span className="trip-booking-tag">Trip</span>
+              )}
+              <span className={`status-badge ${booking.status.toLowerCase()}`}>
+                {booking.status}
+              </span>
+            </div>
           )}
         </div>
 

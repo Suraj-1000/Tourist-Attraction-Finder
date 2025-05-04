@@ -653,3 +653,212 @@
 .guide-initials-avatar64 {
   display: none;
 }
+
+/* Rating and Reviews */
+.review-card25 {
+  background-color: #fff;
+  border-radius: 10px;
+  padding: 15px;
+  margin-bottom: 15px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.review-card-header25 {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 10px;
+}
+
+.reviewer-info25 h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+}
+
+.review-date25 {
+  font-size: 12px;
+  color: #666;
+  display: block;
+  margin-top: 4px;
+}
+
+.review-rating25 {
+  display: flex;
+  align-items: center;
+}
+
+.review-text25 {
+  margin: 10px 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #333;
+}
+
+.rating-summary25 {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.average-rating25 {
+  display: flex;
+  align-items: center;
+  margin-right: 20px;
+}
+
+.rating-number25 {
+  font-size: 24px;
+  font-weight: bold;
+  margin-right: 10px;
+}
+
+.stars-container25 {
+  display: flex;
+  align-items: center;
+  margin-right: 10px;
+}
+
+.total-reviews25 {
+  font-size: 14px;
+  color: #666;
+}
+
+.no-reviews25 {
+  color: #666;
+  font-style: italic;
+}
+
+.guide-reply-section {
+  background-color: #f5f8ff;
+  padding: 10px 15px;
+  border-radius: 8px;
+  margin-top: 10px;
+  border-left: 3px solid #4a90e2;
+}
+
+.guide-reply-section strong {
+  font-size: 14px;
+  color: #4a68b3;
+  display: block;
+  margin-bottom: 5px;
+}
+
+.guide-reply-section p {
+  margin: 0;
+  font-size: 14px;
+  color: #333;
+}
+
+.reply-action-section {
+  margin-top: 10px;
+}
+
+.reply-button {
+  background-color: #eaeaea;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  color: #555;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.reply-button:hover {
+  background-color: #d9d9d9;
+}
+
+.reply-form-container {
+  margin-top: 10px;
+}
+
+.reply-textarea {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  margin-bottom: 10px;
+  font-family: inherit;
+  resize: vertical;
+}
+
+.reply-form-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.cancel-reply-button,
+.submit-reply-button {
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  border: none;
+}
+
+.cancel-reply-button {
+  background-color: #ae0808;
+  color: white;
+}
+
+.submit-reply-button {
+  background-color: #008000;
+  color: white;
+}
+
+.cancel-reply-button:hover {
+  background-color: #ae0808;
+}
+
+.submit-reply-button:hover {
+  background-color: #006400;
+}
+
+.cancel-reply-button:disabled,
+.submit-reply-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.error-field {
+  border: 1px solid #ff3333 !important;
+  background-color: #fff0f0;
+}
+
+.valid-field {
+  border: 1px solid #4caf50 !important;
+  background-color: #f0fff0;
+}
+
+.error-message {
+  color: #ff3333;
+  font-size: 0.8rem;
+  margin-top: -20px;
+}
+
+.helper-text {
+  color: #0b7c39;
+  font-size: 0.8rem;
+  margin-top: -20px;
+}
+
+/* No changes dialog */
+.no-changes-dialog {
+  background: #f8d7da;
+  color: #721c24;
+  padding: 10px 15px;
+  border-radius: 5px;
+  margin-bottom: 15px;
+  border: 1px solid #f5c6cb;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.no-changes-dialog i {
+  font-size: 1.2rem;
+}

@@ -21,6 +21,80 @@ export default function Signup() {
   const [isLoading, setIsLoading] = useState(false);
   const [isOtpLoading, setIsOtpLoading] = useState(false);
   const [isGuide, setIsGuide] = useState(false);
+  const [gender, setGender] = useState('');
+  const [dateOfBirth, setDateOfBirth] = useState('');
+  const [address, setAddress] = useState('');
+  const [profileImage, setProfileImage] = useState(null);
+  
+  // Form validation errors
+  const [errors, setErrors] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    password: '',
+    confirmPassword: '',
+    dateOfBirth: '',
+    address: '',
+    gender: '',
+    termsAccepted: '',
+    profileImage: '',
+    licenseNumber: '',
+    languages: [''],
+    regionsOfExpertise: [''],
+    serviceTypes: '',
+    availability: '',
+    licenseDocument: '',
+    pricing: '',
+    educationCertificates: '',
+  });
+
+  // Form validation states
+  const [touched, setTouched] = useState({
+    firstName: false,
+    lastName: false,
+    email: false,
+    phone: false,
+    password: false,
+    confirmPassword: false,
+    dateOfBirth: false,
+    address: false,
+    gender: false,
+    termsAccepted: false,
+    profileImage: false,
+    licenseNumber: false,
+    languages: [false],
+    regionsOfExpertise: [false],
+    serviceTypes: false,
+    availability: false,
+    licenseDocument: false,
+    pricing: false,
+    educationCertificates: false,
+  });
+
+  // Valid states
+  const [valid, setValid] = useState({
+    firstName: false,
+    lastName: false,
+    email: false,
+    phone: false,
+    password: false,
+    confirmPassword: false,
+    dateOfBirth: false,
+    address: false,
+    gender: false,
+    termsAccepted: false,
+    profileImage: false,
+    licenseNumber: false,
+    languages: [false],
+    regionsOfExpertise: [false],
+    serviceTypes: false,
+    availability: false,
+    licenseDocument: false,
+    pricing: false,
+    educationCertificates: false,
+  });
+  
   const [guideDetails, setGuideDetails] = useState({
     languages: [''],
     licenseNumber: '',
@@ -42,6 +116,7 @@ export default function Signup() {
   // Refs for file inputs
   const licenseInputRef = useRef(null);
   const certificateInputRef = useRef(null);
+  const profileImageInputRef = useRef(null);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -49,25 +124,350 @@ export default function Signup() {
   // Get the redirect path from location state, default to homepage if none exists
   const from = location.state?.from || '/Home';
 
+  // Refs for error fields
+  const fieldRefs = useRef({
+    firstName: useRef(null),
+    lastName: useRef(null),
+    email: useRef(null),
+    phone: useRef(null),
+    password: useRef(null),
+    confirmPassword: useRef(null),
+    gender: useRef(null),
+    dateOfBirth: useRef(null),
+    address: useRef(null),
+    profileImage: useRef(null),
+    licenseNumber: useRef(null),
+    languages: useRef([]),
+    regionsOfExpertise: useRef([]),
+    serviceTypes: useRef(null),
+    availability: useRef(null),
+    licenseDocument: useRef(null),
+    pricing: useRef(null),
+    termsAccepted: useRef(null),
+    educationCertificates: useRef(null),
+  });
+
   // Validation functions
   const validateName = (name) => {
+    if (!name.trim()) return "Name is required";
     const nameRegex = /^[a-zA-Z\s]{2,50}$/;
-    return nameRegex.test(name.trim());
+    if (!nameRegex.test(name.trim())) return "Name should contain only letters and spaces (2-50 characters)";
+    return "";
   };
 
   const validateEmail = (email) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email.trim());
+    if (!email.trim()) return "Email is required";
+    // More comprehensive email regex
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(email.trim())) return "Please enter a valid email address";
+    return "";
   };
 
   const validatePhone = (phone) => {
+    if (!phone.trim()) return "Phone number is required";
+    if (phone.length !== 10) return "Phone number must be exactly 10 digits";
     const phoneRegex = /^(98|97)\d{8}$/;
-    return phoneRegex.test(phone.trim());
+    if (!phoneRegex.test(phone.trim())) return "Phone must start with 98 or 97 followed by 8 digits";
+    return "";
   };
 
   const validatePassword = (password) => {
+    if (!password) return "Password is required";
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
-    return passwordRegex.test(password);
+    if (!passwordRegex.test(password)) return "Password must have at least 8 characters, one uppercase, one lowercase, one number, and one special character";
+    return "";
+  };
+
+  const validateConfirmPassword = (password, confirmPassword) => {
+    if (!confirmPassword) return "Please confirm your password";
+    if (password !== confirmPassword) return "Passwords do not match";
+    return "";
+  };
+
+  const validateDateOfBirth = (dob) => {
+    if (!dob) return "Date of birth is required";
+    
+    const dobDate = new Date(dob);
+    const today = new Date();
+    
+    // Check if date is invalid
+    if (isNaN(dobDate.getTime())) return "Invalid date format";
+    
+    // Check if date is in the future
+    if (dobDate > today) return "Date of birth cannot be in the future";
+    
+    // Calculate age
+    const age = Math.floor((today - dobDate) / (365.25 * 24 * 60 * 60 * 1000));
+    
+    // Check if user is at least 16 years old
+    if (age < 16) return "You must be at least 16 years old to register";
+    
+    return "";
+  };
+
+  const validateAddress = (address) => {
+    if (!address.trim()) return "Address is required";
+    return "";
+  };
+
+  const validateGender = (gender) => {
+    if (!gender) return "Please select your gender";
+    return "";
+  };
+
+  const validateTerms = (accepted) => {
+    if (!accepted) return "You must agree to the terms and conditions";
+    return "";
+  };
+
+  const validateProfileImage = (image) => {
+    if (!image || !image.url) return "Profile image is required";
+    return "";
+  };
+
+  const validateLicenseNumber = (licenseNumber) => {
+    if (!licenseNumber.trim()) return "License number is required";
+    // License number must include letters, numbers and can have "-" or "/"
+    const licenseRegex = /^[a-zA-Z0-9\-\/]+$/;
+    if (!licenseRegex.test(licenseNumber.trim())) return "License number can only contain letters, numbers, hyphens (-) and slashes (/)";
+    return "";
+  };
+
+  const validateLanguage = (language) => {
+    if (!language.trim()) return "Language is required";
+    const languageRegex = /^[a-zA-Z\s]+$/;
+    if (!languageRegex.test(language.trim())) return "Language should contain only letters and spaces";
+    return "";
+  };
+
+  const validateRegion = (region) => {
+    if (!region.trim()) return "Region is required";
+    const regionRegex = /^[a-zA-Z\s]+$/;
+    if (!regionRegex.test(region.trim())) return "Region should contain only letters and spaces";
+    return "";
+  };
+
+  const validateServiceTypes = (serviceTypes) => {
+    if (!serviceTypes || serviceTypes.length < 2) return "Please select at least 2 service types";
+    return "";
+  };
+
+  const validateLicenseDocument = (doc) => {
+    if (!doc || !doc.url) return "License document is required";
+    return "";
+  };
+
+  const validateAvailability = (availability) => {
+    if (!availability || availability.length === 0) return "Please add at least one availability slot";
+    
+    // Check if any date is in the past
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    for (const slot of availability) {
+      const slotDate = new Date(slot.date);
+      if (slotDate < today) return "Availability dates must be current or future dates only";
+    }
+    
+    return "";
+  };
+
+  // Add validatePricing function with the other validation functions
+  const validatePricing = (price) => {
+    if (!price) return "Price per day is required";
+    if (price <= 0) return "Price must be greater than zero";
+    return "";
+  };
+
+  // Add validation function for education certificates
+  const validateEducationCertificates = (certificates) => {
+    if (!certificates || certificates.length === 0) {
+      return "At least one education certificate is required";
+    }
+    
+    // Check if any certificate is missing a URL (not fully uploaded)
+    const incompleteUploads = certificates.filter(cert => !cert.url);
+    if (incompleteUploads.length > 0) {
+      return "Some certificate uploads are not complete. Please wait or retry.";
+    }
+    
+    return "";
+  };
+
+  // Function to handle input blur (when input loses focus)
+  const handleBlur = (field, index = null) => {
+    if (index !== null) {
+      // For array fields like languages and regions
+      const newTouched = { ...touched };
+      if (!newTouched[field][index]) {
+        newTouched[field][index] = true;
+        setTouched(newTouched);
+        validateField(field, index);
+      }
+    } else {
+      // For regular fields
+      if (!touched[field]) {
+        setTouched({ ...touched, [field]: true });
+        validateField(field);
+      }
+    }
+  };
+
+  // Function to validate a specific field
+  const validateField = (field, index = null) => {
+    let errorMessage = "";
+    let isValid = false;
+    
+    if (index !== null) {
+      // Handle array fields
+      switch (field) {
+        case 'languages':
+          errorMessage = validateLanguage(guideDetails.languages[index]);
+          isValid = errorMessage === "";
+          
+          const languageErrors = [...errors.languages];
+          languageErrors[index] = errorMessage;
+          setErrors(prev => ({ ...prev, languages: languageErrors }));
+          
+          const languageValids = [...valid.languages];
+          languageValids[index] = isValid;
+          setValid(prev => ({ ...prev, languages: languageValids }));
+          break;
+          
+        case 'regionsOfExpertise':
+          errorMessage = validateRegion(guideDetails.regionsOfExpertise[index]);
+          isValid = errorMessage === "";
+          
+          const regionErrors = [...errors.regionsOfExpertise];
+          regionErrors[index] = errorMessage;
+          setErrors(prev => ({ ...prev, regionsOfExpertise: regionErrors }));
+          
+          const regionValids = [...valid.regionsOfExpertise];
+          regionValids[index] = isValid;
+          setValid(prev => ({ ...prev, regionsOfExpertise: regionValids }));
+          break;
+          
+        default:
+          break;
+      }
+      return;
+    }
+    
+    // Handle regular fields
+    switch (field) {
+      case 'firstName':
+        errorMessage = validateName(firstName);
+        isValid = errorMessage === "";
+        break;
+        
+      case 'lastName':
+        errorMessage = validateName(lastName);
+        isValid = errorMessage === "";
+        break;
+        
+      case 'email':
+        errorMessage = validateEmail(email);
+        isValid = errorMessage === "";
+        break;
+        
+      case 'phone':
+        errorMessage = validatePhone(phone);
+        isValid = errorMessage === "";
+        break;
+        
+      case 'password':
+        errorMessage = validatePassword(password);
+        isValid = errorMessage === "";
+        
+        // Also validate confirmPassword when password changes
+        if (touched.confirmPassword) {
+          const confirmError = validateConfirmPassword(password, confirmPassword);
+          setErrors(prev => ({ ...prev, confirmPassword: confirmError }));
+          setValid(prev => ({ ...prev, confirmPassword: confirmError === "" }));
+        }
+        break;
+        
+      case 'confirmPassword':
+        errorMessage = validateConfirmPassword(password, confirmPassword);
+        isValid = errorMessage === "";
+        break;
+        
+      case 'dateOfBirth':
+        errorMessage = validateDateOfBirth(dateOfBirth);
+        isValid = errorMessage === "";
+        break;
+        
+      case 'address':
+        errorMessage = validateAddress(address);
+        isValid = errorMessage === "";
+        break;
+        
+      case 'gender':
+        errorMessage = validateGender(gender);
+        isValid = errorMessage === "";
+        break;
+        
+      case 'termsAccepted':
+        errorMessage = validateTerms(termsAccepted);
+        isValid = errorMessage === "";
+        break;
+        
+      case 'profileImage':
+        errorMessage = validateProfileImage(profileImage);
+        isValid = errorMessage === "";
+        break;
+        
+      case 'licenseNumber':
+        errorMessage = validateLicenseNumber(guideDetails.licenseNumber);
+        isValid = errorMessage === "";
+        break;
+        
+      case 'serviceTypes':
+        errorMessage = validateServiceTypes(guideDetails.serviceTypes);
+        isValid = errorMessage === "";
+        break;
+        
+      case 'availability':
+        errorMessage = validateAvailability(guideDetails.availability);
+        isValid = errorMessage === "";
+        break;
+        
+      case 'licenseDocument':
+        errorMessage = validateLicenseDocument(guideDetails.licenseDocument);
+        isValid = errorMessage === "";
+        break;
+        
+      case 'pricing':
+        errorMessage = validatePricing(guideDetails.pricing.perDay);
+        isValid = errorMessage === "";
+        break;
+        
+      case 'educationCertificates':
+        errorMessage = validateEducationCertificates(guideDetails.educationCertificates);
+        isValid = errorMessage === "";
+        break;
+        
+      default:
+        break;
+    }
+    
+    setErrors(prev => ({ ...prev, [field]: errorMessage }));
+    setValid(prev => ({ ...prev, [field]: isValid }));
+  };
+
+  // Helper functions for styling inputs based on validation
+  const getInputStyle = (field) => {
+    if (!touched[field]) return {};
+    return {
+      borderColor: errors[field] ? '#e63946' : valid[field] ? '#28a745' : '#cccccc'
+    };
+  };
+
+  const getArrayInputStyle = (field, index) => {
+    if (!touched[field][index]) return {};
+    return {
+      borderColor: errors[field][index] ? '#e63946' : valid[field][index] ? '#28a745' : '#cccccc'
+    };
   };
 
   const handleGuideDetailsChange = (field, value, index = null) => {
@@ -75,6 +475,16 @@ export default function Signup() {
       const updatedArray = [...guideDetails[field]];
       updatedArray[index] = value.trim();
       setGuideDetails({ ...guideDetails, [field]: updatedArray });
+      
+      // Update corresponding touched state if not already touched
+      if (!touched[field][index]) {
+        const newTouched = { ...touched };
+        newTouched[field][index] = true;
+        setTouched(newTouched);
+      }
+      
+      // Validate the field
+      setTimeout(() => validateField(field, index), 0);
     } else if (field === 'pricing') {
       setGuideDetails(prev => ({
         ...prev,
@@ -83,8 +493,24 @@ export default function Signup() {
           ...value
         }
       }));
+      
+      // Set touched state for pricing
+      if (!touched.pricing) {
+        setTouched({ ...touched, pricing: true });
+      }
+      
+      // Validate pricing immediately
+      setTimeout(() => validateField('pricing'), 0);
     } else {
       setGuideDetails({ ...guideDetails, [field]: value });
+      
+      // Set touched state for the field
+      if (!touched[field]) {
+        setTouched({ ...touched, [field]: true });
+      }
+      
+      // Validate the field
+      setTimeout(() => validateField(field), 0);
     }
   };
 
@@ -93,11 +519,43 @@ export default function Signup() {
       ...guideDetails,
       languages: [...guideDetails.languages, '']
     });
+    
+    // Update errors and valid arrays
+    setErrors(prev => ({
+      ...prev,
+      languages: [...prev.languages, '']
+    }));
+    
+    setValid(prev => ({
+      ...prev,
+      languages: [...prev.languages, false]
+    }));
+    
+    setTouched(prev => ({
+      ...prev,
+      languages: [...prev.languages, false]
+    }));
   };
 
   const removeLanguage = (index) => {
     const updatedLanguages = guideDetails.languages.filter((_, i) => i !== index);
     setGuideDetails({ ...guideDetails, languages: updatedLanguages });
+    
+    // Update errors, valid and touched arrays
+    setErrors(prev => ({
+      ...prev,
+      languages: prev.languages.filter((_, i) => i !== index)
+    }));
+    
+    setValid(prev => ({
+      ...prev,
+      languages: prev.languages.filter((_, i) => i !== index)
+    }));
+    
+    setTouched(prev => ({
+      ...prev,
+      languages: prev.languages.filter((_, i) => i !== index)
+    }));
   };
 
   const addRegion = () => {
@@ -105,11 +563,43 @@ export default function Signup() {
       ...guideDetails,
       regionsOfExpertise: [...guideDetails.regionsOfExpertise, '']
     });
+    
+    // Update errors and valid arrays
+    setErrors(prev => ({
+      ...prev,
+      regionsOfExpertise: [...prev.regionsOfExpertise, '']
+    }));
+    
+    setValid(prev => ({
+      ...prev,
+      regionsOfExpertise: [...prev.regionsOfExpertise, false]
+    }));
+    
+    setTouched(prev => ({
+      ...prev,
+      regionsOfExpertise: [...prev.regionsOfExpertise, false]
+    }));
   };
 
   const removeRegion = (index) => {
     const updatedRegions = guideDetails.regionsOfExpertise.filter((_, i) => i !== index);
     setGuideDetails({ ...guideDetails, regionsOfExpertise: updatedRegions });
+    
+    // Update errors, valid and touched arrays
+    setErrors(prev => ({
+      ...prev,
+      regionsOfExpertise: prev.regionsOfExpertise.filter((_, i) => i !== index)
+    }));
+    
+    setValid(prev => ({
+      ...prev,
+      regionsOfExpertise: prev.regionsOfExpertise.filter((_, i) => i !== index)
+    }));
+    
+    setTouched(prev => ({
+      ...prev,
+      regionsOfExpertise: prev.regionsOfExpertise.filter((_, i) => i !== index)
+    }));
   };
 
   const handleServiceTypeChange = (serviceType) => {
@@ -117,6 +607,16 @@ export default function Signup() {
       ? guideDetails.serviceTypes.filter(type => type !== serviceType)
       : [...guideDetails.serviceTypes, serviceType];
     setGuideDetails({ ...guideDetails, serviceTypes: updatedServiceTypes });
+    
+    // Set touched state for serviceTypes
+    if (!touched.serviceTypes) {
+      setTouched({ ...touched, serviceTypes: true });
+    }
+    
+    // Validate service types immediately
+    const serviceTypesError = validateServiceTypes(updatedServiceTypes);
+    setErrors(prev => ({ ...prev, serviceTypes: serviceTypesError }));
+    setValid(prev => ({ ...prev, serviceTypes: serviceTypesError === "" }));
   };
 
   const handleLicenseUpload = async (e) => {
@@ -137,6 +637,11 @@ export default function Signup() {
           url: null
         }
       }));
+      
+      // Set touched state for licenseDocument
+      if (!touched.licenseDocument) {
+        setTouched({ ...touched, licenseDocument: true });
+      }
 
       const formData = new FormData();
       formData.append('document', file);
@@ -157,6 +662,9 @@ export default function Signup() {
             }
           }));
           toast.success("License document uploaded successfully");
+          
+          // Validate licenseDocument
+          setTimeout(() => validateField('licenseDocument'), 0);
         }
       } catch (error) {
         console.error('Error uploading document:', error);
@@ -171,6 +679,7 @@ export default function Signup() {
   };
 
   const handleCertificateUpload = async (e) => {
+    // No validation needed for certificates as they are not required
     const files = Array.from(e.target.files);
     const validFiles = files.filter(file => file.size <= 5 * 1024 * 1024);
     
@@ -191,6 +700,11 @@ export default function Signup() {
         ...newPreviews
       ]
     }));
+    
+    // Set touched state for educationCertificates
+    if (!touched.educationCertificates) {
+      setTouched(prev => ({ ...prev, educationCertificates: true }));
+    }
 
     const uploadPromises = validFiles.map((file, index) => {
       const formData = new FormData();
@@ -238,6 +752,9 @@ export default function Signup() {
       if (successCount > 0) {
         toast.success(`${successCount} certificate(s) uploaded successfully`);
       }
+      
+      // Validate education certificates after upload
+      setTimeout(() => validateField('educationCertificates'), 0);
     } catch (error) {
       console.error('Error in certificate uploads:', error);
     }
@@ -251,6 +768,10 @@ export default function Signup() {
       ...guideDetails,
       licenseDocument: null
     });
+    
+    // Update validation
+    setErrors(prev => ({ ...prev, licenseDocument: 'License document is required' }));
+    setValid(prev => ({ ...prev, licenseDocument: false }));
   };
 
   const removeCertificate = (index) => {
@@ -262,6 +783,9 @@ export default function Signup() {
       ...guideDetails,
       educationCertificates: guideDetails.educationCertificates.filter((_, i) => i !== index)
     });
+    
+    // Validate education certificates after removal
+    setTimeout(() => validateField('educationCertificates'), 0);
   };
 
   const handleAvailabilityChange = (dateIndex, slotIndex, field, value) => {
@@ -289,6 +813,14 @@ export default function Signup() {
         return date;
       })
     }));
+    
+    // Set touched state for availability
+    if (!touched.availability) {
+      setTouched({ ...touched, availability: true });
+    }
+    
+    // Validate availability
+    setTimeout(() => validateField('availability'), 0);
   };
 
   const addAvailabilitySlot = () => {
@@ -306,6 +838,14 @@ export default function Signup() {
         }
       ]
     }));
+    
+    // Set touched state for availability
+    if (!touched.availability) {
+      setTouched({ ...touched, availability: true });
+    }
+    
+    // Validate availability
+    setTimeout(() => validateField('availability'), 0);
   };
 
   const removeAvailabilitySlot = (index) => {
@@ -313,6 +853,9 @@ export default function Signup() {
       ...prev,
       availability: prev.availability.filter((_, i) => i !== index)
     }));
+    
+    // Validate availability after removal
+    setTimeout(() => validateField('availability'), 0);
   };
 
   const formatDateForInput = (date) => {
@@ -322,6 +865,68 @@ export default function Signup() {
       return tomorrow.toISOString().split('T')[0];
     }
     return date.toISOString().split('T')[0];
+  };
+
+  // Handle profile image upload
+  const handleProfileImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("Image size should be less than 5MB");
+        return;
+      }
+
+      const previewUrl = URL.createObjectURL(file);
+      
+      setProfileImage({
+        preview: previewUrl,
+        name: file.name,
+        url: null
+      });
+      
+      // Set touched state for profileImage
+      if (!touched.profileImage) {
+        setTouched({ ...touched, profileImage: true });
+      }
+
+      const formData = new FormData();
+      formData.append('document', file);
+
+      try {
+        const response = await axios.post('http://localhost:4000/signups/upload-document', formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        });
+
+        if (response.data.url) {
+          setProfileImage(prev => ({
+            ...prev,
+            url: response.data.url
+          }));
+          toast.success("Profile image uploaded successfully");
+          
+          // Validate profileImage
+          setTimeout(() => validateField('profileImage'), 0);
+        }
+      } catch (error) {
+        console.error('Error uploading image:', error);
+        toast.error("Failed to upload image. Please try again.");
+        setProfileImage(null);
+        URL.revokeObjectURL(previewUrl);
+      }
+    }
+  };
+
+  const removeProfileImage = () => {
+    if (profileImage?.preview) {
+      URL.revokeObjectURL(profileImage.preview);
+    }
+    setProfileImage(null);
+    
+    // Update validation
+    setErrors(prev => ({ ...prev, profileImage: 'Profile image is required' }));
+    setValid(prev => ({ ...prev, profileImage: false }));
   };
 
   // Add cleanup function for preview URLs
@@ -338,12 +943,231 @@ export default function Signup() {
           URL.revokeObjectURL(cert.preview);
         }
       });
+
+      // Clean up profile image preview URL
+      if (profileImage?.preview) {
+        URL.revokeObjectURL(profileImage.preview);
+      }
     };
-  }, [guideDetails.licenseDocument, guideDetails.educationCertificates]);
+  }, [guideDetails.licenseDocument, guideDetails.educationCertificates, profileImage]);
+
+  // Validate all fields
+  const validateAllFields = () => {
+    // Regular fields validation
+    const firstNameError = validateName(firstName);
+    const lastNameError = validateName(lastName);
+    const emailError = validateEmail(email);
+    const phoneError = validatePhone(phone);
+    const passwordError = validatePassword(password);
+    const confirmPasswordError = validateConfirmPassword(password, confirmPassword);
+    const termsError = validateTerms(termsAccepted);
+    
+    // Update errors and valid states
+    setErrors(prev => ({
+      ...prev,
+      firstName: firstNameError,
+      lastName: lastNameError,
+      email: emailError,
+      phone: phoneError,
+      password: passwordError,
+      confirmPassword: confirmPasswordError,
+      termsAccepted: termsError
+    }));
+    
+    setValid(prev => ({
+      ...prev,
+      firstName: firstNameError === "",
+      lastName: lastNameError === "",
+      email: emailError === "",
+      phone: phoneError === "",
+      password: passwordError === "",
+      confirmPassword: confirmPasswordError === "",
+      termsAccepted: termsError === ""
+    }));
+    
+    // Set all fields as touched
+    setTouched(prev => ({
+      ...prev,
+      firstName: true,
+      lastName: true,
+      email: true,
+      phone: true,
+      password: true,
+      confirmPassword: true,
+      termsAccepted: true
+    }));
+    
+    // Basic validation for all users
+    let isValid = !firstNameError && !lastNameError && !emailError && 
+                  !phoneError && !passwordError && !confirmPasswordError && 
+                  !termsError;
+    
+    // Additional validation for guides
+    if (isGuide) {
+      const dobError = validateDateOfBirth(dateOfBirth);
+      const addressError = validateAddress(address);
+      const genderError = validateGender(gender);
+      const profileImageError = validateProfileImage(profileImage);
+      const licenseNumberError = validateLicenseNumber(guideDetails.licenseNumber);
+      const serviceTypesError = validateServiceTypes(guideDetails.serviceTypes);
+      const availabilityError = validateAvailability(guideDetails.availability);
+      const licenseDocumentError = validateLicenseDocument(guideDetails.licenseDocument);
+      const certificatesError = validateEducationCertificates(guideDetails.educationCertificates);
+      
+      // Validate pricing
+      let pricingError = '';
+      if (!guideDetails.pricing || !guideDetails.pricing.perDay) {
+        pricingError = "Price per day is required";
+      } else if (guideDetails.pricing.perDay <= 0) {
+        pricingError = "Price must be greater than zero";
+      }
+      
+      // Update errors and valid states for guide fields
+      setErrors(prev => ({
+        ...prev,
+        dateOfBirth: dobError,
+        address: addressError,
+        gender: genderError,
+        profileImage: profileImageError,
+        licenseNumber: licenseNumberError,
+        serviceTypes: serviceTypesError,
+        availability: availabilityError,
+        licenseDocument: licenseDocumentError,
+        pricing: pricingError,
+        educationCertificates: certificatesError
+      }));
+      
+      setValid(prev => ({
+        ...prev,
+        dateOfBirth: dobError === "",
+        address: addressError === "",
+        gender: genderError === "",
+        profileImage: profileImageError === "",
+        licenseNumber: licenseNumberError === "",
+        serviceTypes: serviceTypesError === "",
+        availability: availabilityError === "",
+        licenseDocument: licenseDocumentError === "",
+        pricing: pricingError === "",
+        educationCertificates: certificatesError === ""
+      }));
+      
+      // Set guide fields as touched
+      setTouched(prev => ({
+        ...prev,
+        dateOfBirth: true,
+        address: true,
+        gender: true,
+        profileImage: true,
+        licenseNumber: true,
+        serviceTypes: true,
+        availability: true,
+        licenseDocument: true,
+        pricing: true,
+        educationCertificates: true
+      }));
+      
+      // Validate languages
+      const languageErrors = [];
+      const languageValids = [];
+      const languageTouched = [];
+      
+      guideDetails.languages.forEach((lang, index) => {
+        const error = validateLanguage(lang);
+        languageErrors[index] = error;
+        languageValids[index] = error === "";
+        languageTouched[index] = true;
+      });
+      
+      // Validate regions
+      const regionErrors = [];
+      const regionValids = [];
+      const regionTouched = [];
+      
+      guideDetails.regionsOfExpertise.forEach((region, index) => {
+        const error = validateRegion(region);
+        regionErrors[index] = error;
+        regionValids[index] = error === "";
+        regionTouched[index] = true;
+      });
+      
+      // Update arrays
+      setErrors(prev => ({
+        ...prev,
+        languages: languageErrors,
+        regionsOfExpertise: regionErrors
+      }));
+      
+      setValid(prev => ({
+        ...prev,
+        languages: languageValids,
+        regionsOfExpertise: regionValids
+      }));
+      
+      setTouched(prev => ({
+        ...prev,
+        languages: languageTouched,
+        regionsOfExpertise: regionTouched
+      }));
+      
+      // Check if any language or region has error
+      const hasLanguageError = languageErrors.some(error => error !== "");
+      const hasRegionError = regionErrors.some(error => error !== "");
+      
+      // Update isValid for guide
+      isValid = isValid && !dobError && !addressError && !genderError && 
+                !profileImageError && !licenseNumberError && !serviceTypesError && 
+                !availabilityError && !licenseDocumentError && !pricingError &&
+                !certificatesError && !hasLanguageError && !hasRegionError;
+    }
+    
+    return isValid;
+  };
 
   // Handle form submission
   const handleSubmit = (e) => {
     e.preventDefault();
+    
+    // Validate all fields
+    const isValid = validateAllFields();
+    
+    if (!isValid) {
+      // Find first error field and scroll to it
+      const errorFields = Object.entries(errors).filter(([field, error]) => {
+        if (Array.isArray(error)) {
+          return error.some(err => err !== "");
+        }
+        return error !== "";
+      });
+      
+      if (errorFields.length > 0) {
+        const firstErrorField = errorFields[0][0];
+        
+        // Handle array fields
+        if (Array.isArray(errors[firstErrorField])) {
+          const errorIndex = errors[firstErrorField].findIndex(err => err !== "");
+          if (errorIndex !== -1 && fieldRefs.current[firstErrorField].current[errorIndex]) {
+            fieldRefs.current[firstErrorField].current[errorIndex].scrollIntoView({ 
+              behavior: 'smooth', 
+              block: 'center' 
+            });
+            toast.error(`Please correct the ${firstErrorField} field`);
+          }
+        } else if (fieldRefs.current[firstErrorField]?.current) {
+          // Handle regular fields
+          fieldRefs.current[firstErrorField].current.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'center' 
+          });
+          toast.error(`Please correct the ${firstErrorField.replace(/([A-Z])/g, ' $1').toLowerCase()} field`);
+        } else {
+          toast.error("Please correct the errors in the form");
+        }
+      } else {
+        toast.error("Please correct the errors in the form");
+      }
+      return;
+    }
+    
     setIsLoading(true);
 
     // Trim all input values
@@ -352,54 +1176,7 @@ export default function Signup() {
     const trimmedEmail = email.trim();
     const trimmedPhone = phone.trim();
     const trimmedPassword = password.trim();
-    const trimmedConfirmPassword = confirmPassword.trim();
-
-    // Validate first name
-    if (!validateName(trimmedFirstName)) {
-      toast.error("First name should contain only letters and spaces (2-50 characters)");
-      setIsLoading(false);
-      return;
-    }
-
-    // Validate last name
-    if (!validateName(trimmedLastName)) {
-      toast.error("Last name should contain only letters and spaces (2-50 characters)");
-      setIsLoading(false);
-      return;
-    }
-
-    // Validate email
-    if (!validateEmail(trimmedEmail)) {
-      toast.error("Please enter a valid email address");
-      setIsLoading(false);
-      return;
-    }
-
-    // Validate phone
-    if (!validatePhone(trimmedPhone)) {
-      toast.error("Phone number must start with 98 or 97 and contain 10 digits");
-      setIsLoading(false);
-      return;
-    }
-
-    // Validate password
-    if (!validatePassword(trimmedPassword)) {
-      toast.error("Password must contain at least 8 characters, one uppercase letter, one lowercase letter, one number, and one special character");
-      setIsLoading(false);
-      return;
-    }
-
-    if (trimmedPassword !== trimmedConfirmPassword) {
-      toast.error("Passwords do not match");
-      setIsLoading(false);
-      return;
-    }
-
-    if (!termsAccepted) {
-      toast.error("You must agree to the terms and conditions");
-      setIsLoading(false);
-      return;
-    }
+    const trimmedAddress = address.trim();
 
     const signupData = {
       firstName: trimmedFirstName,
@@ -407,10 +1184,14 @@ export default function Signup() {
       email: trimmedEmail,
       phone: trimmedPhone,
       password: trimmedPassword,
-      confirmPassword: trimmedConfirmPassword,
+      confirmPassword: confirmPassword,
       termsAccepted,
       role: isGuide ? 'guide' : 'user',
-      ...(isGuide && { 
+      ...(isGuide && {
+        gender,
+        dateOfBirth: new Date(dateOfBirth),
+        address: trimmedAddress,
+        image: profileImage.url,
         guideProfile: {
           ...guideDetails,
           isVerified: false,
@@ -436,6 +1217,12 @@ export default function Signup() {
   // Handle OTP verification
   const handleOtpSubmit = async (e) => {
     e.preventDefault();
+    
+    if (!otp.trim()) {
+      toast.error("Please enter the OTP");
+      return;
+    }
+    
     setIsOtpLoading(true);
 
     try {
@@ -463,6 +1250,142 @@ export default function Signup() {
     }
   };
 
+  const handlePhoneChange = (e) => {
+    const value = e.target.value;
+    
+    // Only allow numeric input
+    if (!/^\d*$/.test(value)) {
+      return;
+    }
+    
+    // Limit to 10 digits
+    if (value.length > 10) {
+      return;
+    }
+    
+    setPhone(value);
+    setTouched(prev => ({ ...prev, phone: true }));
+    
+    // Validate phone immediately
+    const phoneError = validatePhone(value);
+    setErrors(prev => ({ ...prev, phone: phoneError }));
+    setValid(prev => ({ ...prev, phone: phoneError === "" }));
+  };
+
+  const handleGenderChange = (value) => {
+    setGender(value);
+    setTouched(prev => ({ ...prev, gender: true }));
+    setTimeout(() => {
+      const genderError = validateGender(value);
+      setErrors(prev => ({ ...prev, gender: genderError }));
+      setValid(prev => ({ ...prev, gender: genderError === "" }));
+    }, 0);
+  };
+
+  // Add handlers for immediate validation on field changes
+  const handleFirstNameChange = (e) => {
+    const value = e.target.value;
+    setFirstName(value);
+    setTouched(prev => ({ ...prev, firstName: true }));
+    const error = validateName(value);
+    setErrors(prev => ({ ...prev, firstName: error }));
+    setValid(prev => ({ ...prev, firstName: error === "" }));
+  };
+
+  const handleLastNameChange = (e) => {
+    const value = e.target.value;
+    setLastName(value);
+    setTouched(prev => ({ ...prev, lastName: true }));
+    const error = validateName(value);
+    setErrors(prev => ({ ...prev, lastName: error }));
+    setValid(prev => ({ ...prev, lastName: error === "" }));
+  };
+
+  const handleEmailChange = (e) => {
+    const value = e.target.value;
+    setEmail(value);
+    setTouched(prev => ({ ...prev, email: true }));
+    const error = validateEmail(value);
+    setErrors(prev => ({ ...prev, email: error }));
+    setValid(prev => ({ ...prev, email: error === "" }));
+  };
+
+  // Add handlers for password fields
+  const handlePasswordChange = (e) => {
+    const value = e.target.value;
+    setPassword(value);
+    setTouched(prev => ({ ...prev, password: true }));
+    
+    // Validate password
+    const passwordError = validatePassword(value);
+    setErrors(prev => ({ ...prev, password: passwordError }));
+    setValid(prev => ({ ...prev, password: passwordError === "" }));
+    
+    // If confirm password is already touched, validate it too
+    if (touched.confirmPassword) {
+      const confirmError = validateConfirmPassword(value, confirmPassword);
+      setErrors(prev => ({ ...prev, confirmPassword: confirmError }));
+      setValid(prev => ({ ...prev, confirmPassword: confirmError === "" }));
+    }
+  };
+
+  const handleConfirmPasswordChange = (e) => {
+    const value = e.target.value;
+    setConfirmPassword(value);
+    setTouched(prev => ({ ...prev, confirmPassword: true }));
+    
+    // Validate confirm password
+    const confirmError = validateConfirmPassword(password, value);
+    setErrors(prev => ({ ...prev, confirmPassword: confirmError }));
+    setValid(prev => ({ ...prev, confirmPassword: confirmError === "" }));
+  };
+
+  // Add handler for date of birth
+  const handleDateOfBirthChange = (e) => {
+    const value = e.target.value;
+    setDateOfBirth(value);
+    setTouched(prev => ({ ...prev, dateOfBirth: true }));
+    
+    // Validate date of birth
+    const dobError = validateDateOfBirth(value);
+    setErrors(prev => ({ ...prev, dateOfBirth: dobError }));
+    setValid(prev => ({ ...prev, dateOfBirth: dobError === "" }));
+  };
+
+  // Add handler for address
+  const handleAddressChange = (e) => {
+    const value = e.target.value;
+    setAddress(value);
+    setTouched(prev => ({ ...prev, address: true }));
+    
+    // Validate address
+    const addressError = validateAddress(value);
+    setErrors(prev => ({ ...prev, address: addressError }));
+    setValid(prev => ({ ...prev, address: addressError === "" }));
+  };
+
+  // Add handler for terms acceptance
+  const handleTermsChange = (e) => {
+    const checked = e.target.checked;
+    setTermsAccepted(checked);
+    setTouched(prev => ({ ...prev, termsAccepted: true }));
+    
+    // Validate terms
+    const termsError = validateTerms(checked);
+    setErrors(prev => ({ ...prev, termsAccepted: termsError }));
+    setValid(prev => ({ ...prev, termsAccepted: termsError === "" }));
+  };
+
+  // Ensure language refs are updated when languages are added or removed
+  useEffect(() => {
+    fieldRefs.current.languages.current = Array(guideDetails.languages.length).fill().map((_, i) => fieldRefs.current.languages.current[i] || React.createRef());
+  }, [guideDetails.languages.length]);
+
+  // Ensure region refs are updated when regions are added or removed
+  useEffect(() => {
+    fieldRefs.current.regionsOfExpertise.current = Array(guideDetails.regionsOfExpertise.length).fill().map((_, i) => fieldRefs.current.regionsOfExpertise.current[i] || React.createRef());
+  }, [guideDetails.regionsOfExpertise.length]);
+
   return (
     <>
       <div className="logo1"></div>
@@ -474,69 +1397,115 @@ export default function Signup() {
           {!isOtpSent ? (
             <form onSubmit={handleSubmit}>
               <div className="input-row0">
-                <div className="input-group0">
-                  <label htmlFor="first-name">First Name</label>
+                <div className="input-group0" ref={fieldRefs.current.firstName}>
+                  <label htmlFor="first-name">
+                    First Name <span className="required-field">*</span>
+                  </label>
                   <input
                     type="text"
                     id="first-name"
                     className="input-field0"
                     name="firstName"
-                    onChange={(e) => setFirstName(e.target.value)}
+                    value={firstName}
+                    onChange={handleFirstNameChange}
+                    onBlur={() => handleBlur('firstName')}
+                    style={getInputStyle('firstName')}
                     placeholder="First Name"
                     required
                   />
+                  {touched.firstName && errors.firstName ? (
+                    <div className="error-message">{errors.firstName}</div>
+                  ) : touched.firstName && valid.firstName ? (
+                    <div className="valid-message">First name is valid</div>
+                  ) : null}
                 </div>
-                <div className="input-group0">
-                  <label htmlFor="last-name">Last Name</label>
+                <div className="input-group0" ref={fieldRefs.current.lastName}>
+                  <label htmlFor="last-name">
+                    Last Name <span className="required-field">*</span>
+                  </label>
                   <input
                     type="text"
                     id="last-name"
                     className="input-field0"
                     name="lastName"
-                    onChange={(e) => setLastName(e.target.value)}
+                    value={lastName}
+                    onChange={handleLastNameChange}
+                    onBlur={() => handleBlur('lastName')}
+                    style={getInputStyle('lastName')}
                     placeholder="Last Name"
                     required
                   />
+                  {touched.lastName && errors.lastName ? (
+                    <div className="error-message">{errors.lastName}</div>
+                  ) : touched.lastName && valid.lastName ? (
+                    <div className="valid-message">Last name is valid</div>
+                  ) : null}
                 </div>
               </div>
 
               <div className="input-row0">
-                <div className="input-group0">
-                  <label htmlFor="email">Email</label>
+                <div className="input-group0" ref={fieldRefs.current.email}>
+                  <label htmlFor="email">
+                    Email <span className="required-field">*</span>
+                  </label>
                   <input
                     type="email"
                     id="email"
                     className="input-field0"
                     name="email"
-                    onChange={(e) => setEmail(e.target.value)}
+                    value={email}
+                    onChange={handleEmailChange}
+                    onBlur={() => handleBlur('email')}
+                    style={getInputStyle('email')}
                     placeholder="Email"
                     required
                   />
+                  {touched.email && errors.email ? (
+                    <div className="error-message">{errors.email}</div>
+                  ) : touched.email && valid.email ? (
+                    <div className="valid-message">Email is valid</div>
+                  ) : null}
                 </div>
-                <div className="input-group0">
-                  <label htmlFor="phone">Phone No.</label>
+                <div className="input-group0" ref={fieldRefs.current.phone}>
+                  <label htmlFor="phone">
+                    Phone No. <span className="required-field">*</span>
+                  </label>
                   <input
                     type="tel"
                     id="phone"
                     className="input-field0"
                     name="phone"
-                    onChange={(e) => setPhone(e.target.value)}
-                    placeholder="Phone Number"
+                    value={phone}
+                    onChange={handlePhoneChange}
+                    onBlur={() => handleBlur('phone')}
+                    style={getInputStyle('phone')}
+                    placeholder="Phone Number (e.g., 9812345678)"
+                    maxLength={10}
                     required
                   />
+                  {touched.phone && errors.phone ? (
+                    <div className="error-message">{errors.phone}</div>
+                  ) : touched.phone && valid.phone ? (
+                    <div className="valid-message">Phone number is valid</div>
+                  ) : null}
                 </div>
               </div>
 
               <div className="input-row0">
-                <div className="input-group0">
-                  <label htmlFor="password">Password</label>
+                <div className="input-group0" ref={fieldRefs.current.password}>
+                  <label htmlFor="password">
+                    Password <span className="required-field">*</span>
+                  </label>
                   <div className="password-field">
                     <input
                       type={passwordVisible ? "text" : "password"}
                       id="password"
                       className="input-field0"
                       name="password"
-                      onChange={(e) => setPassword(e.target.value)}
+                      value={password}
+                      onChange={handlePasswordChange}
+                      onBlur={() => handleBlur('password')}
+                      style={getInputStyle('password')}
                       placeholder="Password"
                       required
                     />
@@ -548,16 +1517,26 @@ export default function Signup() {
                       {passwordVisible ? <FiEyeOff /> : <FiEye />}
                     </button>
                   </div>
+                  {touched.password && errors.password ? (
+                    <div className="error-message">{errors.password}</div>
+                  ) : touched.password && valid.password ? (
+                    <div className="valid-message">Password is valid</div>
+                  ) : null}
                 </div>
-                <div className="input-group0">
-                  <label htmlFor="confirm-password">Confirm Password</label>
+                <div className="input-group0" ref={fieldRefs.current.confirmPassword}>
+                  <label htmlFor="confirm-password">
+                    Confirm Password <span className="required-field">*</span>
+                  </label>
                   <div className="password-field">
                     <input
                       type={confirmPasswordVisible ? "text" : "password"}
                       id="confirm-password"
                       className="input-field0"
                       name="confirmPassword"
-                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      value={confirmPassword}
+                      onChange={handleConfirmPasswordChange}
+                      onBlur={() => handleBlur('confirmPassword')}
+                      style={getInputStyle('confirmPassword')}
                       placeholder="Confirm Password"
                       required
                     />
@@ -569,6 +1548,11 @@ export default function Signup() {
                       {confirmPasswordVisible ? <FiEyeOff /> : <FiEye />}
                     </button>
                   </div>
+                  {touched.confirmPassword && errors.confirmPassword ? (
+                    <div className="error-message">{errors.confirmPassword}</div>
+                  ) : touched.confirmPassword && valid.confirmPassword ? (
+                    <div className="valid-message">Passwords match</div>
+                  ) : null}
                 </div>
               </div>
 
@@ -593,15 +1577,169 @@ export default function Signup() {
                 <div className="guide-details">
                   <h3 className="guide-title">Guide Information</h3>
                   
+                  {/* Personal Information Section */}
+                  <div className="personal-info-section">
+                    <h4>Personal Information</h4>
+                    
+                    <div className="gender-selection" ref={fieldRefs.current.gender}>
+                      <label>
+                        Gender <span className="required-field">*</span>
+                      </label>
+                      <div className="radio-group">
+                        <label className="radio-option">
+                          <input
+                            type="radio"
+                            name="gender"
+                            value="Male"
+                            checked={gender === "Male"}
+                            onChange={() => handleGenderChange("Male")}
+                            required={isGuide}
+                          />
+                          <span className="radio-label">Male</span>
+                        </label>
+                        <label className="radio-option">
+                          <input
+                            type="radio"
+                            name="gender"
+                            value="Female"
+                            checked={gender === "Female"}
+                            onChange={() => handleGenderChange("Female")}
+                            required={isGuide}
+                          />
+                          <span className="radio-label">Female</span>
+                        </label>
+                        <label className="radio-option">
+                          <input
+                            type="radio"
+                            name="gender"
+                            value="Others"
+                            checked={gender === "Others"}
+                            onChange={() => handleGenderChange("Others")}
+                            required={isGuide}
+                          />
+                          <span className="radio-label">Others</span>
+                        </label>
+                      </div>
+                      {touched.gender && errors.gender ? (
+                        <div className="error-message">{errors.gender}</div>
+                      ) : touched.gender && valid.gender ? (
+                        <div className="valid-message">Gender is selected</div>
+                      ) : null}
+                    </div>
+                    
+                    <div className="input-group0" ref={fieldRefs.current.dateOfBirth}>
+                      <label htmlFor="dateOfBirth">
+                        Date of Birth <span className="required-field">*</span>
+                      </label>
+                      <input
+                        type="date"
+                        id="dateOfBirth"
+                        className="input-field0"
+                        value={dateOfBirth}
+                        onChange={handleDateOfBirthChange}
+                        onBlur={() => handleBlur('dateOfBirth')}
+                        style={getInputStyle('dateOfBirth')}
+                        max={new Date().toISOString().split('T')[0]}
+                        required={isGuide}
+                      />
+                      {touched.dateOfBirth && errors.dateOfBirth ? (
+                        <div className="error-message">{errors.dateOfBirth}</div>
+                      ) : touched.dateOfBirth && valid.dateOfBirth ? (
+                        <div className="valid-message">Date of birth is valid</div>
+                      ) : null}
+                    </div>
+                    
+                    <div className="input-group0" ref={fieldRefs.current.address}>
+                      <label htmlFor="address">
+                        Address <span className="required-field">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        id="address"
+                        className="input-field0"
+                        value={address}
+                        onChange={handleAddressChange}
+                        onBlur={() => handleBlur('address')}
+                        style={getInputStyle('address')}
+                        placeholder="e.g., Kathmandu"
+                        required={isGuide}
+                      />
+                      {touched.address && errors.address ? (
+                        <div className="error-message">{errors.address}</div>
+                      ) : touched.address && valid.address ? (
+                        <div className="valid-message">Address is valid</div>
+                      ) : null}
+                    </div>
+                    
+                    <div className="profile-image-upload" ref={fieldRefs.current.profileImage}>
+                      <label>
+                        Profile Image <span className="required-field">*</span>
+                      </label>
+                      <input
+                        type="file"
+                        ref={profileImageInputRef}
+                        className="document-upload-input"
+                        accept=".jpg,.jpeg,.png"
+                        onChange={handleProfileImageUpload}
+                      />
+                      <button
+                        type="button"
+                        className="upload-button1"
+                        onClick={() => profileImageInputRef.current.click()}
+                      >
+                        <FiUpload /> Upload Profile Image
+                      </button>
+                      
+                      {profileImage && (
+                        <div className="document-preview">
+                          <div className="preview-header">
+                            <span>Profile Image</span>
+                            <button
+                              type="button"
+                              className="remove-file"
+                              onClick={removeProfileImage}
+                            >
+                              <FiX />
+                            </button>
+                          </div>
+                          <div className="preview-content">
+                            {profileImage.preview ? (
+                              <img 
+                                src={profileImage.preview} 
+                                alt="Profile Image Preview" 
+                                className="preview-image"
+                              />
+                            ) : (
+                              <div className="preview-placeholder">
+                                <FiUpload />
+                                <span>Image uploaded</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                      {touched.profileImage && errors.profileImage ? (
+                        <div className="error-message">{errors.profileImage}</div>
+                      ) : touched.profileImage && valid.profileImage ? (
+                        <div className="valid-message">Profile image uploaded successfully</div>
+                      ) : null}
+                    </div>
+                  </div>
+                  
                   <div className="languages-section">
-                    <label>Languages Spoken</label>
+                    <label>
+                      Languages Spoken <span className="required-field">*</span>
+                    </label>
                     {guideDetails.languages.map((language, index) => (
-                      <div key={index} className="input-with-remove">
+                      <div key={index} className="input-with-remove" ref={el => fieldRefs.current.languages.current[index] = el}>
                         <input
                           type="text"
                           value={language}
                           onChange={(e) => handleGuideDetailsChange('languages', e.target.value, index)}
+                          onBlur={() => handleBlur('languages', index)}
+                          style={getArrayInputStyle('languages', index)}
                           placeholder="Language"
+                          required={isGuide}
                         />
                         {guideDetails.languages.length > 1 && (
                           <button
@@ -612,6 +1750,11 @@ export default function Signup() {
                             <FiX />
                           </button>
                         )}
+                        {touched.languages[index] && errors.languages[index] ? (
+                          <div className="error-message">{errors.languages[index]}</div>
+                        ) : touched.languages[index] && valid.languages[index] ? (
+                          <div className="valid-message">Language is valid</div>
+                        ) : null}
                       </div>
                     ))}
                     <button type="button" className="add-button" onClick={addLanguage}>
@@ -620,17 +1763,30 @@ export default function Signup() {
                   </div>
 
                   <div className="license-section">
-                    <label>License Number</label>
+                    <label>
+                      License Number <span className="required-field">*</span>
+                    </label>
                     <input
                       type="text"
                       value={guideDetails.licenseNumber}
                       onChange={(e) => handleGuideDetailsChange('licenseNumber', e.target.value)}
+                      onBlur={() => handleBlur('licenseNumber')}
+                      style={getInputStyle('licenseNumber')}
                       placeholder="Enter your guide license number"
                       className="input-field0"
+                      ref={fieldRefs.current.licenseNumber}
+                      required={isGuide}
                     />
+                    {touched.licenseNumber && errors.licenseNumber ? (
+                      <div className="error-message">{errors.licenseNumber}</div>
+                    ) : touched.licenseNumber && valid.licenseNumber ? (
+                      <div className="valid-message">License number is valid</div>
+                    ) : null}
                     
-                    <div className="document-upload">
-                      <label>License Document</label>
+                    <div className="document-upload" ref={fieldRefs.current.licenseDocument}>
+                      <label>
+                        License Document <span className="required-field">*</span>
+                      </label>
                       <input
                         type="file"
                         ref={licenseInputRef}
@@ -674,18 +1830,28 @@ export default function Signup() {
                           </div>
                         </div>
                       )}
+                      {touched.licenseDocument && errors.licenseDocument ? (
+                        <div className="error-message">{errors.licenseDocument}</div>
+                      ) : touched.licenseDocument && valid.licenseDocument ? (
+                        <div className="valid-message">License document uploaded successfully</div>
+                      ) : null}
                     </div>
                   </div>
 
                   <div className="regions-section">
-                    <label>Regions of Expertise</label>
+                    <label>
+                      Regions of Expertise <span className="required-field">*</span>
+                    </label>
                     {guideDetails.regionsOfExpertise.map((region, index) => (
-                      <div key={index} className="input-with-remove">
+                      <div key={index} className="input-with-remove" ref={el => fieldRefs.current.regionsOfExpertise.current[index] = el}>
                         <input
                           type="text"
                           value={region}
                           onChange={(e) => handleGuideDetailsChange('regionsOfExpertise', e.target.value, index)}
+                          onBlur={() => handleBlur('regionsOfExpertise', index)}
+                          style={getArrayInputStyle('regionsOfExpertise', index)}
                           placeholder="Region (e.g., Kathmandu, Pokhara)"
+                          required={isGuide}
                         />
                         {guideDetails.regionsOfExpertise.length > 1 && (
                           <button
@@ -696,6 +1862,11 @@ export default function Signup() {
                             <FiX />
                           </button>
                         )}
+                        {touched.regionsOfExpertise[index] && errors.regionsOfExpertise[index] ? (
+                          <div className="error-message">{errors.regionsOfExpertise[index]}</div>
+                        ) : touched.regionsOfExpertise[index] && valid.regionsOfExpertise[index] ? (
+                          <div className="valid-message">Region is valid</div>
+                        ) : null}
                       </div>
                     ))}
                     <button type="button" className="add-button" onClick={addRegion}>
@@ -703,8 +1874,10 @@ export default function Signup() {
                     </button>
                   </div>
 
-                  <div className="document-upload">
-                    <label>Education Certificates</label>
+                  <div className="document-upload" ref={fieldRefs.current.educationCertificates}>
+                    <label>
+                      Education Certificates <span className="required-field">*</span>
+                    </label>
                     <input
                       type="file"
                       ref={certificateInputRef}
@@ -712,6 +1885,7 @@ export default function Signup() {
                       accept=".pdf,.jpg,.jpeg,.png"
                       multiple
                       onChange={handleCertificateUpload}
+                      required={isGuide && guideDetails.educationCertificates.length === 0}
                     />
                     <button
                       type="button"
@@ -756,10 +1930,17 @@ export default function Signup() {
                         </div>
                       </div>
                     )}
+                    {touched.educationCertificates && errors.educationCertificates ? (
+                      <div className="error-message">{errors.educationCertificates}</div>
+                    ) : touched.educationCertificates && valid.educationCertificates ? (
+                      <div className="valid-message">Certificates uploaded successfully</div>
+                    ) : null}
                   </div>
 
-                  <div className="service-types">
-                    <label>Service Types</label>
+                  <div className="service-types" ref={fieldRefs.current.serviceTypes}>
+                    <label>
+                      Service Types <span className="required-field">*</span>
+                    </label>
                     <div className="service-checkboxes">
                       {['Trekking', 'Cultural Tour', 'City Tour', 'Wildlife Safari'].map((type) => (
                         <label key={type} className="service-checkbox">
@@ -773,25 +1954,42 @@ export default function Signup() {
                         </label>
                       ))}
                     </div>
+                    {touched.serviceTypes && errors.serviceTypes ? (
+                      <div className="error-message">{errors.serviceTypes}</div>
+                    ) : touched.serviceTypes && valid.serviceTypes ? (
+                      <div className="valid-message">Service types selected</div>
+                    ) : null}
                   </div>
 
-                  <div className="pricing-section">
+                  <div className="pricing-section" ref={fieldRefs.current.pricing}>
                     <h4>Pricing Information</h4>
                     <div className="input-group0">
-                      <label>Price per Day (NPR)</label>
+                      <label>
+                        Price per Day (NPR) <span className="required-field">*</span>
+                      </label>
                       <input
                         type="number"
                         value={guideDetails.pricing.perDay}
                         onChange={(e) => handleGuideDetailsChange('pricing', { perDay: Number(e.target.value) })}
+                        onBlur={() => handleBlur('pricing')}
+                        style={getInputStyle('pricing')}
                         placeholder="Enter price per day"
                         min="0"
                         className="input-field0"
+                        required={isGuide}
                       />
+                      {touched.pricing && errors.pricing ? (
+                        <div className="error-message">{errors.pricing}</div>
+                      ) : touched.pricing && valid.pricing ? (
+                        <div className="valid-message">Price is valid</div>
+                      ) : null}
                     </div>
                   </div>
 
-                  <div className="availability-section">
-                    <h4>Availability</h4>
+                  <div className="availability-section" ref={fieldRefs.current.availability}>
+                    <h4>
+                      Availability <span className="required-field">*</span>
+                    </h4>
                     {guideDetails.availability.map((dateSlot, dateIndex) => (
                       <div key={dateIndex} className="availability-item">
                         <div className="date-header">
@@ -801,6 +1999,7 @@ export default function Signup() {
                             onChange={(e) => handleAvailabilityChange(dateIndex, 0, 'date', e.target.value)}
                             className="input-field0"
                             min={new Date().toISOString().split('T')[0]}
+                            required={isGuide}
                           />
                           <button
                             type="button"
@@ -817,6 +2016,7 @@ export default function Signup() {
                               value={slot.startTime}
                               onChange={(e) => handleAvailabilityChange(dateIndex, slotIndex, 'startTime', e.target.value)}
                               className="input-field0"
+                              required={isGuide}
                             />
                             <span>to</span>
                             <input
@@ -824,6 +2024,7 @@ export default function Signup() {
                               value={slot.endTime}
                               onChange={(e) => handleAvailabilityChange(dateIndex, slotIndex, 'endTime', e.target.value)}
                               className="input-field0"
+                              required={isGuide}
                             />
                           </div>
                         ))}
@@ -832,21 +2033,30 @@ export default function Signup() {
                     <button type="button" className="add-button" onClick={addAvailabilitySlot}>
                       <FiPlus /> Add Availability
                     </button>
+                    {touched.availability && errors.availability ? (
+                      <div className="error-message">{errors.availability}</div>
+                    ) : touched.availability && valid.availability ? (
+                      <div className="valid-message">Availability slots added</div>
+                    ) : null}
                   </div>
                 </div>
               )}
 
-              <div className="terms1">
+              <div className="terms1" ref={fieldRefs.current.termsAccepted}>
                 <input
                   type="checkbox"
                   id="terms"
                   name="termsAccepted"
-                  onChange={(e) => setTermsAccepted(e.target.checked)}
+                  checked={termsAccepted}
+                  onChange={handleTermsChange}
                 />
                 <label htmlFor="terms" className="agree-terms-conditions1">
-                  I agree to the Terms & Conditions
+                  I agree to the Terms & Conditions <span className="required-field">*</span>
                 </label>
               </div>
+              {touched.termsAccepted && errors.termsAccepted && (
+                <div className="error-message">{errors.termsAccepted}</div>
+              )}
 
               <button className="submit-button1" type="submit" disabled={isLoading}>
                 {isLoading ? "Signing Up..." : "Sign up"}
@@ -855,12 +2065,15 @@ export default function Signup() {
           ) : (
             <form onSubmit={handleOtpSubmit}>
               <div className="input-group01">
-                <label htmlFor="otp">Enter OTP</label>
+                <label htmlFor="otp">
+                  Enter OTP <span className="required-field">*</span>
+                </label>
                 <input
                   type="text"
                   id="otp"
                   className="input-field01"
                   name="otp"
+                  value={otp}
                   onChange={(e) => setOtp(e.target.value)}
                   placeholder="######"
                   required

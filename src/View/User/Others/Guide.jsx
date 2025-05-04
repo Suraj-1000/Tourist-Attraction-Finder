@@ -5,12 +5,135 @@ import 'react-toastify/dist/ReactToastify.css';
 import Header from '../../../Components/User Header/User-Header';
 import Footer from '../../../Components/Footer';
 import '../../Admin/Management/GuideApproval.css';
+import { FaStar, FaTimes, FaSearch } from 'react-icons/fa';
+
 const Guide = () => {
   const [guides, setGuides] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedGuide, setSelectedGuide] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredGuides, setFilteredGuides] = useState([]);
+
+  // Function to get initials for avatar when no image is available
+  const getInitials = (firstName, lastName) => {
+    const firstInitial = firstName ? firstName.charAt(0).toUpperCase() : '';
+    const lastInitial = lastName ? lastName.charAt(0).toUpperCase() : '';
+    return `${firstInitial}${lastInitial}`;
+  };
+  
+  // Function to render user name for reviews
+  // State to store fetched user names
+  const [userNames, setUserNames] = useState({});
+  
+  // Function to render user name for reviews
+  const renderUserInfo = (review) => {
+    try {
+      // Check if the review has a populated touristId object
+      if (review.touristId && typeof review.touristId === 'object') {
+        // Extract firstName and lastName from touristId object
+        const firstName = review.touristId.firstName || '';
+        const lastName = review.touristId.lastName || '';
+        
+        // If both firstName and lastName exist, return formatted name
+        if (firstName && lastName) {
+          return `${firstName} ${lastName}`;
+        } 
+        // If only one exists, return what we have
+        else if (firstName || lastName) {
+          return (firstName || lastName).trim();
+        }
+        
+        // If we have touristId object but no name, check for email
+        if (review.touristId.email) {
+          return review.touristId.email.split('@')[0]; // Show username part of email
+        }
+      }
+      
+      // If touristId is a string, check if we already fetched the name
+      if (typeof review.touristId === 'string') {
+        const userId = review.touristId;
+        
+        // If we already have the name cached, use it
+        if (userNames[userId]) {
+          return userNames[userId];
+        }
+        
+        // Otherwise, use a default display name based on ID for now
+        // and fetch the details asynchronously
+        setTimeout(() => {
+          fetchUserDetails(userId).then(userDetails => {
+            if (userDetails) {
+              const name = userDetails.firstName && userDetails.lastName 
+                ? `${userDetails.firstName} ${userDetails.lastName}`
+                : userDetails.firstName || userDetails.lastName || userDetails.email;
+                
+              if (name) {
+                setUserNames(prev => ({
+                  ...prev,
+                  [userId]: name
+                }));
+              }
+            }
+          });
+        }, 0);
+        
+        // Return a formatted version of the user ID
+        return `User ${userId.substring(0, 5)}`;
+      }
+      
+      // Check for direct properties on the review object itself
+      if (review.firstName && review.lastName) {
+        return `${review.firstName} ${review.lastName}`.trim();
+      }
+      
+      if (review.touristName) {
+        return review.touristName;
+      }
+      
+      if (review.email) {
+        return review.email.split('@')[0]; // Show username part of email
+      }
+      
+      console.log('Review data:', review);
+    } catch (err) {
+      console.error('Error rendering user info:', err);
+    }
+    
+    return 'Tourist';
+  };
+  
+  // Function to fetch user details by ID (if needed)
+  const fetchUserDetails = async (userId) => {
+    if (!userId) return;
+    
+    try {
+      // Use our new user-basic endpoint that doesn't require authentication
+      const response = await axios.get(`http://localhost:4000/signups/user-basic/${userId}`);
+      
+      if (response.status === 200 && response.data.user) {
+        console.log('Fetched user details:', response.data.user);
+        return response.data.user;
+      }
+    } catch (error) {
+      console.error('Failed to fetch user details:', error);
+      // If that fails, try with other endpoints
+      try {
+        const token = localStorage.getItem('token');
+        // Try guide-profile endpoint
+        const response = await axios.get(`http://localhost:4000/signups/guide-profile/${userId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        
+        if (response.status === 200 && response.data.guide) {
+          console.log('Fetched guide details:', response.data.guide);
+          return response.data.guide;
+        }
+      } catch (innerError) {
+        console.error('All fetch attempts failed:', innerError);
+      }
+    }
+    return null;
+  };
 
   useEffect(() => {
     fetchGuides();
@@ -23,15 +146,24 @@ const Guide = () => {
   const fetchGuides = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get('http://localhost:4000/guides/pending', {
+      const response = await axios.get('http://localhost:4000/guides/approved', {
         headers: { Authorization: `Bearer ${token}` }
       });
-      // Filter only approved guides
-      const approvedGuides = response.data.filter(guide => 
-        guide.guideProfile && guide.guideProfile.verificationStatus === "approved"
-      );
-      setGuides(approvedGuides);
-      setFilteredGuides(approvedGuides);
+      
+      // Process the guide data to ensure all reviews have properly populated tourist info
+      const processedGuides = response.data.map(guide => {
+        if (guide.guideProfile && guide.guideProfile.reviews) {
+          // Log the first review to check its structure
+          if (guide.guideProfile.reviews.length > 0) {
+            console.log('First review structure:', guide.guideProfile.reviews[0]);
+          }
+        }
+        return guide;
+      });
+      
+      // No need to filter, as the endpoint already returns only approved guides
+      setGuides(processedGuides);
+      setFilteredGuides(processedGuides);
       setLoading(false);
     } catch (error) {
       console.error('Error fetching guides:', error);
@@ -92,7 +224,15 @@ const Guide = () => {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="search-input25"
               />
-              <img src="/images/searchicon.png" alt="search" className="search-icon25" />
+              {searchQuery ? (
+                <div className="search-icon-wrapper25" onClick={() => setSearchQuery('')} title="Clear search">
+                  <FaTimes className="search-clear-icon25" />
+                </div>
+              ) : (
+                <div className="search-icon-wrapper25">
+                  <FaSearch className="search-icon25" />
+                </div>
+              )}
             </div>
           </div>
 
@@ -107,15 +247,50 @@ const Guide = () => {
                 <div key={guide._id} className="trip-card25 approved-card">
                   <div className="card-header25">
                     <span className="card-index25">#{index + 1}</span>
+                    <div className="header-ratings">
+                      {guide.guideProfile.ratings?.average ? (
+                        <div className="rating-display">
+                          <span className="rating-value">{guide.guideProfile.ratings.average.toFixed(1)}</span>
+                          <div className="stars-mini">
+                            {[1, 2, 3, 4, 5].map((star) => (
+                              <span key={star} 
+                                className={`star-mini ${star <= Math.round(guide.guideProfile.ratings.average) ? 'filled' : ''}`}>
+                                ★
+                              </span>
+                            ))}
+                          </div>
+                          <span className="reviews-count">({guide.guideProfile.ratings.total || 0})</span>
+                        </div>
+                      ) : (
+                        <span className="no-ratings">No ratings yet</span>
+                      )}
+                    </div>
                     <span className="status-badge25 status-approved">Approved</span>
                   </div>
                   <div className="card-content25">
                     <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                      <img
-                        src={guide.image || '/default-avatar.png'}
-                        alt={`${guide.firstName} ${guide.lastName}`}
-                        style={{ width: 60, height: 60, borderRadius: '50%', objectFit: 'cover', border: '2px solid #eee' }}
-                      />
+                      {guide.image ? (
+                        <img
+                          src={guide.image}
+                          alt={`${guide.firstName} ${guide.lastName}`}
+                          style={{ width: 60, height: 60, borderRadius: '50%', objectFit: 'cover', border: '2px solid #eee' }}
+                        />
+                      ) : (
+                        <div style={{ 
+                          width: 60, 
+                          height: 60, 
+                          borderRadius: '50%', 
+                          backgroundColor: '#e63946', 
+                          display: 'flex', 
+                          justifyContent: 'center', 
+                          alignItems: 'center', 
+                          color: 'white', 
+                          fontWeight: 'bold',
+                          border: '2px solid #eee'
+                        }}>
+                          {getInitials(guide.firstName, guide.lastName)}
+                        </div>
+                      )}
                       <h4 className="trip-title25">{guide.firstName} {guide.lastName}</h4>
                     </div>
                     <div className="trip-info25">
@@ -144,11 +319,29 @@ const Guide = () => {
             <div className="modal-content25">
               <div className="modal-header25">
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
-                  <img
-                    src={selectedGuide.image || '/default-avatar.png'}
-                    alt={`${selectedGuide.firstName} ${selectedGuide.lastName}`}
-                    style={{ width: 80, height: 80, borderRadius: '50%', objectFit: 'cover', border: '2px solid #eee' }}
-                  />
+                  {selectedGuide.image ? (
+                    <img
+                      src={selectedGuide.image}
+                      alt={`${selectedGuide.firstName} ${selectedGuide.lastName}`}
+                      style={{ width: 80, height: 80, borderRadius: '50%', objectFit: 'cover', border: '2px solid #eee' }}
+                    />
+                  ) : (
+                    <div style={{ 
+                      width: 80, 
+                      height: 80, 
+                      borderRadius: '50%', 
+                      backgroundColor: '#e63946', 
+                      display: 'flex', 
+                      justifyContent: 'center', 
+                      alignItems: 'center', 
+                      color: 'white', 
+                      fontWeight: 'bold',
+                      fontSize: '24px',
+                      border: '2px solid #eee'
+                    }}>
+                      {getInitials(selectedGuide.firstName, selectedGuide.lastName)}
+                    </div>
+                  )}
                   <h2 className="modal-title25">{selectedGuide.firstName} {selectedGuide.lastName}</h2>
                 </div>
                 <div className="header-right25">
@@ -288,6 +481,84 @@ const Guide = () => {
                         <p>No education certificates provided</p>
                       )}
                     </div>
+                  </div>
+                </div>
+                
+                {/* Reviews Section - Updated with PackageView style */}
+                <div className="modal-section25 reviews-section25">
+                  <h3 className="section-title25">Reviews & Ratings ({selectedGuide.guideProfile.ratings?.total || 0})</h3>
+                  <div className="rating-summary25">
+                    <div className="average-rating25">
+                      <span className="rating-number25">
+                        {selectedGuide.guideProfile.ratings?.average ? 
+                          selectedGuide.guideProfile.ratings.average.toFixed(1) : 
+                          '0.0'}
+                      </span>
+                      <div className="stars-container25">
+                        {[...Array(5)].map((_, index) => (
+                          <FaStar
+                            key={index}
+                            className={`star ${index < Math.round(selectedGuide.guideProfile.ratings?.average || 0) ? 'filled' : 'empty'}`}
+                            style={{
+                              color: index < Math.round(selectedGuide.guideProfile.ratings?.average || 0) ? '#ffd700' : '#e0e0e0',
+                              marginRight: '2px'
+                            }}
+                          />
+                        ))}
+                      </div>
+                      <span className="total-reviews25">
+                        ({selectedGuide.guideProfile.ratings?.total || 0} reviews)
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <div className="reviews-list25">
+                    {selectedGuide.guideProfile.reviews && selectedGuide.guideProfile.reviews.length > 0 ? (
+                      selectedGuide.guideProfile.reviews.map((review, index) => {
+                        // Add console log to debug the review object structure
+                        console.log('Review object:', review);
+                        console.log('TouristId:', review.touristId);
+                        
+                        return (
+                          <div key={index} className="review-card25">
+                            <div className="review-card-header25">
+                              <div className="reviewer-info25">
+                                <h3>{renderUserInfo(review)}</h3>
+                                
+                                <span className="review-date25">
+                                  {new Date(review.date).toLocaleDateString('en-US', {
+                                    year: 'numeric',
+                                    month: 'long',
+                                    day: 'numeric'
+                                  })}
+                                </span>
+                              </div>
+                              <div className="review-rating25">
+                                {[...Array(5)].map((_, i) => (
+                                  <FaStar
+                                    key={i}
+                                    className={`star ${i < review.rating ? 'filled' : 'empty'}`}
+                                    style={{
+                                      color: i < review.rating ? '#ffd700' : '#e0e0e0',
+                                      marginRight: '2px'
+                                    }}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                            <p className="review-text25">{review.comment}</p>
+                            {review.reply && (
+                              <div className="guide-reply-section">
+                                <strong>Guide's Response:</strong>
+                                <p>{review.reply}</p>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })
+                    ) : (
+                      <p className="no-reviews25">No reviews yet. Be the first to review!</p>
+                    )}
                   </div>
                 </div>
               </div>

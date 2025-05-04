@@ -238,7 +238,8 @@ cursor: pointer;
 
 .result-card17 {
   display: flex;
-  width: 1351px;
+  width: 100%;
+  max-width: 1351px;
   height: 375px;
   gap: 20px;
   background: rgba(253, 249, 249, 0.85);
@@ -249,7 +250,8 @@ cursor: pointer;
   position: relative;
   align-items: center; 
   transition: box-shadow 0.3s ease-in-out;
-  margin-left: 115px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .result-card17:hover {
@@ -267,25 +269,38 @@ cursor: pointer;
   flex-grow: 1;
   display: flex;
   flex-direction: column;
-  justify-content: center; 
+  justify-content: flex-start; 
   margin-bottom: 10px;
+  max-width: calc(100% - 350px);
+  overflow: hidden;
 }
 
 .card-title-rating17 {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   width: 100%;
+  margin-bottom: 10px;
+  margin-top: 55px;
 }
 
 .card-title-rating17 h3 {
   display: flex;
   align-items: center;
   gap: 10px; 
+  flex-wrap: wrap;
 }
 
 .title17{
-  margin-bottom: 15px;
+  margin-bottom: 5px;
+  font-size: 20px;
+}
+
+.star-rating {
+  display: inline-flex !important; 
+  align-items: center !important;
+  margin-left: 15px !important;
+  flex-wrap: wrap !important;
 }
 
 .rating17 {
@@ -333,7 +348,8 @@ cursor: pointer;
 .view-details17 {
   text-decoration: underline;
   cursor: pointer;
-  color: black; 
+  color: black;
+  margin-bottom: 45px;
 }
 
 .view-details17:hover {
@@ -353,6 +369,7 @@ cursor: pointer;
   bottom: 20px;
   font-weight: bold;
   margin-bottom: 10px;
+  z-index: 1;
 }
 
 .edit-delete-icons17 {
@@ -442,17 +459,29 @@ cursor: pointer;
 
 .ranking-string17,
 .category-string17 {
-    margin-bottom: 2px;
+    margin-bottom: 5px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
 }
 
 .highlight-text17 {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 50%;
-  display: block;
+  max-width: 80%;
+  display: inline-block;
+  padding-right: 20px;
 }
 
+/* Add a specific style for the highlight container */
+.category-string17.highlight-text17 {
+  max-width: 700px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
 /* Toast Styles */
 .toast-message17 {

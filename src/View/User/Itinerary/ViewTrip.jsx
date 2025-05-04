@@ -44,12 +44,19 @@ export default function ViewTripPage() {
 };
 
 const convertPrice = (priceString) => {
-  if (!priceString || isNaN(priceString)) {
+  if (!priceString) {
       return "N/A"; 
   }
 
   try {
-    const priceInUSD = parseFloat(priceString.replace(/[^0-9.]+/g, "")); 
+    // Ensure priceString is actually a string
+    const priceStr = String(priceString);
+    
+    const priceInUSD = parseFloat(priceStr.replace(/[^0-9.]+/g, "")); 
+
+    if (isNaN(priceInUSD)) {
+      return "N/A";
+    }
 
     if (!exchangeRates || !exchangeRates[currency]) {
         return `USD ${formatNumberWithCommas(priceInUSD)}`; // Fallback to USD
@@ -60,7 +67,7 @@ const convertPrice = (priceString) => {
     
     return `${currency} ${formatNumberWithCommas(parseFloat(convertedPrice))}`;
   } catch (error) {
-    console.error("Error converting price:", error);
+    console.error("Error converting price:", error, "Price value:", priceString);
     return "N/A";
   }
 };
@@ -552,7 +559,13 @@ const handleShare = async (trip) => {
       console.error('Error saving booking to history:', error);
     }
 
-    setSelectedTrip(trip);
+    // Ensure trip has its _id
+    const tripWithId = {
+      ...trip,
+      _id: trip._id // Make sure _id is included
+    };
+    
+    setSelectedTrip(tripWithId);
     setShowUserForm(true);
   };
 
@@ -561,11 +574,12 @@ const handleShare = async (trip) => {
       const paymentDetails = {
         ...formData,
         packageDetails: {
+          _id: selectedTrip._id,
           title: selectedTrip.tripName,
           duration: selectedTrip.duration,
           tripType: selectedTrip.tripType,
           price: selectedTrip.totalBudget ? selectedTrip.totalBudget.replace(/[^0-9.-]+/g, "") : "0",
-          category: selectedTrip.tripType,
+          category: selectedTrip.tripType || 'Short Trip', // Use tripType as category
           groupSize: "Custom",
           difficulty: "Custom",
           startDate: selectedTrip.startDate || null,
@@ -847,11 +861,12 @@ const handleShare = async (trip) => {
           {showUserForm && selectedTrip && (
             <UserDetailsForm
               packageDetails={{
+                _id: selectedTrip._id,
                 title: selectedTrip.tripName,
                 duration: selectedTrip.duration,
                 tripType: selectedTrip.tripType,
                 price: selectedTrip.totalBudget ? selectedTrip.totalBudget.replace(/[^0-9.-]+/g, "") : "0",
-                category: selectedTrip.tripType,
+                category: selectedTrip.tripType || 'Short Trip',
                 groupSize: "Custom",
                 difficulty: "Custom",
                 startDate: selectedTrip.startDate || null,

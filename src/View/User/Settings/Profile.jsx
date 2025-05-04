@@ -21,14 +21,186 @@ export default function ProfilePage() {
     image: null
   });
 
+  // Store original values to detect changes
+  const [originalUser, setOriginalUser] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    gender: '',
+    dateOfBirth: '',
+    address: '',
+  });
+
+  // Add validation states
+  const [errors, setErrors] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    dateOfBirth: '',
+    address: '',
+    gender: ''
+  });
+
+  // Add touched states to track which fields user has interacted with
+  const [touched, setTouched] = useState({
+    firstName: false,
+    lastName: false,
+    email: false,
+    phone: false,
+    dateOfBirth: false,
+    address: false,
+    gender: false
+  });
+
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
   const [loading, setLoading] = useState(true);
   const [userImage, setUserImage] = useState("");
+  const [originalImage, setOriginalImage] = useState("");
   const [isEditing, setIsEditing] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const [showPreferencesModal, setShowPreferencesModal] = useState(false);
   const [userPreferences, setUserPreferences] = useState([]);
+
+  // Validation functions
+  const validateFirstName = (value) => {
+    if (!value.trim()) return "First name is required";
+    if (!/^[A-Za-z\s]+$/.test(value)) return "First name should contain only letters and spaces";
+    return "";
+  };
+
+  const validateLastName = (value) => {
+    if (!value.trim()) return "Last name is required";
+    if (!/^[A-Za-z\s]+$/.test(value)) return "Last name should contain only letters and spaces";
+    return "";
+  };
+
+  const validateEmail = (value) => {
+    if (!value.trim()) return "Email is required";
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return "Please enter a valid email address";
+    return "";
+  };
+
+  const validatePhone = (value) => {
+    if (!value.trim()) return "Phone number is required";
+    if (!/^(97|98)\d{8}$/.test(value)) return "Phone must start with 97 or 98 followed by 8 digits";
+    return "";
+  };
+
+  const validateDateOfBirth = (value) => {
+    if (!value) return "Date of birth is required";
+    
+    const today = new Date();
+    const birthDate = new Date(value);
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    
+    if (age < 16) return "You must be at least 16 years old";
+    return "";
+  };
+
+  const validateAddress = (value) => {
+    if (!value.trim()) return "Address is required";
+    return "";
+  };
+
+  const validateGender = (value) => {
+    if (!value) return "Gender selection is required";
+    return "";
+  };
+
+  // Handle field change and validation
+  const handleFieldChange = (field, value) => {
+    setUser(prev => ({ ...prev, [field]: value }));
+    
+    // Validate the field and immediately update errors
+    let errorMessage = "";
+    switch (field) {
+      case "firstName":
+        errorMessage = validateFirstName(value);
+        break;
+      case "lastName":
+        errorMessage = validateLastName(value);
+        break;
+      case "email":
+        errorMessage = validateEmail(value);
+        break;
+      case "phone":
+        errorMessage = validatePhone(value);
+        break;
+      case "dateOfBirth":
+        errorMessage = validateDateOfBirth(value);
+        break;
+      case "address":
+        errorMessage = validateAddress(value);
+        break;
+      case "gender":
+        errorMessage = validateGender(value);
+        break;
+      default:
+        break;
+    }
+    
+    // Update errors and touched state
+    setErrors(prev => ({ ...prev, [field]: errorMessage }));
+    setTouched(prev => ({ ...prev, [field]: true }));
+  };
+
+  // Handle field blur
+  const handleFieldBlur = (field) => {
+    setTouched(prev => ({ ...prev, [field]: true }));
+  };
+
+  // Validate all fields
+  const validateAllFields = () => {
+    const newErrors = {
+      firstName: validateFirstName(user.firstName),
+      lastName: validateLastName(user.lastName),
+      email: validateEmail(user.email),
+      phone: validatePhone(user.phone),
+      dateOfBirth: validateDateOfBirth(user.dateOfBirth),
+      address: validateAddress(user.address),
+      gender: validateGender(user.gender)
+    };
+    
+    setErrors(newErrors);
+    setTouched({
+      firstName: true,
+      lastName: true,
+      email: true,
+      phone: true,
+      dateOfBirth: true,
+      address: true,
+      gender: true
+    });
+    
+    // Return true if no errors, false if there are errors
+    return !Object.values(newErrors).some(error => error);
+  };
+
+  // Filter non-numeric characters from phone input
+  const handlePhoneChange = (e) => {
+    const value = e.target.value;
+    // Only allow numeric input
+    if (!/^\d*$/.test(value)) {
+      return;
+    }
+    
+    // Limit to 10 digits
+    if (value.length > 10) {
+      return;
+    }
+    
+    setUser(prev => ({ ...prev, phone: value }));
+    setErrors(prev => ({ ...prev, phone: validatePhone(value) }));
+    setTouched(prev => ({ ...prev, phone: true }));
+  };
 
   useEffect(() => {
     fetchUserDetails();
@@ -51,7 +223,8 @@ export default function ProfilePage() {
       if (response.status === 200) {
         const userData = response.data;
         localStorage.setItem("user", JSON.stringify(userData));
-        setUser({
+        
+        const userObj = {
           firstName: userData.firstName || "",
           lastName: userData.lastName || "",
           email: userData.email || "",
@@ -61,7 +234,9 @@ export default function ProfilePage() {
           address: userData.address || "",
           role: userData.role || "",
           image: userData.image || null
-        });
+        };
+        
+        setUser(userObj);
         setUserImage(userData.image || "");
         setUserPreferences(userData.eventPreferences || []);
         setLoading(false);
@@ -82,25 +257,56 @@ export default function ProfilePage() {
     }
   };
 
+  // Function to start editing
+  const startEditing = () => {
+    // Store original values for comparison when updating
+    setOriginalUser({
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      phone: user.phone,
+      gender: user.gender,
+      dateOfBirth: user.dateOfBirth,
+      address: user.address,
+    });
+    setOriginalImage(userImage);
+    setIsEditing(true);
+  };
+
+  // Check if any changes have been made
+  const hasChanges = () => {
+    // Check if any text fields changed
+    const fieldsChanged = 
+      user.firstName !== originalUser.firstName ||
+      user.lastName !== originalUser.lastName ||
+      user.email !== originalUser.email ||
+      user.phone !== originalUser.phone ||
+      user.gender !== originalUser.gender ||
+      user.dateOfBirth !== originalUser.dateOfBirth ||
+      user.address !== originalUser.address;
+    
+    // Check if image changed
+    const imageChanged = user.image instanceof File;
+    
+    return fieldsChanged || imageChanged;
+  };
+
   const handleUpdate = async (e) => {
     e.preventDefault();
+    
+    // Check if any changes were made
+    if (!hasChanges()) {
+      toast.error("No changes detected. Please make changes before updating.");
+      return;
+    }
+
+    // Validate all fields before submission
+    if (!validateAllFields()) {
+      toast.error("Please fix all validation errors before submitting.");
+      return;
+    }
+    
     setIsUpdating(true);
-
-    // Validation
-    const phoneRegex = /^(98|97)\d{8}$/;
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-    if (!phoneRegex.test(user.phone)) {
-      toast.error("Phone number must start with 98 or 97 and be 10 digits long");
-      setIsUpdating(false);
-      return;
-    }
-
-    if (!emailRegex.test(user.email)) {
-      toast.error("Please enter a valid email address");
-      setIsUpdating(false);
-      return;
-    }
 
     try {
       const formData = new FormData();
@@ -165,6 +371,34 @@ export default function ProfilePage() {
     return `${firstInitial}${lastInitial}`;
   };
 
+  // Helper function to determine input class based on validation
+  const getInputClassName = (fieldName) => {
+    const baseClass = "input-field64";
+    
+    // If the field has a value, show validation state
+    if (user[fieldName]) {
+      return errors[fieldName] 
+        ? `${baseClass} input-error64` 
+        : `${baseClass} input-valid64`;
+    }
+    
+    return baseClass;
+  };
+  
+  // Helper function for textarea
+  const getTextareaClassName = (fieldName) => {
+    const baseClass = "textarea-field64";
+    
+    // If the field has a value, show validation state
+    if (user[fieldName]) {
+      return errors[fieldName] 
+        ? `${baseClass} input-error64` 
+        : `${baseClass} input-valid64`;
+    }
+    
+    return baseClass;
+  };
+
   if (loading) return <div className="loading64">Loading User details...</div>;
 
   return (
@@ -179,7 +413,7 @@ export default function ProfilePage() {
           // View Mode
           <div className="profile-view64">
             <div className="profile-header64">
-              <button className="edit-profile-btn64" onClick={() => setIsEditing(true)}>
+              <button className="edit-profile-btn64" onClick={startEditing}>
                 <FaEdit size={20} />
               </button>
               <div className="profile-image-container64">
@@ -255,52 +489,81 @@ export default function ProfilePage() {
             <h3 className="form-card-heading64">Edit Your Profile</h3>
             <div className="form-container64">
               <div className="left-side64">
-                <label className="form-label64">First Name:</label>
+                <label className="form-label64">
+                  First Name <span className="required-asterisk64">*</span>
+                </label>
                 <input
                   type="text"
-                  className="input-field64"
+                  className={getInputClassName("firstName")}
                   value={user.firstName}
-                  onChange={(e) => setUser({ ...user, firstName: e.target.value })}
+                  onChange={(e) => handleFieldChange("firstName", e.target.value)}
+                  onBlur={() => handleFieldBlur("firstName")}
                   required
+                  maxLength={50}
                 />
+                {errors.firstName && <div className="error-message64">{errors.firstName}</div>}
+                {!errors.firstName && user.firstName && <div className="helper-text64">First name is valid</div>}
 
-                <label className="form-label64">Last Name:</label>
+                <label className="form-label64">
+                  Last Name <span className="required-asterisk64">*</span>
+                </label>
                 <input
                   type="text"
-                  className="input-field64"
+                  className={getInputClassName("lastName")}
                   value={user.lastName}
-                  onChange={(e) => setUser({ ...user, lastName: e.target.value })}
+                  onChange={(e) => handleFieldChange("lastName", e.target.value)}
+                  onBlur={() => handleFieldBlur("lastName")}
                   required
+                  maxLength={50}
                 />
+                {errors.lastName && <div className="error-message64">{errors.lastName}</div>}
+                {!errors.lastName && user.lastName && <div className="helper-text64">Last name is valid</div>}
 
-                <label className="form-label64">Email:</label>
+                <label className="form-label64">
+                  Email <span className="required-asterisk64">*</span>
+                </label>
                 <input
                   type="email"
-                  className="input-field64"
+                  className={getInputClassName("email")}
                   value={user.email}
-                  onChange={(e) => setUser({ ...user, email: e.target.value })}
+                  onChange={(e) => handleFieldChange("email", e.target.value)}
+                  onBlur={() => handleFieldBlur("email")}
                   required
                 />
+                {errors.email && <div className="error-message64">{errors.email}</div>}
+                {!errors.email && user.email && <div className="helper-text64">Email is valid</div>}
 
-                <label className="form-label64">Phone:</label>
+                <label className="form-label64">
+                  Phone <span className="required-asterisk64">*</span>
+                </label>
                 <input
                   type="text"
-                  className="input-field64"
+                  className={getInputClassName("phone")}
                   value={user.phone}
-                  onChange={(e) => setUser({ ...user, phone: e.target.value })}
+                  onChange={handlePhoneChange}
+                  onBlur={() => handleFieldBlur("phone")}
                   required
+                  maxLength={10}
+                  placeholder="Must start with 97 or 98"
                 />
+                {errors.phone && <div className="error-message64">{errors.phone}</div>}
+                {!errors.phone && user.phone && <div className="helper-text64">Phone number is valid</div>}
 
-                <label className="form-label64">Address:</label>
+                <label className="form-label64">
+                  Address <span className="required-asterisk64">*</span>
+                </label>
                 <textarea
-                  className="textarea-field64"
+                  className={getTextareaClassName("address")}
                   value={user.address}
-                  onChange={(e) => setUser({ ...user, address: e.target.value })}
-                  placeholder="Enter your complete address (Required)"
+                  onChange={(e) => handleFieldChange("address", e.target.value)}
+                  onBlur={() => handleFieldBlur("address")}
+                  placeholder="Enter your complete address"
                   required
                   rows={4}
                   style={{ resize: 'vertical', minHeight: '100px' }}
                 />
+                {errors.address && <div className="error-message64">{errors.address}</div>}
+                {!errors.address && user.address && <div className="helper-text64">Address is valid</div>}
               </div>
 
               <div className="right-side64">
@@ -322,7 +585,9 @@ export default function ProfilePage() {
                   accept="image/*"
                 />
 
-                <label className="form-label64">Gender:</label>
+                <label className="form-label64">
+                  Gender <span className="required-asterisk64">*</span>
+                </label>
                 <div className="radio-container64">
                   <label className="radio-label64">
                     <input
@@ -330,7 +595,8 @@ export default function ProfilePage() {
                       name="gender"
                       value="Male"
                       checked={user.gender === "Male"}
-                      onChange={(e) => setUser({ ...user, gender: e.target.value })}
+                      onChange={(e) => handleFieldChange("gender", e.target.value)}
+                      required
                     />
                     Male
                   </label>
@@ -340,7 +606,8 @@ export default function ProfilePage() {
                       name="gender"
                       value="Female"
                       checked={user.gender === "Female"}
-                      onChange={(e) => setUser({ ...user, gender: e.target.value })}
+                      onChange={(e) => handleFieldChange("gender", e.target.value)}
+                      required
                     />
                     Female
                   </label>
@@ -350,19 +617,28 @@ export default function ProfilePage() {
                       name="gender"
                       value="Others"
                       checked={user.gender === "Others"}
-                      onChange={(e) => setUser({ ...user, gender: e.target.value })}
+                      onChange={(e) => handleFieldChange("gender", e.target.value)}
+                      required
                     />
                     Others
                   </label>
                 </div>
+                {errors.gender && <div className="error-message64">{errors.gender}</div>}
+                {!errors.gender && user.gender && <div className="helper-text64">Gender is selected</div>}
 
-                <label className="form-label64">Date of Birth:</label>
+                <label className="form-label64">
+                  Date of Birth <span className="required-asterisk64">*</span>
+                </label>
                 <input
                   type="date"
-                  className="input-field64"
+                  className={getInputClassName("dateOfBirth")}
                   value={user.dateOfBirth}
-                  onChange={(e) => setUser({ ...user, dateOfBirth: e.target.value })}
+                  onChange={(e) => handleFieldChange("dateOfBirth", e.target.value)}
+                  onBlur={() => handleFieldBlur("dateOfBirth")}
+                  required
                 />
+                {errors.dateOfBirth && <div className="error-message64">{errors.dateOfBirth}</div>}
+                {!errors.dateOfBirth && user.dateOfBirth && <div className="helper-text64">Date of birth is valid</div>}
               </div>
             </div>
 
@@ -377,7 +653,7 @@ export default function ProfilePage() {
               <button 
                 className="add-button64" 
                 onClick={handleUpdate}
-                disabled={isUpdating}
+                disabled={isUpdating || Object.values(errors).some(error => error)}
               >
                 {isUpdating ? 'Updating...' : 'Update Profile'}
               </button>

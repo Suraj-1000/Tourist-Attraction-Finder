@@ -149,13 +149,21 @@ export default function ReviewPage() {
           <h1>{isAdmin ? 'Review Management' : 'Reviews'}</h1>
           <div className="review-filters">
             <div className="search-box">
-              <FontAwesomeIcon icon={faSearch} className="search-icon" />
+              <FontAwesomeIcon icon={faSearch} className="search-icon1" />
               <input
                 type="text"
                 placeholder="Search reviews..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
+              {searchQuery && (
+                <FontAwesomeIcon 
+                  icon={faTrash} 
+                  className="clear-search-icon" 
+                  onClick={() => setSearchQuery('')} 
+                  title="Clear search"
+                />
+              )}
             </div>
             <div className="filter-box">
               <FontAwesomeIcon icon={faFilter} className="filter-icon" />

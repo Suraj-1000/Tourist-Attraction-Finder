@@ -26,20 +26,32 @@ export default function ViewTripDetailsPage() {
 };
 
 const convertPrice = (priceString) => {
-  if (!priceString || isNaN(priceString)) {
+  if (!priceString) {
       return "N/A"; 
   }
 
-  const priceInUSD = parseFloat(priceString.replace(/[^0-9.]+/g, "")); 
-
-  if (!exchangeRates || !exchangeRates[currency]) {
-      return "Loading..."; // Exchange rates not yet loaded
-  }
-
-  const conversionRate = exchangeRates[currency]; 
-  const convertedPrice = (priceInUSD * conversionRate).toFixed(2);
+  // Ensure priceString is actually a string
+  const priceStr = String(priceString);
   
-  return `${currency} ${formatNumberWithCommas(parseFloat(convertedPrice))}`;
+  try {
+    const priceInUSD = parseFloat(priceStr.replace(/[^0-9.]+/g, "")); 
+
+    if (isNaN(priceInUSD)) {
+      return "N/A";
+    }
+
+    if (!exchangeRates || !exchangeRates[currency]) {
+        return "Loading..."; // Exchange rates not yet loaded
+    }
+
+    const conversionRate = exchangeRates[currency]; 
+    const convertedPrice = (priceInUSD * conversionRate).toFixed(2);
+    
+    return `${currency} ${formatNumberWithCommas(parseFloat(convertedPrice))}`;
+  } catch (error) {
+    console.error("Error converting price:", error, "Price value:", priceString);
+    return "N/A";
+  }
 };
 
 
@@ -119,11 +131,12 @@ const convertPrice = (priceString) => {
       const paymentDetails = {
         ...formData,
         packageDetails: {
+          _id: tripDetails._id,
           title: tripDetails.tripName,
           duration: tripDetails.duration,
           tripType: tripDetails.tripType,
           price: tripDetails.totalBudget ? tripDetails.totalBudget.replace(/[^0-9.-]+/g, "") : "0",
-          category: tripDetails.tripType,
+          category: tripDetails.tripType || 'Short Trip',
           groupSize: "Custom",
           difficulty: "Custom",
           startDate: tripDetails.startDate || null,
@@ -148,6 +161,13 @@ const convertPrice = (priceString) => {
       toast.error('Failed to initialize payment. Please try again.');
       setShowUserForm(false);
     }
+  };
+
+  // Helper function to get initials from name
+  const getInitials = (firstName, lastName) => {
+    const firstInitial = firstName ? firstName.charAt(0).toUpperCase() : '';
+    const lastInitial = lastName ? lastName.charAt(0).toUpperCase() : '';
+    return `${firstInitial}${lastInitial}`;
   };
 
   if (loading) return <div className="loading24">Loading trip details...</div>;
@@ -213,47 +233,101 @@ const convertPrice = (priceString) => {
         <h3 className="section-heading24">Transportation Preferences</h3>
         <p className="info-item24"><strong>Type:</strong> {tripDetails.transportationType || "Not Specified"}</p>
 
+        {/* Updated Guide Information Section */}
         {tripDetails && tripDetails.guideIncluded && (
-          <>
+          <div className="guide-section-wrapper24">
             <h3 className="section-heading24">Guide Information</h3>
-            <div className="guide-info-container24" style={{
-              background: '#f8f9fa',
-              padding: '20px',
-              borderRadius: '8px',
-              marginBottom: '20px',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
-            }}>
-              <p className="info-item24"><strong>Guide Included:</strong> <span style={{ color: '#28a745', fontWeight: 'bold' }}>Yes</span></p>
+            <div className="guide-info-container24">
+              <div className="guide-info-header24">
+                <div className="guide-status24">
+                  <span className="guide-badge24">Guide Included</span>
+                </div>
+              </div>
+              
               {loadingGuide ? (
-                <p className="info-item24" style={{ color: '#6c757d', fontStyle: 'italic' }}>Loading guide details...</p>
+                <div className="guide-loading24">
+                  <div className="loading-spinner24"></div>
+                  <p>Loading guide details...</p>
+                </div>
               ) : guideDetails ? (
-                <>
-                  <div style={{ 
-                    display: 'grid', 
-                    gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-                    gap: '15px',
-                    marginTop: '15px'
-                  }}>
-                    <p className="info-item24"><strong>Guide Name:</strong> {guideDetails.firstName} {guideDetails.lastName}</p>
-                    <p className="info-item24"><strong>Languages:</strong> {guideDetails.guideProfile?.languages?.join(", ") || "Not specified"}</p>
-                    <p className="info-item24"><strong>Expertise:</strong> {guideDetails.guideProfile?.regionsOfExpertise?.join(", ") || "Not specified"}</p>
-                    <p className="info-item24"><strong>Services:</strong> {guideDetails.guideProfile?.serviceTypes?.join(", ") || "Not specified"}</p>
+                <div className="guide-compact-wrapper24">
+                  <div className="guide-profile-header24">
+                    {guideDetails.image ? (
+                      <img 
+                        src={guideDetails.image} 
+                        alt={`${guideDetails.firstName} ${guideDetails.lastName}`}
+                        className="guide-avatar24"
+                        onError={(e) => {
+                          e.target.style.display = 'none';
+                          e.target.parentNode.classList.add('initials-avatar24');
+                          e.target.parentNode.innerText = getInitials(guideDetails.firstName, guideDetails.lastName);
+                        }}
+                      />
+                    ) : (
+                      <div className="initials-avatar24">
+                        {getInitials(guideDetails.firstName, guideDetails.lastName)}
+                      </div>
+                    )}
+                    
+                    <div className="guide-name-details24">
+                      <h4>{guideDetails.firstName} {guideDetails.lastName}</h4>
+                      <div className="guide-ratings24">
+                        {guideDetails.guideProfile?.ratings?.average ? (
+                          <div className="ratings-display24">
+                            <span className="rating-value24">{guideDetails.guideProfile.ratings.average.toFixed(1)}</span>
+                            <div className="stars-mini24">
+                              {[1, 2, 3, 4, 5].map((star) => (
+                                <span key={star} 
+                                  className={`star-mini24 ${star <= Math.round(guideDetails.guideProfile.ratings.average) ? 'filled' : ''}`}>
+                                  ★
+                                </span>
+                              ))}
+                            </div>
+                            <span className="reviews-count24">({guideDetails.guideProfile.ratings.total || 0})</span>
+                          </div>
+                        ) : (
+                          <span className="no-ratings24">No ratings yet</span>
+                        )}
+                      </div>
+                    </div>
+
+                    {tripDetails.guideCost && (
+                      <div className="guide-cost-badge24">
+                        {convertPrice(tripDetails.guideCost)}
+                      </div>
+                    )}
                   </div>
-                  <p className="info-item24" style={{ 
-                    marginTop: '15px', 
-                    padding: '10px', 
-                    background: '#e9ecef', 
-                    borderRadius: '5px',
-                    fontWeight: 'bold'
-                  }}>
-                    <strong>Guide Cost:</strong> {convertPrice(tripDetails.guideCost)} ({tripDetails.duration})
-                  </p>
-                </>
+                  
+                  <div className="guide-attributes24">
+                    {guideDetails.guideProfile?.languages?.length > 0 && (
+                      <div className="attribute-item24">
+                        <span className="attribute-icon24">🗣️</span>
+                        <span className="attribute-text24">{guideDetails.guideProfile.languages.join(", ")}</span>
+                      </div>
+                    )}
+                    
+                    {guideDetails.guideProfile?.regionsOfExpertise?.length > 0 && (
+                      <div className="attribute-item24">
+                        <span className="attribute-icon24">🗺️</span>
+                        <span className="attribute-text24">{guideDetails.guideProfile.regionsOfExpertise.join(", ")}</span>
+                      </div>
+                    )}
+                    
+                    {guideDetails.guideProfile?.serviceTypes?.length > 0 && (
+                      <div className="attribute-item24">
+                        <span className="attribute-icon24">🛎️</span>
+                        <span className="attribute-text24">{guideDetails.guideProfile.serviceTypes.join(", ")}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
               ) : (
-                <p className="info-item24" style={{ color: '#dc3545' }}>Guide details not available</p>
+                <div className="guide-not-available24">
+                  <p>Guide details not available at the moment. The guide has been assigned but details cannot be retrieved.</p>
+                </div>
               )}
             </div>
-          </>
+          </div>
         )}
 
         <h3 className="section-heading24">Day by Day Itinerary</h3>
@@ -386,11 +460,12 @@ const convertPrice = (priceString) => {
         {showUserForm && tripDetails && (
             <UserDetailsForm
                 packageDetails={{
+                    _id: tripDetails._id,
                     title: tripDetails.tripName,
                     duration: tripDetails.duration,
                     tripType: tripDetails.tripType,
                     price: tripDetails.totalBudget ? tripDetails.totalBudget.replace(/[^0-9.-]+/g, "") : "0",
-                    category: tripDetails.tripType,
+                    category: tripDetails.tripType || 'Short Trip',
                     groupSize: "Custom",
                     difficulty: "Custom",
                     startDate: tripDetails.startDate || null,

@@ -11,13 +11,23 @@ export const verifyToken = async (req, res, next) => {
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await Signup.findById(decoded.id);
+    console.log('Decoded token:', decoded);
+    
+    // Check for userId or id in the token payload
+    const userId = decoded.userId || decoded.id;
+    
+    if (!userId) {
+      return res.status(401).json({ message: 'Invalid token format' });
+    }
+    
+    const user = await Signup.findById(userId);
     
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
 
     req.user = user;
+    req.userId = userId; // Set both user object and userId for convenience
     next();
   } catch (error) {
     res.status(401).json({ message: 'Invalid token' });

@@ -13,8 +13,19 @@ const CalenderView = () => {
     const [datePickerValue, setDatePickerValue] = useState(
         `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}`
     );
+    const [currentGuideId, setCurrentGuideId] = useState(null);
+    const [activeFilter, setActiveFilter] = useState('all');
+    const [filteredBookings, setFilteredBookings] = useState([]);
 
     useEffect(() => {
+        // Get current guide ID from localStorage
+        const user = JSON.parse(localStorage.getItem('user'));
+        if (user && user.id) {
+            setCurrentGuideId(user.id);
+        } else if (user && user._id) {
+            setCurrentGuideId(user._id);
+        }
+        
         fetchBookings();
     }, []);
 
@@ -25,15 +36,115 @@ const CalenderView = () => {
         );
     }, [selectedDate]);
 
+    // Filter bookings when filter option or bookings change
+    useEffect(() => {
+        applyFilters();
+    }, [activeFilter, bookings]);
+
+    const applyFilters = () => {
+        let filtered = [...bookings];
+        
+        // Apply tour type filter
+        switch(activeFilter) {
+            case 'packages':
+                filtered = filtered.filter(booking => {
+                    const bookingType = getBookingType(booking);
+                    return bookingType === 'package';
+                });
+                break;
+            case 'trips':
+                filtered = filtered.filter(booking => {
+                    const bookingType = getBookingType(booking);
+                    return bookingType === 'trip';
+                });
+                break;
+            case 'events':
+                filtered = filtered.filter(booking => {
+                    const bookingType = getBookingType(booking);
+                    return bookingType === 'event';
+                });
+                break;
+            default:
+                // 'all' filter - no additional filtering needed
+                break;
+        }
+        
+        setFilteredBookings(filtered);
+    };
+
     const fetchBookings = async () => {
         try {
             const response = await axios.get('http://localhost:4000/payments/all-bookings');
             if (response.data.success) {
-                // Filter only completed bookings
-                const completedBookings = response.data.bookings.filter(
-                    booking => booking.status.toLowerCase() === 'completed'
-                );
-                setBookings(completedBookings);
+                // Get the current guide's ID if not already set
+                const user = JSON.parse(localStorage.getItem('user'));
+                let guideId = currentGuideId;
+                if (!guideId && user) {
+                    if (user.id) {
+                        guideId = user.id;
+                        setCurrentGuideId(user.id);
+                    } else if (user._id) {
+                        guideId = user._id;
+                        setCurrentGuideId(user._id);
+                    }
+                }
+                
+                // Filter bookings for the current guide
+                let filteredBookings = [];
+                
+                if (guideId) {
+                    console.log("Filtering calendar bookings for guide ID:", guideId);
+                    
+                    filteredBookings = response.data.bookings.filter(booking => {
+                        // Case 1: First filter completed bookings
+                        if (booking.status.toLowerCase() !== 'completed') {
+                            return false;
+                        }
+                        
+                        // Get package details and determine if it's a trip
+                        const packageDetails = booking.paymentDetails?.packageDetails || {};
+                        const category = (packageDetails.category || '').toLowerCase();
+                        const isTrip = category.includes('short trip') || category.includes('long trip');
+                        
+                        // Case 2: Booking has no guide assigned (guideId is undefined/null)
+                        if (!booking.guideId) {
+                            console.log(`Calendar: Booking ${booking.bookingId}, ${booking.packageName}: No guide assigned, showing to all guides`);
+                            return true; // Show to all guides
+                        }
+                        
+                        // Convert both IDs to strings for comparison to avoid type issues
+                        const bookingGuideId = String(booking.guideId);
+                        const currentId = String(guideId);
+                        
+                        // Debug trip bookings specifically
+                        if (isTrip) {
+                            console.log(`CALENDAR TRIP BOOKING: ${booking.packageName}, guideId=${bookingGuideId}, currentGuideId=${currentId}, match=${bookingGuideId === currentId}`);
+                            
+                            // Additional debugging for trip guide details
+                            if (booking.tripGuideDetails) {
+                                console.log(`Trip guide details found: name=${booking.tripGuideDetails.guideName}, email=${booking.tripGuideDetails.guideEmail}`);
+                            }
+                        }
+                        
+                        // Case 3: Booking is assigned to this guide
+                        const isAssigned = bookingGuideId === currentId;
+                        if (isAssigned) {
+                            console.log(`Calendar: Booking ${booking.bookingId}, ${booking.packageName}: Assigned to current guide (${bookingGuideId} === ${currentId})`);
+                            return true;
+                        } else {
+                            console.log(`Calendar: Booking ${booking.bookingId}, ${booking.packageName}: Not assigned to current guide (${bookingGuideId} !== ${currentId})`);
+                            return false;
+                        }
+                    });
+                } else {
+                    // If no guide ID found, show all completed bookings (admin view)
+                    filteredBookings = response.data.bookings.filter(
+                        booking => booking.status.toLowerCase() === 'completed'
+                    );
+                }
+                
+                setBookings(filteredBookings);
+                setFilteredBookings(filteredBookings);
             }
             setLoading(false);
         } catch (error) {
@@ -158,6 +269,7 @@ const CalenderView = () => {
     const handleDateClick = (date, bookingsForDate) => {
         setSelectedDate(date);
         if (bookingsForDate.length > 0) {
+            // bookingsForDate already contains filtered bookings
             setSelectedBooking(bookingsForDate);
             setShowBookingModal(true);
         }
@@ -199,7 +311,7 @@ const CalenderView = () => {
             date.setHours(0, 0, 0, 0);
             
             // Find bookings that include this date in their start-end range
-            const bookingsForDay = bookings.filter(booking => isDateInBookingRange(date, booking));
+            const bookingsForDay = filteredBookings.filter(booking => isDateInBookingRange(date, booking));
 
             const hasBookings = bookingsForDay.length > 0;
             const isToday = date.getTime() === today.getTime();
@@ -399,6 +511,10 @@ const CalenderView = () => {
         }
     };
 
+    const handleFilterChange = (filter) => {
+        setActiveFilter(filter);
+    };
+
     if (loading) {
         return (
             <div className="calendar-loading">
@@ -432,6 +548,44 @@ const CalenderView = () => {
                     </div>
                 </div>
 
+                <div className="booking-tabs">
+                    <button 
+                        className={`tab-btn ${activeFilter === 'all' ? 'active' : ''}`}
+                        onClick={() => handleFilterChange('all')}
+                    >
+                        All Tours <span className="tour-count">({bookings.length})</span>
+                    </button>
+                    <button 
+                        className={`tab-btn ${activeFilter === 'packages' ? 'active' : ''}`}
+                        onClick={() => handleFilterChange('packages')}
+                    >
+                        Packages <span className="tour-count">({bookings.filter(b => getBookingType(b) === 'package').length})</span>
+                    </button>
+                    <button 
+                        className={`tab-btn ${activeFilter === 'trips' ? 'active' : ''}`}
+                        onClick={() => handleFilterChange('trips')}
+                    >
+                        Trips <span className="tour-count">({bookings.filter(b => getBookingType(b) === 'trip').length})</span>
+                    </button>
+                    <button 
+                        className={`tab-btn ${activeFilter === 'events' ? 'active' : ''}`}
+                        onClick={() => handleFilterChange('events')}
+                    >
+                        Events <span className="tour-count">({bookings.filter(b => getBookingType(b) === 'event').length})</span>
+                    </button>
+                </div>
+
+                <div className="current-filter-summary">
+                    {activeFilter === 'all' ? (
+                        <p>Showing all {bookings.length} tours in the calendar</p>
+                    ) : (
+                        <p>
+                            Showing {filteredBookings.length} {activeFilter === 'packages' ? 'package' : activeFilter === 'trips' ? 'trip' : 'event'} 
+                            {filteredBookings.length !== 1 ? 's' : ''} out of {bookings.length} total tours
+                        </p>
+                    )}
+                </div>
+
                 {renderLegend()}
 
                 <div className="calendar-weekdays">
@@ -460,9 +614,18 @@ const CalenderView = () => {
                                     const userDetails = booking.paymentDetails?.userDetails || {};
                                     const bookingType = getBookingType(booking);
                                     
+                                    // Check if booking is specifically assigned to the current guide
+                                    const isAssignedToCurrentGuide = booking.guideId && currentGuideId && 
+                                                                 String(booking.guideId) === String(currentGuideId);
+                                    
                                     return (
                                         <div key={index} className={`booking-item ${bookingType}`}>
-                                            <h3>{booking.packageName}</h3>
+                                            <div className="booking-header-wrapper">
+                                                <h3>{booking.packageName}</h3>
+                                                {isAssignedToCurrentGuide && (
+                                                    <span className="guide-assigned-tag">Assigned to You</span>
+                                                )}
+                                            </div>
                                             <div className="booking-details">
                                                 <div className="booking-info">
                                                     <div className="booking-field">

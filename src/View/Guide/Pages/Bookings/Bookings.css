@@ -168,6 +168,32 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-bottom: 10px;
+}
+
+.booking-header-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.guide-assigned-tag {
+  background-color: #4b7bec;
+  color: white;
+  font-size: 0.8rem;
+  padding: 2px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.trip-booking-tag {
+  background-color: #26de81;
+  color: white;
+  font-size: 0.8rem;
+  padding: 2px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+  margin-right: 5px;
 }
 
 .booking-header h3 {

@@ -336,6 +336,7 @@ const convertPrice = (priceString) => {
 
     // Log the packageDetails for debugging
     console.log("Package details for booking:", {
+      _id: packageDetails._id,
       title: packageDetails.title,
       address: packageDetails.address,
       destinations: packageDetails.destinations,
@@ -346,6 +347,7 @@ const convertPrice = (priceString) => {
     // Update packageDetails to include all fields
     const completePackageDetails = {
       ...packageDetails,
+      _id: packageDetails._id,
       startDate: packageDetails.startDate || null,
       endDate: packageDetails.endDate || null,
       address: packageDetails.address || null,
@@ -674,6 +676,7 @@ const handleShare = async (card) => {
                     <button 
                       className="book-now54"
                       onClick={() => handleBookNow({
+                        _id: result._id,
                         title: result.title,
                         duration: result.duration,
                         tripType: result.tripType,

@@ -4,6 +4,9 @@ import { GoogleMap, LoadScriptNext, Marker, Autocomplete } from '@react-google-m
 // Define libraries outside component to prevent unnecessary re-renders
 const libraries = ['places'];
 
+// Use the same API key as in AdminLocation.jsx
+const GOOGLE_MAPS_API_KEY = 'AIzaSyB41DRUbKWJHPxaFjMAwdrzWzbVKartNGg';
+
 const MapPicker = ({ onLocationSelect, initialLocation }) => {
   // Ensure valid coordinates or use defaults
   const getValidCoordinates = (location) => {
@@ -188,7 +191,7 @@ const MapPicker = ({ onLocationSelect, initialLocation }) => {
   return (
     <div className="map-picker-container">
       <LoadScriptNext
-        googleMapsApiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}
+        googleMapsApiKey={GOOGLE_MAPS_API_KEY}
         libraries={libraries}
         preventGoogleFontsLoading={true}
       >

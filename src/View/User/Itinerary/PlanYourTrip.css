@@ -435,8 +435,9 @@ body {
 }
 
 .required {
-  color: #AE0808;
+  color: #ff0000;
   margin-left: 4px;
+  font-weight: bold;
 }
 
 .input21:required {

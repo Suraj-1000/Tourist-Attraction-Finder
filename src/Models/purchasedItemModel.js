@@ -15,6 +15,9 @@ const purchasedItemSchema = new mongoose.Schema({
   paymentMethod: { type: String, enum: ["khalti", "esewa"], required: true },
   status: { type: String, enum: ["pending", "completed", "refunded"], default: "pending" },
   packageDetails: {
+    _id: { type: mongoose.Schema.Types.ObjectId }, // Store the actual package or trip _id
+    packageId: { type: mongoose.Schema.Types.ObjectId, ref: 'Package' }, // Reference to Package model
+    tripId: { type: mongoose.Schema.Types.ObjectId, ref: 'PlanTrip' }, // Reference to PlanTrip model
     title: { type: String, required: true },
     duration: { type: String, required: true },
     category: { type: String, required: true },

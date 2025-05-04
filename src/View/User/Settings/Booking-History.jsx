@@ -28,6 +28,13 @@ export default function BookingHistory() {
   const [reviewText, setReviewText] = useState('');
   const [hoverRating, setHoverRating] = useState(0);
   const [reviewRating, setReviewRating] = useState(0);
+  
+  // New state variables for guide
+  const [showGuideReviewModal, setShowGuideReviewModal] = useState(false);
+  const [selectedGuide, setSelectedGuide] = useState(null);
+  const [guideReviewText, setGuideReviewText] = useState('');
+  const [guideHoverRating, setGuideHoverRating] = useState(0);
+  const [guideReviewRating, setGuideReviewRating] = useState(0);
 
   useEffect(() => {
     const fetchBookings = async () => {
@@ -75,8 +82,36 @@ export default function BookingHistory() {
         if (response.data.success) {
           // No need to filter on frontend since backend is now handling it
           const userBookings = response.data.bookings;
-          setBookings(userBookings);
-          setHeading(`Your Booking History (${userBookings.length} bookings)`);
+          
+          console.log('Received user bookings from server:', 
+            userBookings.map(booking => ({
+              bookingId: booking.bookingId,
+              packageName: booking.packageName,
+              guideId: booking.guideId,
+              guideIncluded: booking.guideIncluded,
+              hasGuideReview: booking.hasGuideReview,
+              status: booking.status,
+              paymentDetails: {
+                packageDetails: booking.paymentDetails?.packageDetails ? {
+                  locationDetails: booking.paymentDetails?.packageDetails?.locationDetails || 'N/A'
+                } : 'N/A'
+              }
+            }))
+          );
+          
+          // Check if each booking has a guide review
+          const processedBookings = userBookings.map(booking => {
+            // If booking has guideId but no hasGuideReview flag, set it to false by default
+            if ((booking.guideId || 
+                (booking.paymentDetails?.packageDetails?.locationDetails?.guideId)) && 
+                booking.hasGuideReview === undefined) {
+              return { ...booking, hasGuideReview: false };
+            }
+            return booking;
+          });
+          
+          setBookings(processedBookings);
+          setHeading(`Your Booking History (${processedBookings.length} bookings)`);
         } else {
           console.error('Failed to load bookings:', response.data);
           toast.error('Failed to load booking history');
@@ -799,6 +834,119 @@ export default function BookingHistory() {
     }
   };
 
+  // Function to handle guide review submission
+  const handleGuideReviewSubmit = async () => {
+    try {
+      if (!selectedGuide) {
+        toast.error('No guide selected');
+        return;
+      }
+
+      const token = localStorage.getItem('token');
+      if (!token) {
+        toast.error('Please login to submit a review');
+        return;
+      }
+
+      const userData = JSON.parse(localStorage.getItem('user'));
+      if (!userData) {
+        toast.error('User data not found. Please login again.');
+        return;
+      }
+
+      const userId = userData._id || userData.id;
+      if (!userId) {
+        toast.error('Invalid user data. Please login again.');
+        return;
+      }
+
+      if (!guideReviewRating || guideReviewRating < 1 || guideReviewRating > 5) {
+        toast.error('Please select a rating between 1 and 5');
+        return;
+      }
+
+      if (!guideReviewText.trim()) {
+        toast.error('Please write a review');
+        return;
+      }
+
+      // Create the review data with consistent structure for guide reviews
+      const reviewData = {
+        itemType: 'guide',
+        itemId: selectedGuide.guideId,
+        guideName: selectedGuide.guideName,
+        userId: userId,
+        rating: guideReviewRating,
+        review: guideReviewText.trim(),
+        bookingId: selectedGuide.bookingId,
+        bookingDetails: {
+          packageName: selectedGuide.packageName || '',
+          category: selectedGuide.category || '',
+          duration: selectedGuide.duration || '',
+          amount: selectedGuide.amount || 0,
+          status: selectedGuide.status || ''
+        }
+      };
+
+      console.log('Submitting guide review data:', reviewData);
+
+      const response = await axios.post('http://localhost:4000/reviews/guide', reviewData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.data.success) {
+        toast.success('Guide review submitted successfully');
+        
+        // Update the local state to reflect the new guide review
+        const updatedBookings = bookings.map(booking => {
+          if (booking.bookingId === selectedGuide.bookingId) {
+            return {
+              ...booking,
+              hasGuideReview: true,
+              guideReview: {
+                rating: guideReviewRating,
+                review: guideReviewText,
+                createdAt: new Date()
+              }
+            };
+          }
+          return booking;
+        });
+        
+        setBookings(updatedBookings);
+        setFilteredBookings(prevFiltered => 
+          prevFiltered.map(booking => {
+            if (booking.bookingId === selectedGuide.bookingId) {
+              return {
+                ...booking,
+                hasGuideReview: true,
+                guideReview: {
+                  rating: guideReviewRating,
+                  review: guideReviewText,
+                  createdAt: new Date()
+                }
+              };
+            }
+            return booking;
+          })
+        );
+
+        // Reset the form and close modal
+        setShowGuideReviewModal(false);
+        setGuideReviewRating(0);
+        setGuideReviewText('');
+        setSelectedGuide(null);
+      }
+    } catch (error) {
+      console.error('Error submitting guide review:', error);
+      console.error('Error details:', error.response?.data);
+      toast.error(error.response?.data?.message || 'Failed to submit guide review. Please try again.');
+    }
+  };
+
   const renderStarRating = (value, isInteractive = false) => {
     return (
       <div className="star-rating-container">
@@ -828,6 +976,17 @@ export default function BookingHistory() {
   };
 
   const renderBookingCard = (booking) => {
+    // Add this logging to check the booking object
+    console.log('Rendering booking card:', {
+      bookingId: booking.bookingId,
+      packageName: booking.packageName,
+      status: booking.status,
+      guideId: booking.guideId,
+      guideIncluded: booking.guideIncluded,
+      hasGuideReview: booking.hasGuideReview,
+      paymentStatus: booking.paymentDetails?.status
+    });
+    
     const paymentDetails = booking.paymentDetails || {};
     const userDetails = booking.userDetails || {};
     const packageDetails = paymentDetails.packageDetails || {};
@@ -1059,6 +1218,75 @@ export default function BookingHistory() {
               <FontAwesomeIcon icon={faStar} /> Review
             </button>
           )}
+          
+          {/* Add Review Guide button - only show when guide is assigned and hasn't been reviewed yet */}
+          {isPaymentSuccessful(booking) && 
+           (booking.guideId || 
+            (paymentDetails.packageDetails && paymentDetails.packageDetails.locationDetails && 
+             paymentDetails.packageDetails.locationDetails.guideId)) && 
+           !booking.hasGuideReview && (
+            <button 
+              onClick={() => {
+                const userData = JSON.parse(localStorage.getItem('user'));
+                if (!userData) {
+                  toast.error('Please login to submit a review');
+                  return;
+                }
+
+                const userId = userData._id || userData.id;
+                if (!userId) {
+                  toast.error('Invalid user data. Please login again.');
+                  return;
+                }
+
+                // Log to help debug guide ID extraction
+                console.log('Guide review info:', {
+                  bookingId: booking.bookingId,
+                  guideId: booking.guideId || 
+                    (paymentDetails.packageDetails && paymentDetails.packageDetails.locationDetails && 
+                     paymentDetails.packageDetails.locationDetails.guideId),
+                  guideIncluded: booking.guideIncluded || 
+                    (paymentDetails.packageDetails && paymentDetails.packageDetails.locationDetails && 
+                     paymentDetails.packageDetails.locationDetails.guideIncluded)
+                });
+
+                // Get the guide ID from the best available source
+                const guideId = booking.guideId || 
+                  (paymentDetails.packageDetails && paymentDetails.packageDetails.locationDetails && 
+                   paymentDetails.packageDetails.locationDetails.guideId);
+
+                // Get guide name from tripGuideDetails or use "Your Guide" as fallback
+                const guideName = booking.tripGuideDetails?.guideName || 
+                                (booking.guideIncluded ? 'Your Guide' : 'Tour Guide');
+                
+                // Create guide review data
+                const guideData = {
+                  guideId: guideId,
+                  guideName: guideName,
+                  userId: userId,
+                  bookingId: booking.bookingId,
+                  packageName: booking.packageName,
+                  category: packageDetails.category || '',
+                  duration: duration || '',
+                  amount: booking.amount || 0,
+                  status: booking.status || ''
+                };
+
+                setSelectedGuide(guideData);
+                setShowGuideReviewModal(true);
+                setGuideReviewRating(0);
+                setGuideReviewText('');
+              }}
+              className="action-btn63 review-btn63 guide-review-btn"
+              title="Share your experience with your guide"
+              style={{ 
+                backgroundColor: '#2e5984', 
+                marginLeft: '5px' 
+              }}
+            >
+              <FontAwesomeIcon icon={faCrown} style={{ marginRight: '5px' }} /> Review Guide
+            </button>
+          )}
         </div>
       </div>
     );
@@ -1214,6 +1442,63 @@ export default function BookingHistory() {
                     setReviewRating(0);
                     setReviewText('');
                     setSelectedBooking(null);
+                  }} 
+                  className="cancel-btn63"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Guide Review Modal */}
+      {showGuideReviewModal && selectedGuide && (
+        <div className="modal-overlay63">
+          <div className="modal-content63">
+            <h3>Write a Review for Guide: {selectedGuide.guideName}</h3>
+            <div className="review-form63">
+              <div className="rating-section63">
+                <label>Guide Rating:</label>
+                <div className="stars-container63">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      key={star}
+                      type="button"
+                      className={`star-btn63 ${star <= (guideHoverRating || guideReviewRating) ? 'active' : ''}`}
+                      onMouseEnter={() => setGuideHoverRating(star)}
+                      onMouseLeave={() => setGuideHoverRating(0)}
+                      onClick={() => setGuideReviewRating(star)}
+                    >
+                      ★
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="review-text-section63">
+                <label>Your Review:</label>
+                <textarea
+                  value={guideReviewText}
+                  onChange={(e) => setGuideReviewText(e.target.value)}
+                  placeholder={`Share your experience about the guide service for your ${selectedGuide.packageName}...`}
+                  rows="4"
+                />
+              </div>
+              <div className="modal-buttons63">
+                <button 
+                  onClick={handleGuideReviewSubmit} 
+                  className="submit-btn63"
+                  disabled={!guideReviewRating || !guideReviewText.trim()}
+                >
+                  Submit
+                </button>
+                <button 
+                  onClick={() => {
+                    setShowGuideReviewModal(false);
+                    setGuideReviewRating(0);
+                    setGuideReviewText('');
+                    setSelectedGuide(null);
                   }} 
                   className="cancel-btn63"
                 >

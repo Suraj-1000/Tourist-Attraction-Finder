@@ -805,3 +805,47 @@
         font-size: 0.75rem;
     }
 }
+
+.booking-header-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.guide-assigned-tag {
+    background-color: #4b7bec;
+    color: white;
+    font-size: 0.8rem;
+    padding: 2px 8px;
+    border-radius: 4px;
+    white-space: nowrap;
+    margin-left: 10px;
+}
+
+.tour-count {
+    display: inline-block;
+    font-size: 0.75rem;
+    opacity: 0.7;
+    margin-left: 4px;
+}
+
+.tab-btn.active .tour-count {
+    color: white;
+    opacity: 0.9;
+}
+
+.current-filter-summary {
+    margin: 0.5rem 0 1rem;
+    color: #666;
+    font-size: 0.9rem;
+    font-style: italic;
+    text-align: center;
+    background-color: #f8f9fa;
+    padding: 0.5rem;
+    border-radius: 4px;
+}
+
+.current-filter-summary p {
+    margin: 0;
+}

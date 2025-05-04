@@ -1,11 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { FaEdit } from 'react-icons/fa';
+import { FaEdit, FaStar } from 'react-icons/fa';
 import './Profile.css';
+import '../../Admin/Management/GuideApproval.css';
 import { toast } from 'react-hot-toast';
 
 const Profile = () => {
+  const [replyingToReviewId, setReplyingToReviewId] = useState(null);
+  const [replyText, setReplyText] = useState('');
+  const [submittingReply, setSubmittingReply] = useState(false);
   const [user, setUser] = useState({
     firstName: '',
     lastName: '',
@@ -48,6 +52,10 @@ const Profile = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const [originalUser, setOriginalUser] = useState(null);
+  const [errors, setErrors] = useState({});
+  const [validFields, setValidFields] = useState({});
+  const [formModified, setFormModified] = useState(false);
+  const [showNoChangesError, setShowNoChangesError] = useState(false);
 
   useEffect(() => {
     fetchGuideDetails();
@@ -102,7 +110,27 @@ const Profile = () => {
 
         console.log("Formatted User Data:", formattedUser.guideProfile); // Debug log
         setUser(formattedUser);
-        setOriginalUser(formattedUser);
+        
+        // Create a deep copy for original data comparison
+        setOriginalUser(JSON.parse(JSON.stringify(formattedUser)));
+        
+        // Reset form modified state
+        setFormModified(false);
+        setShowNoChangesError(false);
+        
+        // Initialize validation states
+        if (formattedUser.email) {
+          validateEmail(formattedUser.email);
+        }
+        
+        if (formattedUser.phone) {
+          validatePhone(formattedUser.phone);
+        }
+        
+        if (formattedUser.dateOfBirth) {
+          validateDateOfBirth(formattedUser.dateOfBirth);
+        }
+        
         setUserImage(userData.image || "");
         localStorage.setItem("user", JSON.stringify(formattedUser));
 
@@ -176,6 +204,7 @@ const Profile = () => {
             }
           }));
           toast.success("License document uploaded successfully");
+          trackFormChange();
         }
       } catch (error) {
         console.error('Error uploading document:', error);
@@ -233,31 +262,81 @@ const Profile = () => {
           ]
         }
       }));
-
+      
       if (validResults.length > 0) {
         toast.success(`${validResults.length} certificate(s) uploaded successfully`);
+        trackFormChange();
       }
     } catch (error) {
       console.error('Error in certificate uploads:', error);
     }
   };
 
+  // Function to track form changes
+  const trackFormChange = () => {
+    if (originalUser) {
+      setFormModified(true);
+      // Hide no changes error when user starts modifying the form
+      setShowNoChangesError(false);
+    }
+  };
+
+  // Add this to any onChange handler that should track changes
+  const handleInputChange = (field, value) => {
+    setUser(prev => ({ ...prev, [field]: value }));
+    trackFormChange();
+  };
+
+  // Update handle update function
   const handleUpdate = async (e) => {
     e.preventDefault();
+    
+    // Check if form has been modified
+    if (!formModified) {
+      setShowNoChangesError(true);
+      toast.error("No changes detected. Please make changes before updating.");
+      return;
+    }
+    
     setIsUpdating(true);
 
     // Validation
+    const validationErrors = {};
     const phoneRegex = /^(98|97)\d{8}$/;
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+    // Validate phone
     if (!phoneRegex.test(user.phone)) {
-      toast.error("Phone number must start with 98 or 97 and be 10 digits long");
-      setIsUpdating(false);
-      return;
+      validationErrors.phone = "Phone number must start with 98 or 97 and be 10 digits long";
     }
 
+    // Validate email
     if (!emailRegex.test(user.email)) {
-      toast.error("Please enter a valid email address");
+      validationErrors.email = "Please enter a valid email address";
+    }
+
+    // Validate date of birth (must be at least 16 years old)
+    if (user.dateOfBirth) {
+      const dobDate = new Date(user.dateOfBirth);
+      const today = new Date();
+      let age = today.getFullYear() - dobDate.getFullYear();
+      const monthDiff = today.getMonth() - dobDate.getMonth();
+      
+      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dobDate.getDate())) {
+        age--;
+      }
+      
+      if (age < 16) {
+        validationErrors.dateOfBirth = "You must be at least 16 years old";
+      }
+    } else {
+      validationErrors.dateOfBirth = "Date of birth is required";
+    }
+
+    // Check if we have any errors
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      toast.error("Please fix the validation errors");
       setIsUpdating(false);
       return;
     }
@@ -318,6 +397,7 @@ const Profile = () => {
         
         toast.success('Profile updated successfully');
         setIsEditing(false);
+        setFormModified(false);
         await fetchGuideDetails(); // Refresh the data
       }
     } catch (error) {
@@ -332,6 +412,320 @@ const Profile = () => {
     const firstInitial = firstName ? firstName.charAt(0).toUpperCase() : '';
     const lastInitial = lastName ? lastName.charAt(0).toUpperCase() : '';
     return `${firstInitial}${lastInitial}`;
+  };
+  
+  // State to store fetched user names
+  const [userNames, setUserNames] = useState({});
+  
+  // Function to render user name for reviews
+  const renderUserInfo = (review) => {
+    try {
+      // Check if the review has a populated touristId object
+      if (review.touristId && typeof review.touristId === 'object') {
+        // Extract firstName and lastName from touristId object
+        const firstName = review.touristId.firstName || '';
+        const lastName = review.touristId.lastName || '';
+        
+        // If both firstName and lastName exist, return formatted name
+        if (firstName && lastName) {
+          return `${firstName} ${lastName}`;
+        } 
+        // If only one exists, return what we have
+        else if (firstName || lastName) {
+          return (firstName || lastName).trim();
+        }
+        
+        // If we have touristId object but no name, check for email
+        if (review.touristId.email) {
+          return review.touristId.email.split('@')[0]; // Show username part of email
+        }
+      }
+      
+      // If touristId is a string, check if we already fetched the name
+      if (typeof review.touristId === 'string') {
+        const userId = review.touristId;
+        
+        // If we already have the name cached, use it
+        if (userNames[userId]) {
+          return userNames[userId];
+        }
+        
+        // Otherwise, use a default display name based on ID for now
+        // and fetch the details asynchronously
+        setTimeout(() => {
+          fetchUserDetails(userId).then(userDetails => {
+            if (userDetails) {
+              const name = userDetails.firstName && userDetails.lastName 
+                ? `${userDetails.firstName} ${userDetails.lastName}`
+                : userDetails.firstName || userDetails.lastName || userDetails.email;
+                
+              if (name) {
+                setUserNames(prev => ({
+                  ...prev,
+                  [userId]: name
+                }));
+              }
+            }
+          });
+        }, 0);
+        
+        // Return a formatted version of the user ID
+        return `User ${userId.substring(0, 5)}`;
+      }
+      
+      // Check for direct properties on the review object itself
+      if (review.firstName && review.lastName) {
+        return `${review.firstName} ${review.lastName}`.trim();
+      }
+      
+      if (review.touristName) {
+        return review.touristName;
+      }
+      
+      if (review.email) {
+        return review.email.split('@')[0]; // Show username part of email
+      }
+    } catch (err) {
+      console.error('Error rendering user info:', err);
+    }
+    
+    return 'Tourist';
+  };
+  
+  // Function to fetch user details by ID
+  const fetchUserDetails = async (userId) => {
+    if (!userId) return;
+    
+    try {
+      // Use our user-basic endpoint that doesn't require authentication
+      const response = await axios.get(`http://localhost:4000/signups/user-basic/${userId}`);
+      
+      if (response.status === 200 && response.data.user) {
+        console.log('Fetched user details:', response.data.user);
+        return response.data.user;
+      }
+    } catch (error) {
+      console.error('Failed to fetch user details:', error);
+    }
+    return null;
+  };
+  
+  // Function to handle clicking reply button
+  const handleReplyClick = (reviewId) => {
+    setReplyingToReviewId(reviewId);
+    setReplyText('');
+  };
+  
+  // Function to cancel replying
+  const handleCancelReply = () => {
+    setReplyingToReviewId(null);
+    setReplyText('');
+  };
+  
+  // Function to submit reply
+  const handleSubmitReply = async (reviewId) => {
+    if (!replyText.trim()) {
+      toast.error('Please enter a reply message');
+      return;
+    }
+    
+    setSubmittingReply(true);
+    
+    try {
+      const token = localStorage.getItem('token');
+      console.log('Sending token:', token ? 'Token exists' : 'No token found');
+      
+      if (!token) {
+        toast.error('Authentication token missing. Please log in again.');
+        setTimeout(() => {
+          window.location.href = '/login';
+        }, 2000);
+        return;
+      }
+      
+      const response = await axios.post(
+        `http://localhost:4000/reviews/guide/reply/${reviewId}`,
+        { 
+          reply: replyText.trim()
+        },
+        {
+          headers: { 
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+      
+      if (response.status === 200) {
+        toast.success('Reply submitted successfully');
+        
+        // Update local state
+        setUser(prevUser => {
+          const updatedReviews = prevUser.guideProfile.reviews.map(review => 
+            review._id === reviewId ? { ...review, reply: replyText.trim() } : review
+          );
+          
+          return {
+            ...prevUser,
+            guideProfile: {
+              ...prevUser.guideProfile,
+              reviews: updatedReviews
+            }
+          };
+        });
+        
+        // Reset reply state
+        setReplyingToReviewId(null);
+        setReplyText('');
+      }
+    } catch (error) {
+      console.error('Error submitting reply:', error);
+      toast.error('Failed to submit reply');
+    } finally {
+      setSubmittingReply(false);
+    }
+  };
+
+  // Add these new field validation handlers
+  const validateEmail = (email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const isValid = emailRegex.test(email);
+    
+    setValidFields(prev => ({
+      ...prev,
+      email: isValid
+    }));
+    
+    if (!isValid) {
+      setErrors(prev => ({
+        ...prev,
+        email: "Please enter a valid email address"
+      }));
+    } else {
+      setErrors(prev => {
+        const newErrors = {...prev};
+        delete newErrors.email;
+        return newErrors;
+      });
+    }
+    
+    return isValid;
+  };
+  
+  const validatePhone = (phone) => {
+    const phoneRegex = /^(98|97)\d{8}$/;
+    const isValid = phoneRegex.test(phone);
+    
+    setValidFields(prev => ({
+      ...prev,
+      phone: isValid
+    }));
+    
+    if (!isValid) {
+      setErrors(prev => ({
+        ...prev,
+        phone: "Phone must start with 98 or 97 and be 10 digits long"
+      }));
+    } else {
+      setErrors(prev => {
+        const newErrors = {...prev};
+        delete newErrors.phone;
+        return newErrors;
+      });
+    }
+    
+    return isValid;
+  };
+  
+  const validateDateOfBirth = (dob) => {
+    if (!dob) {
+      setValidFields(prev => ({
+        ...prev,
+        dateOfBirth: false
+      }));
+      
+      setErrors(prev => ({
+        ...prev,
+        dateOfBirth: "Date of birth is required"
+      }));
+      
+      return false;
+    }
+    
+    const dobDate = new Date(dob);
+    const today = new Date();
+    let age = today.getFullYear() - dobDate.getFullYear();
+    const monthDiff = today.getMonth() - dobDate.getMonth();
+    
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dobDate.getDate())) {
+      age--;
+    }
+    
+    const isValid = age >= 16;
+    
+    setValidFields(prev => ({
+      ...prev,
+      dateOfBirth: isValid
+    }));
+    
+    if (!isValid) {
+      setErrors(prev => ({
+        ...prev,
+        dateOfBirth: "You must be at least 16 years old"
+      }));
+    } else {
+      setErrors(prev => {
+        const newErrors = {...prev};
+        delete newErrors.dateOfBirth;
+        return newErrors;
+      });
+    }
+    
+    return isValid;
+  };
+  
+  const validateAvailabilityDate = (date) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const selectedDate = new Date(date);
+    selectedDate.setHours(0, 0, 0, 0);
+    
+    return selectedDate >= today;
+  };
+
+  // Handle phone input with validation
+  const handlePhoneInput = (e) => {
+    const value = e.target.value;
+    
+    // Only allow digits for phone numbers
+    if (!/^\d*$/.test(value) && value !== '') {
+      return;
+    }
+    
+    // Limit to 10 digits
+    if (value.length <= 10) {
+      setUser({
+        ...user,
+        phone: value
+      });
+      
+      // Don't show validation errors while typing, but update valid state
+      if (value.length === 10) {
+        validatePhone(value);
+      } else {
+        setValidFields(prev => ({
+          ...prev,
+          phone: false
+        }));
+      }
+    }
+  };
+
+  // Function to compare if the user has made changes
+  const hasUserMadeChanges = () => {
+    if (!originalUser) return true;
+    return JSON.stringify(user) !== JSON.stringify(originalUser);
   };
 
   if (loading) return <div className="loading">Loading Guide details...</div>;
@@ -455,7 +849,33 @@ const Profile = () => {
                   {user.guideProfile.availability.map((day, index) => (
                     <div key={index} className="availability-slot64">
                       <div className="availability-date64">
-                        {new Date(day.date).toLocaleDateString()}
+                        <input
+                          type="date"
+                          className="input-field64"
+                          value={day.date.split('T')[0]}
+                          onChange={(e) => {
+                            const newDate = e.target.value;
+                            // Prevent selecting past dates
+                            if (!validateAvailabilityDate(newDate)) {
+                              toast.error("Cannot select past dates for availability");
+                              return;
+                            }
+                            
+                            const newAvailability = [...user.guideProfile.availability];
+                            newAvailability[index] = {
+                              ...newAvailability[index],
+                              date: newDate
+                            };
+                            setUser({
+                              ...user,
+                              guideProfile: {
+                                ...user.guideProfile,
+                                availability: newAvailability
+                              }
+                            });
+                          }}
+                          min={new Date().toISOString().split('T')[0]} // Disable past dates
+                        />
                       </div>
                       <div className="availability-time64">
                         {day.slots.map((slot, slotIndex) => (
@@ -472,9 +892,106 @@ const Profile = () => {
 
               <div className="guide-info-section64">
                 <h4>Ratings & Reviews</h4>
-                <div className="ratings-summary64">
-                  <p>Average Rating: {user.guideProfile.ratings.average.toFixed(1)} / 5</p>
-                  <p>Total Reviews: {user.guideProfile.ratings.total}</p>
+                <div className="rating-summary25">
+                  <div className="average-rating25">
+                    <span className="rating-number25">
+                      {user.guideProfile.ratings?.average ? 
+                        user.guideProfile.ratings.average.toFixed(1) : 
+                        '0.0'}
+                    </span>
+                    <div className="stars-container25">
+                      {[...Array(5)].map((_, index) => (
+                        <FaStar
+                          key={index}
+                          className={`star ${index < Math.round(user.guideProfile.ratings?.average || 0) ? 'filled' : 'empty'}`}
+                          style={{
+                            color: index < Math.round(user.guideProfile.ratings?.average || 0) ? '#ffd700' : '#e0e0e0',
+                            marginRight: '2px'
+                          }}
+                        />
+                      ))}
+                    </div>
+                    <span className="total-reviews25">
+                      ({user.guideProfile.ratings?.total || 0} reviews)
+                    </span>
+                  </div>
+                </div>
+                
+                <div className="reviews-list25">
+                  {user.guideProfile.reviews && user.guideProfile.reviews.length > 0 ? (
+                    user.guideProfile.reviews.map((review, index) => (
+                      <div key={index} className="review-card25">
+                        <div className="review-card-header25">
+                          <div className="reviewer-info25">
+                            <h3>{renderUserInfo(review)}</h3>
+                            <span className="review-date25">
+                              {new Date(review.date).toLocaleDateString('en-US', {
+                                year: 'numeric',
+                                month: 'long',
+                                day: 'numeric'
+                              })}
+                            </span>
+                          </div>
+                          <div className="review-rating25">
+                            {[...Array(5)].map((_, i) => (
+                              <FaStar
+                                key={i}
+                                className={`star ${i < review.rating ? 'filled' : 'empty'}`}
+                                style={{
+                                  color: i < review.rating ? '#ffd700' : '#e0e0e0',
+                                  marginRight: '2px'
+                                }}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                        <p className="review-text25">{review.comment}</p>
+                        {review.reply ? (
+                          <div className="guide-reply-section">
+                            <strong>Your Response:</strong>
+                            <p>{review.reply}</p>
+                          </div>
+                        ) : replyingToReviewId === review._id ? (
+                          <div className="reply-form-container">
+                            <textarea
+                              className="reply-textarea"
+                              value={replyText}
+                              onChange={(e) => setReplyText(e.target.value)}
+                              placeholder="Type your reply here..."
+                              rows={3}
+                            />
+                            <div className="reply-form-buttons">
+                              <button 
+                                className="cancel-reply-button" 
+                                onClick={handleCancelReply}
+                                disabled={submittingReply}
+                              >
+                                Cancel
+                              </button>
+                              <button 
+                                className="submit-reply-button" 
+                                onClick={() => handleSubmitReply(review._id)}
+                                disabled={submittingReply}
+                              >
+                                {submittingReply ? 'Submitting...' : 'Submit Reply'}
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="reply-action-section">
+                            <button 
+                              className="reply-button" 
+                              onClick={() => handleReplyClick(review._id)}
+                            >
+                              Reply to this review
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    ))
+                  ) : (
+                    <p className="no-reviews25">No reviews yet.</p>
+                  )}
                 </div>
               </div>
 
@@ -553,20 +1070,33 @@ const Profile = () => {
                   type="file"
                   ref={fileInputRef}
                   style={{ display: "none" }}
-                  onChange={handleImageUpload}
+                  onChange={(e) => {
+                    handleImageUpload(e);
+                    trackFormChange();
+                  }}
                   accept="image/*"
                 />
               </div>
 
               <div className="profile-section64">
                 <h4 className="section-title64">Basic Information</h4>
+                
+                {showNoChangesError && (
+                  <div className="no-changes-dialog">
+                    <i className="fas fa-exclamation-circle"></i>
+                    No changes detected. Please make changes before updating.
+                  </div>
+                )}
+                
                 <div className="input-group64">
                   <label>First Name</label>
                   <input
                     type="text"
                     className="input-field64"
                     value={user.firstName}
-                    onChange={(e) => setUser({ ...user, firstName: e.target.value })}
+                    onChange={(e) => {
+                      handleInputChange('firstName', e.target.value);
+                    }}
                     required
                   />
                 </div>
@@ -577,7 +1107,9 @@ const Profile = () => {
                     type="text"
                     className="input-field64"
                     value={user.lastName}
-                    onChange={(e) => setUser({ ...user, lastName: e.target.value })}
+                    onChange={(e) => {
+                      handleInputChange('lastName', e.target.value);
+                    }}
                     required
                   />
                 </div>
@@ -586,22 +1118,29 @@ const Profile = () => {
                   <label>Email</label>
                   <input
                     type="email"
-                    className="input-field64"
+                    className={`input-field64 ${errors.email ? 'error-field' : validFields.email ? 'valid-field' : ''}`}
                     value={user.email}
-                    onChange={(e) => setUser({ ...user, email: e.target.value })}
+                    onChange={(e) => handleInputChange('email', e.target.value)}
+                    onBlur={(e) => validateEmail(e.target.value)}
                     required
                   />
+                  {errors.email && <div className="error-message">{errors.email}</div>}
                 </div>
 
                 <div className="input-group64">
                   <label>Phone</label>
                   <input
                     type="text"
-                    className="input-field64"
+                    className={`input-field64 ${errors.phone ? 'error-field' : validFields.phone ? 'valid-field' : ''}`}
                     value={user.phone}
-                    onChange={(e) => setUser({ ...user, phone: e.target.value })}
+                    onChange={(e) => handleInputChange('phone', e.target.value)}
+                    onBlur={() => validatePhone(user.phone)}
+                    placeholder="Phone number starting with 97 or 98"
+                    maxLength={10}
                     required
                   />
+                  {errors.phone && <div className="error-message">{errors.phone}</div>}
+                  {!errors.phone && <div className="helper-text">Phone must start with 97 or 98 (10 digits total)</div>}
                 </div>
 
                 <div className="input-group64">
@@ -609,7 +1148,7 @@ const Profile = () => {
                   <select
                     className="input-field64"
                     value={user.gender}
-                    onChange={(e) => setUser({ ...user, gender: e.target.value })}
+                    onChange={(e) => handleInputChange('gender', e.target.value)}
                   >
                     <option value="">Select Gender</option>
                     <option value="Male">Male</option>
@@ -622,10 +1161,12 @@ const Profile = () => {
                   <label>Date of Birth</label>
                   <input
                     type="date"
-                    className="input-field64"
+                    className={`input-field64 ${errors.dateOfBirth ? 'error-field' : validFields.dateOfBirth ? 'valid-field' : ''}`}
                     value={user.dateOfBirth}
-                    onChange={(e) => setUser({ ...user, dateOfBirth: e.target.value })}
+                    onChange={(e) => handleInputChange('dateOfBirth', e.target.value)}
+                    onBlur={(e) => validateDateOfBirth(e.target.value)}
                   />
+                  {errors.dateOfBirth && <div className="error-message">{errors.dateOfBirth}</div>}
                 </div>
 
                 <div className="input-group64">
@@ -633,7 +1174,7 @@ const Profile = () => {
                   <textarea
                     className="input-field64"
                     value={user.address}
-                    onChange={(e) => setUser({ ...user, address: e.target.value })}
+                    onChange={(e) => handleInputChange('address', e.target.value)}
                     rows="3"
                   />
                 </div>
@@ -651,13 +1192,7 @@ const Profile = () => {
                         onChange={(e) => {
                           const newLanguages = [...user.guideProfile.languages];
                           newLanguages[index] = e.target.value;
-                          setUser({
-                            ...user,
-                            guideProfile: {
-                              ...user.guideProfile,
-                              languages: newLanguages
-                            }
-                          });
+                          handleInputChange('guideProfile.languages', newLanguages);
                         }}
                       />
                       <button
@@ -665,13 +1200,7 @@ const Profile = () => {
                         className="remove-button64"
                         onClick={() => {
                           const newLanguages = user.guideProfile.languages.filter((_, i) => i !== index);
-                          setUser({
-                            ...user,
-                            guideProfile: {
-                              ...user.guideProfile,
-                              languages: newLanguages
-                            }
-                          });
+                          handleInputChange('guideProfile.languages', newLanguages);
                         }}
                       >
                         Remove
@@ -683,13 +1212,7 @@ const Profile = () => {
                   type="button"
                   className="add-button64"
                   onClick={() => {
-                    setUser({
-                      ...user,
-                      guideProfile: {
-                        ...user.guideProfile,
-                        languages: [...user.guideProfile.languages, '']
-                      }
-                    });
+                    handleInputChange('guideProfile.languages', [...user.guideProfile.languages, '']);
                   }}
                 >
                   Add Language
@@ -708,13 +1231,7 @@ const Profile = () => {
                         onChange={(e) => {
                           const newRegions = [...user.guideProfile.regionsOfExpertise];
                           newRegions[index] = e.target.value;
-                          setUser({
-                            ...user,
-                            guideProfile: {
-                              ...user.guideProfile,
-                              regionsOfExpertise: newRegions
-                            }
-                          });
+                          handleInputChange('guideProfile.regionsOfExpertise', newRegions);
                         }}
                         placeholder="Enter region"
                       />
@@ -723,13 +1240,7 @@ const Profile = () => {
                         className="remove-button64"
                         onClick={() => {
                           const newRegions = user.guideProfile.regionsOfExpertise.filter((_, i) => i !== index);
-                          setUser({
-                            ...user,
-                            guideProfile: {
-                              ...user.guideProfile,
-                              regionsOfExpertise: newRegions
-                            }
-                          });
+                          handleInputChange('guideProfile.regionsOfExpertise', newRegions);
                         }}
                       >
                         Remove
@@ -740,13 +1251,7 @@ const Profile = () => {
                     type="button"
                     className="add-button64"
                     onClick={() => {
-                      setUser({
-                        ...user,
-                        guideProfile: {
-                          ...user.guideProfile,
-                          regionsOfExpertise: [...user.guideProfile.regionsOfExpertise, '']
-                        }
-                      });
+                      handleInputChange('guideProfile.regionsOfExpertise', [...user.guideProfile.regionsOfExpertise, '']);
                     }}
                   >
                     Add Region
@@ -766,13 +1271,7 @@ const Profile = () => {
                         onChange={(e) => {
                           const newServices = [...user.guideProfile.serviceTypes];
                           newServices[index] = e.target.value;
-                          setUser({
-                            ...user,
-                            guideProfile: {
-                              ...user.guideProfile,
-                              serviceTypes: newServices
-                            }
-                          });
+                          handleInputChange('guideProfile.serviceTypes', newServices);
                         }}
                         placeholder="Enter service type"
                       />
@@ -781,13 +1280,7 @@ const Profile = () => {
                         className="remove-button64"
                         onClick={() => {
                           const newServices = user.guideProfile.serviceTypes.filter((_, i) => i !== index);
-                          setUser({
-                            ...user,
-                            guideProfile: {
-                              ...user.guideProfile,
-                              serviceTypes: newServices
-                            }
-                          });
+                          handleInputChange('guideProfile.serviceTypes', newServices);
                         }}
                       >
                         Remove
@@ -798,13 +1291,7 @@ const Profile = () => {
                     type="button"
                     className="add-button64"
                     onClick={() => {
-                      setUser({
-                        ...user,
-                        guideProfile: {
-                          ...user.guideProfile,
-                          serviceTypes: [...user.guideProfile.serviceTypes, '']
-                        }
-                      });
+                      handleInputChange('guideProfile.serviceTypes', [...user.guideProfile.serviceTypes, '']);
                     }}
                   >
                     Add Service Type
@@ -824,13 +1311,7 @@ const Profile = () => {
                         className="remove-button64"
                         onClick={() => {
                           const newAvailability = user.guideProfile.availability.filter((_, i) => i !== index);
-                          setUser({
-                            ...user,
-                            guideProfile: {
-                              ...user.guideProfile,
-                              availability: newAvailability
-                            }
-                          });
+                          handleInputChange('guideProfile.availability', newAvailability);
                         }}
                       >
                         Remove
@@ -841,19 +1322,21 @@ const Profile = () => {
                           className="input-field64"
                           value={day.date.split('T')[0]}
                           onChange={(e) => {
+                            const newDate = e.target.value;
+                            // Prevent selecting past dates
+                            if (!validateAvailabilityDate(newDate)) {
+                              toast.error("Cannot select past dates for availability");
+                              return;
+                            }
+                            
                             const newAvailability = [...user.guideProfile.availability];
                             newAvailability[index] = {
                               ...newAvailability[index],
-                              date: e.target.value
+                              date: newDate
                             };
-                            setUser({
-                              ...user,
-                              guideProfile: {
-                                ...user.guideProfile,
-                                availability: newAvailability
-                              }
-                            });
+                            handleInputChange('guideProfile.availability', newAvailability);
                           }}
+                          min={new Date().toISOString().split('T')[0]} // Disable past dates
                         />
                       </div>
                       <div className="time-slots-container64">
@@ -869,13 +1352,7 @@ const Profile = () => {
                                 endTime: "17:00",
                                 isBooked: false
                               });
-                              setUser({
-                                ...user,
-                                guideProfile: {
-                                  ...user.guideProfile,
-                                  availability: newAvailability
-                                }
-                              });
+                              handleInputChange('guideProfile.availability', newAvailability);
                             }}
                           >
                             Add Slot
@@ -890,13 +1367,7 @@ const Profile = () => {
                               onChange={(e) => {
                                 const newAvailability = [...user.guideProfile.availability];
                                 newAvailability[index].slots[slotIndex].startTime = e.target.value;
-                                setUser({
-                                  ...user,
-                                  guideProfile: {
-                                    ...user.guideProfile,
-                                    availability: newAvailability
-                                  }
-                                });
+                                handleInputChange('guideProfile.availability', newAvailability);
                               }}
                             />
                             <span>to</span>
@@ -907,13 +1378,7 @@ const Profile = () => {
                               onChange={(e) => {
                                 const newAvailability = [...user.guideProfile.availability];
                                 newAvailability[index].slots[slotIndex].endTime = e.target.value;
-                                setUser({
-                                  ...user,
-                                  guideProfile: {
-                                    ...user.guideProfile,
-                                    availability: newAvailability
-                                  }
-                                });
+                                handleInputChange('guideProfile.availability', newAvailability);
                               }}
                             />
                             <button
@@ -922,13 +1387,7 @@ const Profile = () => {
                               onClick={() => {
                                 const newAvailability = [...user.guideProfile.availability];
                                 newAvailability[index].slots = newAvailability[index].slots.filter((_, i) => i !== slotIndex);
-                                setUser({
-                                  ...user,
-                                  guideProfile: {
-                                    ...user.guideProfile,
-                                    availability: newAvailability
-                                  }
-                                });
+                                handleInputChange('guideProfile.availability', newAvailability);
                               }}
                             >
                               ×
@@ -943,23 +1402,20 @@ const Profile = () => {
                   type="button"
                   className="add-button64"
                   onClick={() => {
-                    setUser({
-                      ...user,
-                      guideProfile: {
-                        ...user.guideProfile,
-                        availability: [
-                          ...user.guideProfile.availability,
-                          {
-                            date: new Date().toISOString().split('T')[0],
-                            slots: [{
-                              startTime: "09:00",
-                              endTime: "17:00",
-                              isBooked: false
-                            }]
-                          }
-                        ]
+                    // Get current date in YYYY-MM-DD format
+                    const today = new Date().toISOString().split('T')[0];
+                    
+                    handleInputChange('guideProfile.availability', [
+                      ...user.guideProfile.availability,
+                      {
+                        date: today,
+                        slots: [{
+                          startTime: "09:00",
+                          endTime: "17:00",
+                          isBooked: false
+                        }]
                       }
-                    });
+                    ]);
                   }}
                 >
                   Add New Date
@@ -974,13 +1430,7 @@ const Profile = () => {
                     type="text"
                     className="input-field64"
                     value={user.guideProfile.licenseNumber}
-                    onChange={(e) => setUser({
-                      ...user,
-                      guideProfile: {
-                        ...user.guideProfile,
-                        licenseNumber: e.target.value
-                      }
-                    })}
+                    onChange={(e) => handleInputChange('guideProfile.licenseNumber', e.target.value)}
                   />
                 </div>
                 <div className="input-group64">
@@ -1006,13 +1456,7 @@ const Profile = () => {
                         type="button"
                         className="remove-button64"
                         onClick={() => {
-                          setUser({
-                            ...user,
-                            guideProfile: {
-                              ...user.guideProfile,
-                              licenseDocument: null
-                            }
-                          });
+                          handleInputChange('guideProfile.licenseDocument', null);
                         }}
                       >
                         ×
@@ -1048,13 +1492,7 @@ const Profile = () => {
                         className="remove-button64"
                         onClick={() => {
                           const newCertificates = user.guideProfile.educationCertificates.filter((_, i) => i !== index);
-                          setUser({
-                            ...user,
-                            guideProfile: {
-                              ...user.guideProfile,
-                              educationCertificates: newCertificates
-                            }
-                          });
+                          handleInputChange('guideProfile.educationCertificates', newCertificates);
                         }}
                       >
                         ×
@@ -1072,16 +1510,7 @@ const Profile = () => {
                     type="number"
                     className="input-field64"
                     value={user.guideProfile.pricing.perDay}
-                    onChange={(e) => setUser({
-                      ...user,
-                      guideProfile: {
-                        ...user.guideProfile,
-                        pricing: {
-                          ...user.guideProfile.pricing,
-                          perDay: Number(e.target.value)
-                        }
-                      }
-                    })}
+                    onChange={(e) => handleInputChange('guideProfile.pricing.perDay', Number(e.target.value))}
                     min="0"
             />
           </div>

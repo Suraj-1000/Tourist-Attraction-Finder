@@ -53,6 +53,18 @@ const packageSchema = new mongoose.Schema({
   pickupDetails: String,
   accessibility: String,
   cancellationPolicy: String,
+  guideIncluded: { type: Boolean, default: false },
+  guideId: { 
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Signup',
+    required: function() {
+      return this.guideIncluded === true;
+    }
+  },
+  guideCost: { 
+    type: Number,
+    default: 0
+  },
 }, { timestamps: true });
 
 // Middleware to update averageRating and totalReviews when a review is added
