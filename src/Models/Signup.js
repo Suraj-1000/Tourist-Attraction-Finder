@@ -119,17 +119,10 @@ const signupSchema = new mongoose.Schema({
       type: String,
       enum: ['Trekking', 'Cultural Tour', 'City Tour', 'Wildlife Safari']
     }],
-    availability: [{
-      date: Date,
-      slots: [{
-        startTime: String,
-        endTime: String,
-        isBooked: {
-          type: Boolean,
-          default: false
-        }
-      }]
-    }],
+    isAvailable: {
+      type: Boolean,
+      default: true
+    },
     pricing: {
       perDay: {
         type: Number,

@@ -1180,4 +1180,31 @@ body {
   .rating-number25 {
     font-size: 2.5rem;
   }
+}
+
+/* Availability Status Styles */
+.availability-status64 {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.5rem;
+  background: white;
+  border-radius: 8px;
+}
+
+.status-badge64 {
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.status-badge64.available {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+}
+
+.status-badge64.unavailable {
+  background-color: #ffebee;
+  color: #c62828;
 } 

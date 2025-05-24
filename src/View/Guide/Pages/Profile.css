@@ -862,3 +862,99 @@
 .no-changes-dialog i {
   font-size: 1.2rem;
 }
+
+/* Availability Toggle Styles */
+.availability-toggle64 {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1rem;
+  background: white;
+  border-radius: 8px;
+}
+
+.toggle-container64 {
+  position: relative;
+  display: inline-block;
+  width: 60px;
+  height: 34px;
+}
+
+.toggle-input64 {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-label64 {
+  position: relative;
+  display: inline-block;
+  width: 60px;
+  height: 34px;
+  background-color: #ccc;
+  border-radius: 34px;
+  transition: .4s;
+  cursor: pointer;
+}
+
+.toggle-label64:before {
+  position: absolute;
+  content: "";
+  height: 26px;
+  width: 26px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  border-radius: 50%;
+  transition: .4s;
+}
+
+.toggle-input64:checked + .toggle-label64 {
+  background-color: #008000;
+}
+
+.toggle-input64:checked + .toggle-label64:before {
+  transform: translateX(26px);
+}
+
+.toggle-text64 {
+  position: absolute;
+  left: 70px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #333;
+  font-size: 0.9rem;
+}
+
+/* Availability Status Display */
+.availability-status64 {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: white;
+  border-radius: 8px;
+}
+
+.status-label64 {
+  font-size: 1rem;
+  color: #333;
+  font-weight: 500;
+}
+
+.status-badge64 {
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.status-badge64.available {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+}
+
+.status-badge64.unavailable {
+  background-color: #ffebee;
+  color: #c62828;
+}

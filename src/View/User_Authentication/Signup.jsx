@@ -43,7 +43,6 @@ export default function Signup() {
     languages: [''],
     regionsOfExpertise: [''],
     serviceTypes: '',
-    availability: '',
     licenseDocument: '',
     pricing: '',
     educationCertificates: '',
@@ -66,7 +65,6 @@ export default function Signup() {
     languages: [false],
     regionsOfExpertise: [false],
     serviceTypes: false,
-    availability: false,
     licenseDocument: false,
     pricing: false,
     educationCertificates: false,
@@ -89,7 +87,6 @@ export default function Signup() {
     languages: [false],
     regionsOfExpertise: [false],
     serviceTypes: false,
-    availability: false,
     licenseDocument: false,
     pricing: false,
     educationCertificates: false,
@@ -105,7 +102,7 @@ export default function Signup() {
     pricing: {
       perDay: 0
     },
-    availability: [],
+    isAvailable: true,
     isVerified: false,
     verificationStatus: 'pending',
     verificationDate: null,
@@ -140,7 +137,6 @@ export default function Signup() {
     languages: useRef([]),
     regionsOfExpertise: useRef([]),
     serviceTypes: useRef(null),
-    availability: useRef(null),
     licenseDocument: useRef(null),
     pricing: useRef(null),
     termsAccepted: useRef(null),
@@ -248,7 +244,7 @@ export default function Signup() {
   };
 
   const validateServiceTypes = (serviceTypes) => {
-    if (!serviceTypes || serviceTypes.length < 2) return "Please select at least 2 service types";
+    if (!serviceTypes || serviceTypes.length === 0) return "At least one service type is required";
     return "";
   };
 
@@ -257,40 +253,13 @@ export default function Signup() {
     return "";
   };
 
-  const validateAvailability = (availability) => {
-    if (!availability || availability.length === 0) return "Please add at least one availability slot";
-    
-    // Check if any date is in the past
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    for (const slot of availability) {
-      const slotDate = new Date(slot.date);
-      if (slotDate < today) return "Availability dates must be current or future dates only";
-    }
-    
-    return "";
-  };
-
-  // Add validatePricing function with the other validation functions
   const validatePricing = (price) => {
-    if (!price) return "Price per day is required";
-    if (price <= 0) return "Price must be greater than zero";
+    if (!price || price <= 0) return "Price must be greater than 0";
     return "";
   };
 
-  // Add validation function for education certificates
   const validateEducationCertificates = (certificates) => {
-    if (!certificates || certificates.length === 0) {
-      return "At least one education certificate is required";
-    }
-    
-    // Check if any certificate is missing a URL (not fully uploaded)
-    const incompleteUploads = certificates.filter(cert => !cert.url);
-    if (incompleteUploads.length > 0) {
-      return "Some certificate uploads are not complete. Please wait or retry.";
-    }
-    
+    if (!certificates || certificates.length === 0) return "At least one education certificate is required";
     return "";
   };
 
@@ -424,11 +393,6 @@ export default function Signup() {
         
       case 'serviceTypes':
         errorMessage = validateServiceTypes(guideDetails.serviceTypes);
-        isValid = errorMessage === "";
-        break;
-        
-      case 'availability':
-        errorMessage = validateAvailability(guideDetails.availability);
         isValid = errorMessage === "";
         break;
         
@@ -603,20 +567,18 @@ export default function Signup() {
   };
 
   const handleServiceTypeChange = (serviceType) => {
-    const updatedServiceTypes = guideDetails.serviceTypes.includes(serviceType)
-      ? guideDetails.serviceTypes.filter(type => type !== serviceType)
-      : [...guideDetails.serviceTypes, serviceType];
-    setGuideDetails({ ...guideDetails, serviceTypes: updatedServiceTypes });
-    
-    // Set touched state for serviceTypes
-    if (!touched.serviceTypes) {
-      setTouched({ ...touched, serviceTypes: true });
+    const currentTypes = [...guideDetails.serviceTypes];
+    if (currentTypes.includes(serviceType)) {
+      setGuideDetails({
+        ...guideDetails,
+        serviceTypes: currentTypes.filter(type => type !== serviceType)
+      });
+    } else {
+      setGuideDetails({
+        ...guideDetails,
+        serviceTypes: [...currentTypes, serviceType]
+      });
     }
-    
-    // Validate service types immediately
-    const serviceTypesError = validateServiceTypes(updatedServiceTypes);
-    setErrors(prev => ({ ...prev, serviceTypes: serviceTypesError }));
-    setValid(prev => ({ ...prev, serviceTypes: serviceTypesError === "" }));
   };
 
   const handleLicenseUpload = async (e) => {
@@ -788,85 +750,6 @@ export default function Signup() {
     setTimeout(() => validateField('educationCertificates'), 0);
   };
 
-  const handleAvailabilityChange = (dateIndex, slotIndex, field, value) => {
-    setGuideDetails(prev => ({
-      ...prev,
-      availability: prev.availability.map((date, i) => {
-        if (i === dateIndex) {
-          if (field === 'date') {
-            // Create a new Date object from the selected date
-            const selectedDate = new Date(value);
-            return {
-              ...date,
-              date: selectedDate,
-              slots: date.slots
-            };
-          } else {
-            return {
-              ...date,
-              slots: date.slots.map((slot, j) => 
-                j === slotIndex ? { ...slot, [field]: value } : slot
-              )
-            };
-          }
-        }
-        return date;
-      })
-    }));
-    
-    // Set touched state for availability
-    if (!touched.availability) {
-      setTouched({ ...touched, availability: true });
-    }
-    
-    // Validate availability
-    setTimeout(() => validateField('availability'), 0);
-  };
-
-  const addAvailabilitySlot = () => {
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    tomorrow.setHours(0, 0, 0, 0);
-    
-    setGuideDetails(prev => ({
-      ...prev,
-      availability: [
-        ...prev.availability,
-        {
-          date: tomorrow,
-          slots: [{ startTime: '09:00', endTime: '17:00', isBooked: false }]
-        }
-      ]
-    }));
-    
-    // Set touched state for availability
-    if (!touched.availability) {
-      setTouched({ ...touched, availability: true });
-    }
-    
-    // Validate availability
-    setTimeout(() => validateField('availability'), 0);
-  };
-
-  const removeAvailabilitySlot = (index) => {
-    setGuideDetails(prev => ({
-      ...prev,
-      availability: prev.availability.filter((_, i) => i !== index)
-    }));
-    
-    // Validate availability after removal
-    setTimeout(() => validateField('availability'), 0);
-  };
-
-  const formatDateForInput = (date) => {
-    if (!(date instanceof Date) || isNaN(date)) {
-      const tomorrow = new Date();
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      return tomorrow.toISOString().split('T')[0];
-    }
-    return date.toISOString().split('T')[0];
-  };
-
   // Handle profile image upload
   const handleProfileImageUpload = async (e) => {
     const file = e.target.files[0];
@@ -1010,7 +893,6 @@ export default function Signup() {
       const profileImageError = validateProfileImage(profileImage);
       const licenseNumberError = validateLicenseNumber(guideDetails.licenseNumber);
       const serviceTypesError = validateServiceTypes(guideDetails.serviceTypes);
-      const availabilityError = validateAvailability(guideDetails.availability);
       const licenseDocumentError = validateLicenseDocument(guideDetails.licenseDocument);
       const certificatesError = validateEducationCertificates(guideDetails.educationCertificates);
       
@@ -1031,7 +913,6 @@ export default function Signup() {
         profileImage: profileImageError,
         licenseNumber: licenseNumberError,
         serviceTypes: serviceTypesError,
-        availability: availabilityError,
         licenseDocument: licenseDocumentError,
         pricing: pricingError,
         educationCertificates: certificatesError
@@ -1045,7 +926,6 @@ export default function Signup() {
         profileImage: profileImageError === "",
         licenseNumber: licenseNumberError === "",
         serviceTypes: serviceTypesError === "",
-        availability: availabilityError === "",
         licenseDocument: licenseDocumentError === "",
         pricing: pricingError === "",
         educationCertificates: certificatesError === ""
@@ -1060,7 +940,6 @@ export default function Signup() {
         profileImage: true,
         licenseNumber: true,
         serviceTypes: true,
-        availability: true,
         licenseDocument: true,
         pricing: true,
         educationCertificates: true
@@ -1116,8 +995,8 @@ export default function Signup() {
       // Update isValid for guide
       isValid = isValid && !dobError && !addressError && !genderError && 
                 !profileImageError && !licenseNumberError && !serviceTypesError && 
-                !availabilityError && !licenseDocumentError && !pricingError &&
-                !certificatesError && !hasLanguageError && !hasRegionError;
+                !licenseDocumentError && !pricingError && !certificatesError &&
+                !hasLanguageError && !hasRegionError;
     }
     
     return isValid;
@@ -1414,7 +1293,7 @@ export default function Signup() {
                     required
                   />
                   {touched.firstName && errors.firstName ? (
-                    <div className="error-message">{errors.firstName}</div>
+                    <div className="error-message01">{errors.firstName}</div>
                   ) : touched.firstName && valid.firstName ? (
                     <div className="valid-message">First name is valid</div>
                   ) : null}
@@ -1436,7 +1315,7 @@ export default function Signup() {
                     required
                   />
                   {touched.lastName && errors.lastName ? (
-                    <div className="error-message">{errors.lastName}</div>
+                    <div className="error-message01">{errors.lastName}</div>
                   ) : touched.lastName && valid.lastName ? (
                     <div className="valid-message">Last name is valid</div>
                   ) : null}
@@ -1461,7 +1340,7 @@ export default function Signup() {
                     required
                   />
                   {touched.email && errors.email ? (
-                    <div className="error-message">{errors.email}</div>
+                    <div className="error-message01">{errors.email}</div>
                   ) : touched.email && valid.email ? (
                     <div className="valid-message">Email is valid</div>
                   ) : null}
@@ -1484,7 +1363,7 @@ export default function Signup() {
                     required
                   />
                   {touched.phone && errors.phone ? (
-                    <div className="error-message">{errors.phone}</div>
+                    <div className="error-message01">{errors.phone}</div>
                   ) : touched.phone && valid.phone ? (
                     <div className="valid-message">Phone number is valid</div>
                   ) : null}
@@ -1518,7 +1397,7 @@ export default function Signup() {
                     </button>
                   </div>
                   {touched.password && errors.password ? (
-                    <div className="error-message">{errors.password}</div>
+                    <div className="error-message01">{errors.password}</div>
                   ) : touched.password && valid.password ? (
                     <div className="valid-message">Password is valid</div>
                   ) : null}
@@ -1549,7 +1428,7 @@ export default function Signup() {
                     </button>
                   </div>
                   {touched.confirmPassword && errors.confirmPassword ? (
-                    <div className="error-message">{errors.confirmPassword}</div>
+                    <div className="error-message01">{errors.confirmPassword}</div>
                   ) : touched.confirmPassword && valid.confirmPassword ? (
                     <div className="valid-message">Passwords match</div>
                   ) : null}
@@ -1621,7 +1500,7 @@ export default function Signup() {
                         </label>
                       </div>
                       {touched.gender && errors.gender ? (
-                        <div className="error-message">{errors.gender}</div>
+                        <div className="error-message01">{errors.gender}</div>
                       ) : touched.gender && valid.gender ? (
                         <div className="valid-message">Gender is selected</div>
                       ) : null}
@@ -1643,7 +1522,7 @@ export default function Signup() {
                         required={isGuide}
                       />
                       {touched.dateOfBirth && errors.dateOfBirth ? (
-                        <div className="error-message">{errors.dateOfBirth}</div>
+                        <div className="error-message01">{errors.dateOfBirth}</div>
                       ) : touched.dateOfBirth && valid.dateOfBirth ? (
                         <div className="valid-message">Date of birth is valid</div>
                       ) : null}
@@ -1665,7 +1544,7 @@ export default function Signup() {
                         required={isGuide}
                       />
                       {touched.address && errors.address ? (
-                        <div className="error-message">{errors.address}</div>
+                        <div className="error-message01">{errors.address}</div>
                       ) : touched.address && valid.address ? (
                         <div className="valid-message">Address is valid</div>
                       ) : null}
@@ -1719,7 +1598,7 @@ export default function Signup() {
                         </div>
                       )}
                       {touched.profileImage && errors.profileImage ? (
-                        <div className="error-message">{errors.profileImage}</div>
+                        <div className="error-message01">{errors.profileImage}</div>
                       ) : touched.profileImage && valid.profileImage ? (
                         <div className="valid-message">Profile image uploaded successfully</div>
                       ) : null}
@@ -1751,7 +1630,7 @@ export default function Signup() {
                           </button>
                         )}
                         {touched.languages[index] && errors.languages[index] ? (
-                          <div className="error-message">{errors.languages[index]}</div>
+                          <div className="error-message01">{errors.languages[index]}</div>
                         ) : touched.languages[index] && valid.languages[index] ? (
                           <div className="valid-message">Language is valid</div>
                         ) : null}
@@ -1778,7 +1657,7 @@ export default function Signup() {
                       required={isGuide}
                     />
                     {touched.licenseNumber && errors.licenseNumber ? (
-                      <div className="error-message">{errors.licenseNumber}</div>
+                      <div className="error-message01">{errors.licenseNumber}</div>
                     ) : touched.licenseNumber && valid.licenseNumber ? (
                       <div className="valid-message">License number is valid</div>
                     ) : null}
@@ -1831,7 +1710,7 @@ export default function Signup() {
                         </div>
                       )}
                       {touched.licenseDocument && errors.licenseDocument ? (
-                        <div className="error-message">{errors.licenseDocument}</div>
+                        <div className="error-message01">{errors.licenseDocument}</div>
                       ) : touched.licenseDocument && valid.licenseDocument ? (
                         <div className="valid-message">License document uploaded successfully</div>
                       ) : null}
@@ -1863,7 +1742,7 @@ export default function Signup() {
                           </button>
                         )}
                         {touched.regionsOfExpertise[index] && errors.regionsOfExpertise[index] ? (
-                          <div className="error-message">{errors.regionsOfExpertise[index]}</div>
+                          <div className="error-message01">{errors.regionsOfExpertise[index]}</div>
                         ) : touched.regionsOfExpertise[index] && valid.regionsOfExpertise[index] ? (
                           <div className="valid-message">Region is valid</div>
                         ) : null}
@@ -1931,7 +1810,7 @@ export default function Signup() {
                       </div>
                     )}
                     {touched.educationCertificates && errors.educationCertificates ? (
-                      <div className="error-message">{errors.educationCertificates}</div>
+                      <div className="error-message01">{errors.educationCertificates}</div>
                     ) : touched.educationCertificates && valid.educationCertificates ? (
                       <div className="valid-message">Certificates uploaded successfully</div>
                     ) : null}
@@ -1955,7 +1834,7 @@ export default function Signup() {
                       ))}
                     </div>
                     {touched.serviceTypes && errors.serviceTypes ? (
-                      <div className="error-message">{errors.serviceTypes}</div>
+                      <div className="error-message01">{errors.serviceTypes}</div>
                     ) : touched.serviceTypes && valid.serviceTypes ? (
                       <div className="valid-message">Service types selected</div>
                     ) : null}
@@ -1979,65 +1858,11 @@ export default function Signup() {
                         required={isGuide}
                       />
                       {touched.pricing && errors.pricing ? (
-                        <div className="error-message">{errors.pricing}</div>
+                        <div className="error-message01">{errors.pricing}</div>
                       ) : touched.pricing && valid.pricing ? (
                         <div className="valid-message">Price is valid</div>
                       ) : null}
                     </div>
-                  </div>
-
-                  <div className="availability-section" ref={fieldRefs.current.availability}>
-                    <h4>
-                      Availability <span className="required-field">*</span>
-                    </h4>
-                    {guideDetails.availability.map((dateSlot, dateIndex) => (
-                      <div key={dateIndex} className="availability-item">
-                        <div className="date-header">
-                          <input
-                            type="date"
-                            value={formatDateForInput(dateSlot.date)}
-                            onChange={(e) => handleAvailabilityChange(dateIndex, 0, 'date', e.target.value)}
-                            className="input-field0"
-                            min={new Date().toISOString().split('T')[0]}
-                            required={isGuide}
-                          />
-                          <button
-                            type="button"
-                            className="remove-button"
-                            onClick={() => removeAvailabilitySlot(dateIndex)}
-                          >
-                            <FiX />
-                          </button>
-                        </div>
-                        {dateSlot.slots.map((slot, slotIndex) => (
-                          <div key={slotIndex} className="time-slot">
-                            <input
-                              type="time"
-                              value={slot.startTime}
-                              onChange={(e) => handleAvailabilityChange(dateIndex, slotIndex, 'startTime', e.target.value)}
-                              className="input-field0"
-                              required={isGuide}
-                            />
-                            <span>to</span>
-                            <input
-                              type="time"
-                              value={slot.endTime}
-                              onChange={(e) => handleAvailabilityChange(dateIndex, slotIndex, 'endTime', e.target.value)}
-                              className="input-field0"
-                              required={isGuide}
-                            />
-                          </div>
-                        ))}
-                      </div>
-                    ))}
-                    <button type="button" className="add-button" onClick={addAvailabilitySlot}>
-                      <FiPlus /> Add Availability
-                    </button>
-                    {touched.availability && errors.availability ? (
-                      <div className="error-message">{errors.availability}</div>
-                    ) : touched.availability && valid.availability ? (
-                      <div className="valid-message">Availability slots added</div>
-                    ) : null}
                   </div>
                 </div>
               )}
@@ -2055,7 +1880,7 @@ export default function Signup() {
                 </label>
               </div>
               {touched.termsAccepted && errors.termsAccepted && (
-                <div className="error-message">{errors.termsAccepted}</div>
+                <div className="error-message01">{errors.termsAccepted}</div>
               )}
 
               <button className="submit-button1" type="submit" disabled={isLoading}>

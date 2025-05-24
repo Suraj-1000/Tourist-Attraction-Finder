@@ -20,6 +20,39 @@ const toastConfig = {
   theme: "light"
 };
 
+// Update the activity to service mapping with more comprehensive mappings
+const ACTIVITY_TO_SERVICE_MAPPING = {
+  // Adventure Activities
+  "Hiking & Trekking": ["Trekking", "Hiking", "Mountain Guide", "Adventure Guide"],
+  "Paragliding": ["Adventure Sports", "Paragliding", "Adventure Guide"],
+  "Rafting": ["Adventure Sports", "Rafting", "Water Sports Guide"],
+  
+  // Cultural Experiences
+  "Temples": ["Cultural Tour", "Religious Tour", "City Guide", "Cultural Guide"],
+  "Museums": ["Cultural Tour", "Museum Tour", "City Guide", "Cultural Guide"],
+  "Festivals": ["Cultural Tour", "Festival Tour", "Cultural Guide"],
+  
+  // Relaxation
+  "Lakeside Strolls": ["City Tour", "Nature Tour", "City Guide"],
+  "Hot Springs": ["Wellness Tour", "Nature Tour", "Wellness Guide"],
+  "Spas": ["Wellness Tour", "Luxury Tour", "Wellness Guide"],
+  
+  // Food & Culinary
+  "Food Tours": ["Food Tour", "Cultural Tour", "Food Guide", "City Guide"],
+  "Street Food": ["Food Tour", "Cultural Tour", "Food Guide", "City Guide"],
+  "Cooking Classes": ["Food Tour", "Cultural Tour", "Food Guide"],
+  
+  // Nightlife & Entertainment
+  "Clubs": ["Nightlife Tour", "Entertainment", "City Guide"],
+  "Live Music": ["Cultural Tour", "Entertainment", "City Guide"]
+};
+
+// Add trip type to service mapping
+const TRIP_TYPE_TO_SERVICE_MAPPING = {
+  "Short Trip": ["City Tour", "Day Tour", "City Guide", "Local Guide"],
+  "Long Trip": ["Trekking", "Expedition", "Mountain Guide", "Adventure Guide", "Long Trip Guide"]
+};
+
 export default function PlanYourTripPage() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
@@ -76,6 +109,8 @@ export default function PlanYourTripPage() {
   // Get current date in YYYY-MM-DD format for min date validation
   const today = new Date().toISOString().split('T')[0];
 
+  const [filteredGuides, setFilteredGuides] = useState([]);
+
   useEffect(() => {
     const fetchUserData = async () => {
       try {
@@ -127,14 +162,26 @@ export default function PlanYourTripPage() {
         return;
       }
 
-      const response = await axios.get("http://localhost:4000/api/guides/approved", {
+      const response = await axios.get("http://localhost:4000/guides/approved", {
         headers: {
           Authorization: `Bearer ${token}`
         }
       });
 
       if (response.status === 200) {
-        setApprovedGuides(response.data);
+        console.log("Raw guide data:", response.data);
+        // Filter guides to only show approved and available ones
+        const availableGuides = response.data.filter(guide => {
+          console.log("Checking guide:", guide);
+          const isAvailable = guide.guideProfile && 
+            guide.guideProfile.verificationStatus === 'approved' &&
+            guide.guideProfile.isVerified &&
+            guide.guideProfile.isAvailable;
+          console.log("Guide availability status:", isAvailable);
+          return isAvailable;
+        });
+        console.log("Filtered available guides:", availableGuides);
+        setApprovedGuides(availableGuides);
       }
     } catch (error) {
       console.error("Error fetching guides:", error);
@@ -347,6 +394,95 @@ const calculateCostBreakdown = (data) => {
   };
 };
 
+const filterGuidesByTripDetails = (tripType, activities) => {
+  if (!tripType && (!activities || activities.length === 0)) {
+    setFilteredGuides(approvedGuides);
+    return;
+  }
+
+  // First stage: Filter by trip type if available
+  let matchingGuides = approvedGuides;
+  if (tripType) {
+    matchingGuides = approvedGuides.filter(guide => {
+      const guideServices = guide.guideProfile?.serviceTypes?.map(service => 
+        service.toLowerCase().trim()
+      ) || [];
+      
+      const tripTypeServices = TRIP_TYPE_TO_SERVICE_MAPPING[tripType] || [];
+      return tripTypeServices.some(tripService => 
+        guideServices.some(guideService => 
+          guideService.includes(tripService.toLowerCase()) || 
+          tripService.toLowerCase().includes(guideService)
+        )
+      );
+    });
+  }
+
+  // Second stage: Further filter by activities if any are selected
+  if (activities && activities.length > 0) {
+    // Instead of filtering out guides, we'll add guides that match activities
+    const activityMatchingGuides = approvedGuides.filter(guide => {
+      const guideServices = guide.guideProfile?.serviceTypes?.map(service => 
+        service.toLowerCase().trim()
+      ) || [];
+      
+      return activities.some(activity => {
+        const mappedServices = ACTIVITY_TO_SERVICE_MAPPING[activity] || [activity];
+        return mappedServices.some(mappedService => 
+          guideServices.some(guideService => 
+            guideService.includes(mappedService.toLowerCase()) || 
+            mappedService.toLowerCase().includes(guideService)
+          )
+        );
+      });
+    });
+
+    // Combine both sets of guides, removing duplicates
+    const combinedGuides = [...new Set([...matchingGuides, ...activityMatchingGuides])];
+    matchingGuides = combinedGuides;
+  }
+
+  // Sort guides by number of matching services (most matches first)
+  const sortedGuides = matchingGuides.sort((a, b) => {
+    const aServices = a.guideProfile?.serviceTypes?.map(s => s.toLowerCase().trim()) || [];
+    const bServices = b.guideProfile?.serviceTypes?.map(s => s.toLowerCase().trim()) || [];
+    
+    // Calculate trip type match score
+    const aTripTypeScore = tripType ? 
+      (TRIP_TYPE_TO_SERVICE_MAPPING[tripType] || []).filter(service => 
+        aServices.some(as => as.includes(service.toLowerCase()) || service.toLowerCase().includes(as))
+      ).length : 0;
+    
+    const bTripTypeScore = tripType ? 
+      (TRIP_TYPE_TO_SERVICE_MAPPING[tripType] || []).filter(service => 
+        bServices.some(bs => bs.includes(service.toLowerCase()) || service.toLowerCase().includes(bs))
+      ).length : 0;
+    
+    // Calculate activity match score
+    const aActivityScore = activities.filter(activity => {
+      const mappedServices = ACTIVITY_TO_SERVICE_MAPPING[activity] || [activity];
+      return mappedServices.some(ms => 
+        aServices.some(as => as.includes(ms.toLowerCase()) || ms.toLowerCase().includes(as))
+      );
+    }).length;
+    
+    const bActivityScore = activities.filter(activity => {
+      const mappedServices = ACTIVITY_TO_SERVICE_MAPPING[activity] || [activity];
+      return mappedServices.some(ms => 
+        bServices.some(bs => bs.includes(ms.toLowerCase()) || ms.toLowerCase().includes(bs))
+      );
+    }).length;
+    
+    // Combine scores with higher weight for trip type matches
+    const aTotalScore = (aTripTypeScore * 2) + aActivityScore;
+    const bTotalScore = (bTripTypeScore * 2) + bActivityScore;
+    
+    return bTotalScore - aTotalScore;
+  });
+
+  setFilteredGuides(sortedGuides);
+};
+
 const handleChange = (e) => {
   const { name, value, type, checked } = e.target;
   
@@ -359,31 +495,6 @@ const handleChange = (e) => {
         guideId: '', // Always clear guide ID when toggling checkbox
         guideCost: 0,  // Clear guide cost when toggling checkbox
       };
-      
-      // If we're including a guide and don't have other selections yet, 
-      // we need to ensure we reset other costs to zero
-      if (checked) {
-        // Only show guide cost and zero out other costs if they haven't been selected
-        if (!prev.transportationType || prev.transportationType === "None") {
-          updatedData.transportCost = "0.00";
-        }
-        
-        if (!prev.accommodationType || prev.accommodationType === "None") {
-          updatedData.accommodationCost = "0.00";
-        }
-        
-        if (!prev.mealsPreferences || prev.mealsPreferences === "None") {
-          updatedData.mealsCost = "0.00";
-        }
-        
-        if (prev.adventureActivities?.length === 0 && 
-            prev.culturalExperiences?.length === 0 && 
-            prev.relaxation?.length === 0 &&
-            prev.foodCulinary?.length === 0 &&
-            prev.nightlifeEntertainment?.length === 0) {
-          updatedData.activitiesCost = "0.00";
-        }
-      }
       
       setSelectedGuide(null); // Reset selected guide state
       return calculateCostBreakdown(updatedData);
@@ -408,8 +519,26 @@ const handleChange = (e) => {
       
       return calculateCostBreakdown(updatedData);
     });
+  } else if (name === "tripType") {
+    // Special handling for trip type radio buttons
+    setFormData((prev) => {
+      const updatedData = { ...prev, [name]: value };
+      
+      // Collect all selected activities
+      const allActivities = [
+        ...(updatedData.adventureActivities || []),
+        ...(updatedData.culturalExperiences || []),
+        ...(updatedData.relaxation || []),
+        ...(updatedData.foodCulinary || []),
+        ...(updatedData.nightlifeEntertainment || [])
+      ];
+
+      // Filter guides based on new trip type and existing activities
+      filterGuidesByTripDetails(value, allActivities);
+      
+      return updatedData;
+    });
   } else {
-    // Original code for other form elements
     setFormData((prev) => {
       const updatedData = { ...prev, [name]: value };
 
@@ -430,8 +559,40 @@ const handleChange = (e) => {
   }
 };
   
+const handleCheckboxChange = (e) => {
+  const { name, value, checked } = e.target;
 
- 
+  if (name === 'dietaryPreferences') {
+    // For dietary preferences, treat as radio buttons
+    setFormData(prev => ({
+      ...prev,
+      dietaryPreferences: [value]
+    }));
+  } else {
+    // Default handling for other checkboxes
+    setFormData((prev) => {
+      const currentValues = Array.isArray(prev[name]) ? prev[name] : []; 
+      const updatedData = {
+        ...prev,
+        [name]: checked ? [...currentValues, value] : currentValues.filter((item) => item !== value),
+      };
+      
+      // Collect all selected activities
+      const allActivities = [
+        ...(updatedData.adventureActivities || []),
+        ...(updatedData.culturalExperiences || []),
+        ...(updatedData.relaxation || []),
+        ...(updatedData.foodCulinary || []),
+        ...(updatedData.nightlifeEntertainment || [])
+      ];
+
+      // Filter guides based on trip type and all selected activities
+      filterGuidesByTripDetails(updatedData.tripType, allActivities);
+      
+      return calculateCostBreakdown(updatedData);
+    });
+  }
+};
 
   const calculateDurationAndTripType = (field, value) => {
     let { startDate, endDate } = formData;
@@ -448,12 +609,28 @@ const handleChange = (e) => {
         const duration = `${days + 1} days`; // Include the last day
         const tripType = days + 1 <= 3 ? "Short Trip" : "Long Trip";
 
-        setFormData((prev) => ({
+      setFormData((prev) => {
+        const updatedData = {
           ...prev,
           duration,
           tripType,
           itinerary: generateItinerary(days + 1),
-        }));
+        };
+
+        // Collect all selected activities
+        const allActivities = [
+          ...(updatedData.adventureActivities || []),
+          ...(updatedData.culturalExperiences || []),
+          ...(updatedData.relaxation || []),
+          ...(updatedData.foodCulinary || []),
+          ...(updatedData.nightlifeEntertainment || [])
+        ];
+
+        // Filter guides based on new trip type and existing activities
+        filterGuidesByTripDetails(tripType, allActivities);
+
+        return updatedData;
+      });
       } else {
         setFormData((prev) => ({
           ...prev,
@@ -483,28 +660,6 @@ const handleChange = (e) => {
     setFormData({ ...formData, itinerary: updatedItinerary });
   };
 
-  const handleCheckboxChange = (e) => {
-    const { name, value, checked } = e.target;
-
-    if (name === 'dietaryPreferences') {
-      // For dietary preferences, treat as radio buttons
-      setFormData(prev => ({
-        ...prev,
-        dietaryPreferences: [value]
-      }));
-    } else {
-      // Default handling for other checkboxes
-      setFormData((prev) => {
-        const currentValues = Array.isArray(prev[name]) ? prev[name] : []; 
-        return {
-          ...prev,
-          [name]: checked ? [...currentValues, value] : currentValues.filter((item) => item !== value),
-        };
-      });
-    }
-  };
-
-  // Add a dedicated handler for dietary preferences
   const handleDietaryPreferenceChange = (e) => {
     const { value } = e.target;
     setFormData(prev => ({
@@ -605,6 +760,10 @@ const handleChange = (e) => {
           : "None"
       };
 
+    // Convert arrays to proper format
+    if (Array.isArray(formDataToSubmit.accommodationType)) {
+      formDataToSubmit.accommodationType = formDataToSubmit.accommodationType[0];
+    }
       // Convert arrays to proper format
       if (Array.isArray(formDataToSubmit.accommodationType)) {
         formDataToSubmit.accommodationType = formDataToSubmit.accommodationType[0];
@@ -784,9 +943,82 @@ const handleChange = (e) => {
               <div className="activity-section21">
                 <h3 className="h3-21">Others (Custom Activities):</h3>
                 <label className="label-21"><textarea className="custom-textarea21" name="customActivities" value={formData.customActivities} onChange={handleChange}  placeholder="Enter your custom activities here..." /></label>
-          </div>
+              </div>
 
           </div>
+
+          {/* --- MOVE GUIDE SELECTION SECTION HERE --- */}
+          <h2 className="h2-21">Guide Selection</h2>
+          <h3 className="h3-21">Would you like to include a guide?</h3>
+          <div className="guide-option">
+            <label className="label-21">
+              <input
+                type="checkbox"
+                name="guideIncluded"
+                checked={formData.guideIncluded}
+                onChange={handleChange}
+                className="input-21"
+              />
+              Include a professional guide for your trip
+            </label>
+          </div>
+          {formData.guideIncluded && (
+            <div className="guide-selection" style={{ marginTop: '20px' }}>
+              <h3 className="h3-21" style={{ marginBottom: '15px' }}>Select your guide:</h3>
+              {filteredGuides.length > 0 ? (
+                <div className="select-wrapper" style={{ marginBottom: '20px' }}>
+                  <select
+                    name="guideId"
+                    value={formData.guideId}
+                    onChange={handleChange}
+                    className={`select-input ${errors.guideId ? 'error-input' : ''}`}
+                    style={{ 
+                      width: '100%', 
+                      padding: '12px', 
+                      borderRadius: '5px',
+                      border: '1px solid #ccc',
+                      fontSize: '16px'
+                    }}
+                  >
+                    <option value="">Select a guide</option>
+                    {filteredGuides.map((guide) => (
+                      <option key={guide._id} value={guide._id}>
+                        {guide.firstName} {guide.lastName} - NPR {guide.guideProfile?.pricing?.perDay || COST_RANGES.guide.perDay}/day
+                      </option>
+                    ))}
+                  </select>
+                  {errors.guideId && <span className="error-message21" style={{ color: 'red', fontSize: '14px', display: 'block', marginTop: '5px' }}>{errors.guideId}</span>}
+                </div>
+              ) : (
+                <p className="no-guides-message" style={{ color: '#666', fontStyle: 'italic' }}>
+                  {formData.tripType || formData.adventureActivities?.length > 0 || formData.culturalExperiences?.length > 0 || 
+                   formData.relaxation?.length > 0 || formData.foodCulinary?.length > 0 || formData.nightlifeEntertainment?.length > 0
+                    ? "No guides available with matching service types. Please try different activities or trip type."
+                    : "Please select a trip type or activities to see matching guides."}
+                </p>
+              )}
+              {selectedGuide && (
+                <div className="guide-details" style={{ 
+                  background: '#f8f9fa', 
+                  padding: '20px', 
+                  borderRadius: '8px',
+                  boxShadow: '0 2px 5px rgba(0,0,0,0.1)',
+                  marginBottom: '25px'
+                }}>
+                  <h4 style={{ fontSize: '18px', marginBottom: '15px', color: '#333', borderBottom: '1px solid #ddd', paddingBottom: '10px' }}>Guide Details:</h4>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                    <p><strong>Name:</strong> {selectedGuide.firstName} {selectedGuide.lastName}</p>
+                    <p><strong>Languages:</strong> {selectedGuide.guideProfile?.languages?.join(", ") || "Not specified"}</p>
+                    <p><strong>Regions of Expertise:</strong> {selectedGuide.guideProfile?.regionsOfExpertise?.join(", ") || "Not specified"}</p>
+                    <p><strong>Service Types:</strong> {selectedGuide.guideProfile?.serviceTypes?.join(", ") || "Not specified"}</p>
+                    <p><strong>Price per Day:</strong> NPR {selectedGuide.guideProfile?.pricing?.perDay || COST_RANGES.guide.perDay}</p>
+                    <p><strong>Total Guide Cost:</strong> NPR {formData.guideCost || "0.00"} ({formData.duration})</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+          {/* --- END GUIDE SELECTION SECTION --- */}
 
           <h3 className="h3-21">Travel Style: <span className="required">*</span></h3>
           {errors.travelStyle && <p className="error-message21">{errors.travelStyle}</p>}
@@ -987,75 +1219,6 @@ const handleChange = (e) => {
                   />
               </label>
           </div>
-
-          <h2 className="h2-21">Guide Selection</h2>
-
-          <h3 className="h3-21">Would you like to include a guide?</h3>
-          <div className="guide-option">
-            <label className="label-21">
-              <input
-                type="checkbox"
-                name="guideIncluded"
-                checked={formData.guideIncluded}
-                onChange={handleChange}
-                className="input-21"
-              />
-              Include a professional guide for your trip
-            </label>
-          </div>
-
-          {formData.guideIncluded && (
-            <div className="guide-selection" style={{ marginTop: '20px' }}>
-              <h3 className="h3-21" style={{ marginBottom: '15px' }}>Select your guide:</h3>
-              {approvedGuides.length > 0 ? (
-                <div className="select-wrapper" style={{ marginBottom: '20px' }}>
-                  <select
-                    name="guideId"
-                    value={formData.guideId}
-                    onChange={handleChange}
-                    className={`select-input ${errors.guideId ? 'error-input' : ''}`}
-                    style={{ 
-                      width: '100%', 
-                      padding: '12px', 
-                      borderRadius: '5px',
-                      border: '1px solid #ccc',
-                      fontSize: '16px'
-                    }}
-                  >
-                    <option value="">Select a guide</option>
-                    {approvedGuides.map((guide) => (
-                      <option key={guide._id} value={guide._id}>
-                        {guide.firstName} {guide.lastName} - NPR {guide.guideProfile?.pricing?.perDay || COST_RANGES.guide.perDay}/day
-                      </option>
-                    ))}
-                  </select>
-                  {errors.guideId && <span className="error-message21" style={{ color: 'red', fontSize: '14px', display: 'block', marginTop: '5px' }}>{errors.guideId}</span>}
-                </div>
-              ) : (
-                <p className="no-guides-message" style={{ color: '#666', fontStyle: 'italic' }}>No guides available. Please try again later.</p>
-              )}
-
-              {selectedGuide && (
-                <div className="guide-details" style={{ 
-                  background: '#f8f9fa', 
-                  padding: '20px', 
-                  borderRadius: '8px',
-                  boxShadow: '0 2px 5px rgba(0,0,0,0.1)',
-                  marginBottom: '25px'
-                }}>
-                  <h4 style={{ fontSize: '18px', marginBottom: '15px', color: '#333', borderBottom: '1px solid #ddd', paddingBottom: '10px' }}>Guide Details:</h4>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                    <p><strong>Name:</strong> {selectedGuide.firstName} {selectedGuide.lastName}</p>
-                    <p><strong>Languages:</strong> {selectedGuide.guideProfile?.languages?.join(", ") || "Not specified"}</p>
-                    <p><strong>Regions of Expertise:</strong> {selectedGuide.guideProfile?.regionsOfExpertise?.join(", ") || "Not specified"}</p>
-                    <p><strong>Service Types:</strong> {selectedGuide.guideProfile?.serviceTypes?.join(", ") || "Not specified"}</p>
-                    <p><strong>Price per Day:</strong> NPR {selectedGuide.guideProfile?.pricing?.perDay || COST_RANGES.guide.perDay}</p>
-                    <p><strong>Total Guide Cost:</strong> NPR {formData.guideCost || "0.00"} ({formData.duration})</p>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
 
           <h2 className="h2-21">Select Your Transportation Preferences</h2>
 

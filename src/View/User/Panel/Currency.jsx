@@ -17,7 +17,7 @@ export default function CurrencyPage() {
   const [conversionHistory, setConversionHistory] = useState([]);
   const { currency, updateCurrency } = useContext(CurrencyContext);
 
-  const apiKey = "02ff8245503dad998ff4f66f"; 
+  const apiKey = "2bc865e457a5535f8e6631e5"; 
 
   useEffect(() => {
     fetchExchangeRates();

@@ -535,11 +535,11 @@ const GuideApproval = () => {
                       <p><strong>Phone:</strong> {guide.phone}</p>
                       <p><strong>Languages:</strong> {guide.guideProfile.languages.join(', ')}</p>
                       <p><strong>License:</strong> {guide.guideProfile.licenseNumber}</p>
-                      {guide.guideProfile.verificationStatus === 'rejected' && guide.guideProfile.rejectionReason && (
-                        <p className="rejection-reason25">
-                          <strong>Rejection Reason:</strong> {guide.guideProfile.rejectionReason}
-                        </p>
-                      )}
+                      <p><strong>Availability:</strong> 
+                      <span className={`status-badge64 ${guide.guideProfile.isAvailable ? 'available' : 'unavailable'}`}>
+                          {guide.guideProfile.isAvailable ? 'Available' : 'Unavailable'}
+                        </span>
+                      </p>
                     </div>
                     <div className="card-actions25">
                       <span 
@@ -705,24 +705,14 @@ const GuideApproval = () => {
                 <div className="modal-section25">
                   <h3>Availability</h3>
                   <div className="detail-grid25">
-                    {selectedGuide.guideProfile.availability?.length > 0 ? (
-                      selectedGuide.guideProfile.availability.map((avail, idx) => (
-                        <div className="detail-item25" key={idx}>
-                          <span className="detail-label25">Date:</span>
-                          <span className="detail-value25">{avail.date ? new Date(avail.date).toLocaleDateString() : 'N/A'}</span>
-                          <span className="detail-label25">Slots:</span>
-                          <span className="detail-value25">
-                            {avail.slots?.length > 0 ? (
-                              <ul style={{ margin: 0, paddingLeft: 18 }}>
-                                {avail.slots.map((slot, sidx) => (
-                                  <li key={sidx}>{slot.startTime} - {slot.endTime} {slot.isBooked ? '(Booked)' : ''}</li>
-                                ))}
-                              </ul>
-                            ) : 'No slots'}
-                          </span>
+                    <div className="detail-item25">
+                      <span className="detail-label25">Status:</span>
+                      <div className="availability-status64">
+                        <div className={`status-badge64 ${selectedGuide.guideProfile.isAvailable ? 'available' : 'unavailable'}`}>
+                          {selectedGuide.guideProfile.isAvailable ? 'Available' : 'Unavailable'}
                         </div>
-                      ))
-                    ) : <span className="detail-value25">No availability info</span>}
+                      </div>
+                    </div>
                   </div>
                 </div>
                 <div className="modal-section25">

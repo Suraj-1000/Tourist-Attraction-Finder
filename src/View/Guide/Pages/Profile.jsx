@@ -29,7 +29,7 @@ const Profile = () => {
       pricing: {
         perDay: 0
       },
-      availability: [],
+      isAvailable: true,
       ratings: {
         average: 0,
         total: 0
@@ -275,7 +275,8 @@ const Profile = () => {
   // Function to track form changes
   const trackFormChange = () => {
     if (originalUser) {
-      setFormModified(true);
+      const hasChanges = JSON.stringify(user) !== JSON.stringify(originalUser);
+      setFormModified(hasChanges);
       // Hide no changes error when user starts modifying the form
       setShowNoChangesError(false);
     }
@@ -283,7 +284,20 @@ const Profile = () => {
 
   // Add this to any onChange handler that should track changes
   const handleInputChange = (field, value) => {
+    if (field.startsWith('guideProfile.')) {
+      // Handle nested guide profile fields
+      const [_, nestedField] = field.split('.');
+      setUser(prev => ({
+        ...prev,
+        guideProfile: {
+          ...prev.guideProfile,
+          [nestedField]: value
+        }
+      }));
+    } else {
+      // Handle top-level fields
     setUser(prev => ({ ...prev, [field]: value }));
+    }
     trackFormChange();
   };
 
@@ -367,7 +381,8 @@ const Profile = () => {
         },
         availability: user.guideProfile.availability || [],
         ratings: user.guideProfile.ratings || { average: 0, total: 0 },
-        reviews: user.guideProfile.reviews || []
+        reviews: user.guideProfile.reviews || [],
+        isAvailable: user.guideProfile.isAvailable
       };
 
       // Append guide profile as a stringified object
@@ -843,50 +858,14 @@ const Profile = () => {
                 <p>Rate per Day: NPR {user.guideProfile.pricing.perDay}</p>
               </div>
 
+
               <div className="guide-info-section64">
-                <h4>Availability</h4>
-                <div className="availability-grid64">
-                  {user.guideProfile.availability.map((day, index) => (
-                    <div key={index} className="availability-slot64">
-                      <div className="availability-date64">
-                        <input
-                          type="date"
-                          className="input-field64"
-                          value={day.date.split('T')[0]}
-                          onChange={(e) => {
-                            const newDate = e.target.value;
-                            // Prevent selecting past dates
-                            if (!validateAvailabilityDate(newDate)) {
-                              toast.error("Cannot select past dates for availability");
-                              return;
-                            }
-                            
-                            const newAvailability = [...user.guideProfile.availability];
-                            newAvailability[index] = {
-                              ...newAvailability[index],
-                              date: newDate
-                            };
-                            setUser({
-                              ...user,
-                              guideProfile: {
-                                ...user.guideProfile,
-                                availability: newAvailability
-                              }
-                            });
-                          }}
-                          min={new Date().toISOString().split('T')[0]} // Disable past dates
-                        />
-                      </div>
-                      <div className="availability-time64">
-                        {day.slots.map((slot, slotIndex) => (
-                          <div key={slotIndex}>
-                            {slot.startTime} - {slot.endTime}
-                            {slot.isBooked ? " (Booked)" : " (Available)"}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
+                <h4>Availability Status</h4>
+                <div className="availability-status64">
+                  <span className="status-label64">Currently Available:</span>
+                  <div className={`status-badge64 ${user.guideProfile.isAvailable ? 'available' : 'unavailable'}`}>
+                    {user.guideProfile.isAvailable ? 'Available' : 'Unavailable'}
+                  </div>
                 </div>
               </div>
 
@@ -1302,124 +1281,27 @@ const Profile = () => {
 
             <div className="right-side64">
               <div className="profile-section64">
-                <h4 className="section-title64">Availability</h4>
-                <div className="availability-slots64">
-                  {user.guideProfile.availability.map((day, index) => (
-                    <div key={index} className="availability-slot64">
-                      <button
-                        type="button"
-                        className="remove-button64"
-                        onClick={() => {
-                          const newAvailability = user.guideProfile.availability.filter((_, i) => i !== index);
-                          handleInputChange('guideProfile.availability', newAvailability);
-                        }}
-                      >
-                        Remove
-                      </button>
-                      <div className="availability-date64">
-                        <input
-                          type="date"
-                          className="input-field64"
-                          value={day.date.split('T')[0]}
-                          onChange={(e) => {
-                            const newDate = e.target.value;
-                            // Prevent selecting past dates
-                            if (!validateAvailabilityDate(newDate)) {
-                              toast.error("Cannot select past dates for availability");
-                              return;
-                            }
-                            
-                            const newAvailability = [...user.guideProfile.availability];
-                            newAvailability[index] = {
-                              ...newAvailability[index],
-                              date: newDate
-                            };
-                            handleInputChange('guideProfile.availability', newAvailability);
-                          }}
-                          min={new Date().toISOString().split('T')[0]} // Disable past dates
-                        />
-                      </div>
-                      <div className="time-slots-container64">
-                        <div className="time-slots-header64">
-                          <h5>Time Slots</h5>
-                          <button
-                            type="button"
-                            className="add-button64"
-                            onClick={() => {
-                              const newAvailability = [...user.guideProfile.availability];
-                              newAvailability[index].slots.push({
-                                startTime: "09:00",
-                                endTime: "17:00",
-                                isBooked: false
-                              });
-                              handleInputChange('guideProfile.availability', newAvailability);
-                            }}
-                          >
-                            Add Slot
-                          </button>
-                        </div>
-                        {day.slots.map((slot, slotIndex) => (
-                          <div key={slotIndex} className="slot-input64">
-                            <input
-                              type="time"
-                              className="input-field64"
-                              value={slot.startTime}
-                              onChange={(e) => {
-                                const newAvailability = [...user.guideProfile.availability];
-                                newAvailability[index].slots[slotIndex].startTime = e.target.value;
-                                handleInputChange('guideProfile.availability', newAvailability);
-                              }}
-                            />
-                            <span>to</span>
-                            <input
-                              type="time"
-                              className="input-field64"
-                              value={slot.endTime}
-                              onChange={(e) => {
-                                const newAvailability = [...user.guideProfile.availability];
-                                newAvailability[index].slots[slotIndex].endTime = e.target.value;
-                                handleInputChange('guideProfile.availability', newAvailability);
-                              }}
-                            />
-                            <button
-                              type="button"
-                              className="remove-button64"
-                              onClick={() => {
-                                const newAvailability = [...user.guideProfile.availability];
-                                newAvailability[index].slots = newAvailability[index].slots.filter((_, i) => i !== slotIndex);
-                                handleInputChange('guideProfile.availability', newAvailability);
-                              }}
-                            >
-                              ×
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
+            
+                <div className="availability-toggle64">
+                
+                  <div className="toggle-container64">
+                    <input
+                      type="checkbox"
+                      id="availability-toggle"
+                      className="toggle-input64"
+                      checked={user.guideProfile.isAvailable}
+                      onChange={(e) => {
+                        const newValue = e.target.checked;
+                        handleInputChange('guideProfile.isAvailable', newValue);
+                      }}
+                    />
+                    <label htmlFor="availability-toggle" className="toggle-label64">
+                      <span className="toggle-text64">
+                        {user.guideProfile.isAvailable ? 'Available' : 'Unavailable'}
+                      </span>
+                    </label>
+                  </div>
                 </div>
-                <button
-                  type="button"
-                  className="add-button64"
-                  onClick={() => {
-                    // Get current date in YYYY-MM-DD format
-                    const today = new Date().toISOString().split('T')[0];
-                    
-                    handleInputChange('guideProfile.availability', [
-                      ...user.guideProfile.availability,
-                      {
-                        date: today,
-                        slots: [{
-                          startTime: "09:00",
-                          endTime: "17:00",
-                          isBooked: false
-                        }]
-                      }
-                    ]);
-                  }}
-                >
-                  Add New Date
-                </button>
               </div>
 
               <div className="profile-section64">

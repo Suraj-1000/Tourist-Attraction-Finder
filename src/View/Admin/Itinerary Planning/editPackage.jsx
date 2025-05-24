@@ -140,6 +140,7 @@ export default function EditPackagePage() {
   });
   const formRef = useRef(null);
   const originalValues = useRef(null);
+  const [filteredGuides, setFilteredGuides] = useState([]);
 
   useEffect(() => {
     if (packageName) {
@@ -229,27 +230,33 @@ export default function EditPackagePage() {
     try {
       const token = localStorage.getItem("token");
       if (!token) {
-        console.log("No token found, user may need to login");
+        console.error("No token found");
         return;
       }
 
-      const response = await axios.get("http://localhost:4000/api/guides/approved", {
+      const response = await axios.get("http://localhost:4000/guides/approved", {
         headers: {
           Authorization: `Bearer ${token}`
         }
       });
 
       if (response.status === 200) {
-        setApprovedGuides(response.data);
+        console.log("Raw guide data:", response.data);
+        // Filter guides to only show approved and available ones
+        const availableGuides = response.data.filter(guide => {
+          console.log("Checking guide:", guide);
+          const isAvailable = guide.guideProfile && 
+            guide.guideProfile.verificationStatus === 'approved' &&
+            guide.guideProfile.isVerified &&
+            guide.guideProfile.isAvailable;
+          console.log("Guide availability status:", isAvailable);
+          return isAvailable;
+        });
+        console.log("Filtered available guides:", availableGuides);
+        setApprovedGuides(availableGuides);
       }
     } catch (error) {
       console.error("Error fetching guides:", error);
-      // Don't show an error toast as this is not critical for form operation
-      // Fallback to empty guides array which is already the default
-      if (error.response && error.response.status === 401) {
-        console.log("Authentication issue with guides API - user may need to re-login");
-        // You could redirect to login or handle silently
-      }
     }
   };
   
@@ -537,6 +544,25 @@ export default function EditPackagePage() {
     }
   };
 
+  // Unified guide filtering function
+  const filterGuides = (approvedGuides, category) => {
+    const normalize = str => str.toLowerCase().trim();
+    let matchSet = new Set();
+    if (category) matchSet.add(normalize(category));
+    if (matchSet.size === 0) return approvedGuides;
+    return approvedGuides.filter(guide => {
+      const services = (guide.guideProfile?.serviceTypes || []).map(normalize);
+      return [...matchSet].some(sel =>
+        services.some(service => service.includes(sel) || sel.includes(service))
+      );
+    });
+  };
+
+  const filterGuidesByCategory = (category) => {
+    const filtered = filterGuides(approvedGuides, category);
+    setFilteredGuides(filtered);
+  };
+
   return (
     <>
       <Header />
@@ -662,7 +688,7 @@ export default function EditPackagePage() {
               name="title" 
                       onChange={handleFieldChange}
                     />
-                    <ErrorMessage name="title" component="span" className="error-message" />
+                    <ErrorMessage name="title" component="span" className="error-message20" />
                   </div>
 
                   {/* Image field */}
@@ -676,7 +702,7 @@ export default function EditPackagePage() {
               accept="image/*" 
                       className={errors.image && touched.image ? 'error-input' : ''}
                     />
-                    <ErrorMessage name="image" component="span" className="error-message" />
+                    <ErrorMessage name="image" component="span" className="error-message20" />
                   </div>
                   
                   {imagePreview && (
@@ -692,7 +718,7 @@ export default function EditPackagePage() {
               name="highlight" 
                       onChange={handleFieldChange}
                     />
-                    <ErrorMessage name="highlight" component="span" className="error-message" />
+                    <ErrorMessage name="highlight" component="span" className="error-message20" />
                   </div>
 
                   {/* Overview field */}
@@ -704,7 +730,7 @@ export default function EditPackagePage() {
               name="overview" 
                       onChange={handleFieldChange}
                     />
-                    <ErrorMessage name="overview" component="span" className="error-message" />
+                    <ErrorMessage name="overview" component="span" className="error-message20" />
                   </div>
 
           <h3 className="h3-20">Quick Info:</h3>
@@ -718,7 +744,7 @@ export default function EditPackagePage() {
               name="address" 
                       onChange={handleFieldChange}
                     />
-                    <ErrorMessage name="address" component="span" className="error-message" />
+                    <ErrorMessage name="address" component="span" className="error-message20" />
                   </div>
 
                   {/* Map picker */}
@@ -742,7 +768,7 @@ export default function EditPackagePage() {
               readOnly 
                       onChange={handleFieldChange}
                     />
-                    <ErrorMessage name="tripType" component="span" className="error-message" />
+                    <ErrorMessage name="tripType" component="span" className="error-message20" />
                   </div>
 
                   {/* Date fields */}
@@ -755,7 +781,7 @@ export default function EditPackagePage() {
                       onChange={handleDateChange}
                       min={new Date().toISOString().split('T')[0]}
                     />
-                    <ErrorMessage name="startDate" component="span" className="error-message" />
+                    <ErrorMessage name="startDate" component="span" className="error-message20" />
                   </div>
                   
                   <div className="label20">
@@ -767,7 +793,7 @@ export default function EditPackagePage() {
                       onChange={handleDateChange}
                       min={values.startDate || new Date().toISOString().split('T')[0]}
                     />
-                    <ErrorMessage name="endDate" component="span" className="error-message" />
+                    <ErrorMessage name="endDate" component="span" className="error-message20" />
                   </div>
                   
                   <div className="label20">
@@ -779,7 +805,7 @@ export default function EditPackagePage() {
               readOnly 
                       onChange={handleFieldChange}
                     />
-                    <ErrorMessage name="duration" component="span" className="error-message" />
+                    <ErrorMessage name="duration" component="span" className="error-message20" />
                   </div>
 
                   {/* Category field */}
@@ -789,10 +815,68 @@ export default function EditPackagePage() {
                       className={`input20 ${errors.category && touched.category ? 'error-input' : touched.category ? 'valid-input' : ''}`}
               type="text" 
               name="category" 
-                      onChange={handleFieldChange}
+                      onChange={(e) => {
+                        handleFieldChange(e);
+                        filterGuidesByCategory(e.target.value);
+                      }}
                     />
-                    <ErrorMessage name="category" component="span" className="error-message" />
+                    <ErrorMessage name="category" component="span" className="error-message20" />
                   </div>
+
+                  {/* Guide selection */}
+                  <div className="guide-checkbox-container">
+                    <label className="guide-checkbox-label">
+                      <Field
+                        type="checkbox"
+                        name="guideIncluded"
+                        onChange={handleGuideChange}
+                        className="guide-checkbox-input"
+                      />
+                      <span className="guide-checkbox-text">Include a professional guide for your trip</span>
+                    </label>
+                  </div>
+
+                  {values.guideIncluded && (
+                    <div className="guide-selection20">
+                      <h3 className="h3-20">Select a guide:</h3>
+                      {filteredGuides.length > 0 ? (
+                        <div className="select-wrapper20">
+                          <Field
+                            as="select"
+                            name="guideId"
+                            onChange={handleGuideChange}
+                            className={`input20 ${errors.guideId && touched.guideId ? 'error-input' : touched.guideId ? 'valid-input' : ''}`}
+                          >
+                            <option value="">Select a guide</option>
+                            {filteredGuides.map((guide) => (
+                              <option key={guide._id} value={guide._id}>
+                                {guide.firstName} {guide.lastName} - NPR {guide.guideProfile?.pricing?.perDay || COST_RANGES.guide.perDay}/day
+                              </option>
+                            ))}
+                          </Field>
+                          <ErrorMessage name="guideId" component="span" className="error-message20" />
+                        </div>
+                      ) : (!selectedGuide) ? (
+                        <p className="no-guides-message20">
+                          No guides available with matching service types. Please try a different category.
+                        </p>
+                      ) : null}
+
+                      {selectedGuide && (
+                        <div className="guide-details20">
+                          <h4 className="guide-details-heading">Guide Details:</h4>
+                          <div className="guide-details-grid">
+                            <p><strong>Name:</strong> {selectedGuide.firstName} {selectedGuide.lastName}</p>
+                            <p><strong>Languages:</strong> {selectedGuide.guideProfile?.languages?.join(", ") || "Not specified"}</p>
+                            <p><strong>Regions:</strong> {selectedGuide.guideProfile?.regionsOfExpertise?.join(", ") || "Not specified"}</p>
+                            <p><strong>Services:</strong> {selectedGuide.guideProfile?.serviceTypes?.join(", ") || "Not specified"}</p>
+                            <p><strong>Price/Day:</strong> NPR {selectedGuide.guideProfile?.pricing?.perDay || COST_RANGES.guide.perDay}</p>
+                            <p><strong>Total Cost:</strong> NPR {values.guideCost || "0.00"} ({values.duration})</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                   {/* Group size field */}
                   <div className="label20">
@@ -803,7 +887,7 @@ export default function EditPackagePage() {
               name="groupSize" 
                       onChange={handleFieldChange}
                     />
-                    <ErrorMessage name="groupSize" component="span" className="error-message" />
+                    <ErrorMessage name="groupSize" component="span" className="error-message20" />
                   </div>
                   
                   {/* Difficulty field */}
@@ -815,7 +899,7 @@ export default function EditPackagePage() {
               name="difficulty" 
                       onChange={handleFieldChange}
                     />
-                    <ErrorMessage name="difficulty" component="span" className="error-message" />
+                    <ErrorMessage name="difficulty" component="span" className="error-message20" />
                   </div>
 
                   {/* Age restriction field */}
@@ -827,7 +911,7 @@ export default function EditPackagePage() {
               name="ageRestriction" 
                       onChange={handleFieldChange}
                     />
-                    <ErrorMessage name="ageRestriction" component="span" className="error-message" />
+                    <ErrorMessage name="ageRestriction" component="span" className="error-message20" />
                   </div>
 
                   {/* Pickup details field */}
@@ -839,7 +923,7 @@ export default function EditPackagePage() {
               name="pickupDetails" 
                       onChange={handleFieldChange}
                     />
-                    <ErrorMessage name="pickupDetails" component="span" className="error-message" />
+                    <ErrorMessage name="pickupDetails" component="span" className="error-message20" />
                   </div>
 
                   {/* Accessibility field */}
@@ -851,7 +935,7 @@ export default function EditPackagePage() {
               name="accessibility" 
                       onChange={handleFieldChange}
                     />
-                    <ErrorMessage name="accessibility" component="span" className="error-message" />
+                    <ErrorMessage name="accessibility" component="span" className="error-message20" />
                   </div>
 
                   {/* Cancellation policy field */}
@@ -863,7 +947,7 @@ export default function EditPackagePage() {
               name="cancellationPolicy" 
                       onChange={handleFieldChange}
                     />
-                    <ErrorMessage name="cancellationPolicy" component="span" className="error-message" />
+                    <ErrorMessage name="cancellationPolicy" component="span" className="error-message20" />
                   </div>
 
                   {/* Operator field */}
@@ -875,7 +959,7 @@ export default function EditPackagePage() {
               name="operator" 
                       onChange={handleFieldChange}
                     />
-                    <ErrorMessage name="operator" component="span" className="error-message" />
+                    <ErrorMessage name="operator" component="span" className="error-message20" />
                   </div>
 
           <h3 className="h3-20">Day by Day Itinerary:</h3>
@@ -923,7 +1007,7 @@ export default function EditPackagePage() {
                                 handleFieldChange({ target: { name: `itinerary[${index}].mode`, value } });
                               }}
                             />
-                            <ErrorMessage name={`itinerary[${index}].mode`} component="span" className="error-message" />
+                            <ErrorMessage name={`itinerary[${index}].mode`} component="span" className="error-message20" />
                           </div>
                           
                           <div className="label20">
@@ -950,7 +1034,7 @@ export default function EditPackagePage() {
                                 handleFieldChange({ target: { name: `itinerary[${index}].highlights`, value } });
                               }}
                             />
-                            <ErrorMessage name={`itinerary[${index}].highlights`} component="span" className="error-message" />
+                            <ErrorMessage name={`itinerary[${index}].highlights`} component="span" className="error-message20" />
                           </div>
                           
                           <div className="label20">
@@ -977,7 +1061,7 @@ export default function EditPackagePage() {
                                 handleFieldChange({ target: { name: `itinerary[${index}].stay`, value } });
                               }}
                             />
-                            <ErrorMessage name={`itinerary[${index}].stay`} component="span" className="error-message" />
+                            <ErrorMessage name={`itinerary[${index}].stay`} component="span" className="error-message20" />
                           </div>
                           
                           <div className="label20">
@@ -1004,7 +1088,7 @@ export default function EditPackagePage() {
                                 handleFieldChange({ target: { name: `itinerary[${index}].meals`, value } });
                               }}
                             />
-                            <ErrorMessage name={`itinerary[${index}].meals`} component="span" className="error-message" />
+                            <ErrorMessage name={`itinerary[${index}].meals`} component="span" className="error-message20" />
                           </div>
                           
                           <div className="label20">
@@ -1031,7 +1115,7 @@ export default function EditPackagePage() {
                                 handleFieldChange({ target: { name: `itinerary[${index}].costBreakdown`, value } });
                               }}
                             />
-                            <ErrorMessage name={`itinerary[${index}].costBreakdown`} component="span" className="error-message" />
+                            <ErrorMessage name={`itinerary[${index}].costBreakdown`} component="span" className="error-message20" />
             </div>
                         </div>
                       ))
@@ -1047,7 +1131,7 @@ export default function EditPackagePage() {
               name="included" 
                       onChange={handleFieldChange}
                     />
-                    <ErrorMessage name="included" component="span" className="error-message" />
+                    <ErrorMessage name="included" component="span" className="error-message20" />
                   </div>
 
                   {/* Additional info field */}
@@ -1059,61 +1143,8 @@ export default function EditPackagePage() {
               name="additionalInfo" 
                       onChange={handleFieldChange}
                     />
-                    <ErrorMessage name="additionalInfo" component="span" className="error-message" />
+                    <ErrorMessage name="additionalInfo" component="span" className="error-message20" />
                   </div>
-
-                  {/* Guide selection */}
-           <div className="guide-checkbox-container">
-            <label className="guide-checkbox-label">
-                      <Field
-                type="checkbox"
-                name="guideIncluded"
-                        onChange={handleGuideChange}
-                className="guide-checkbox-input"
-              />
-              <span className="guide-checkbox-text">Include a professional guide for your trip</span>
-            </label>
-          </div>
-
-                  {values.guideIncluded && (
-            <div className="guide-selection20">
-              <h3 className="h3-20">Select a guide:</h3>
-              {approvedGuides.length > 0 ? (
-                <div className="select-wrapper20">
-                          <Field
-                            as="select"
-                    name="guideId"
-                            onChange={handleGuideChange}
-                            className={`input20 ${errors.guideId && touched.guideId ? 'error-input' : touched.guideId ? 'valid-input' : ''}`}
-                  >
-                    <option value="">Select a guide</option>
-                    {approvedGuides.map((guide) => (
-                      <option key={guide._id} value={guide._id}>
-                        {guide.firstName} {guide.lastName} - NPR {guide.guideProfile?.pricing?.perDay || COST_RANGES.guide.perDay}/day
-                      </option>
-                    ))}
-                          </Field>
-                          <ErrorMessage name="guideId" component="span" className="error-message" />
-                </div>
-              ) : (
-                <p className="no-guides-message20">No guides available. Please try again later.</p>
-              )}
-
-              {selectedGuide && (
-                <div className="guide-details20">
-                  <h4 className="guide-details-heading">Guide Details:</h4>
-                  <div className="guide-details-grid">
-                    <p><strong>Name:</strong> {selectedGuide.firstName} {selectedGuide.lastName}</p>
-                    <p><strong>Languages:</strong> {selectedGuide.guideProfile?.languages?.join(", ") || "Not specified"}</p>
-                    <p><strong>Regions:</strong> {selectedGuide.guideProfile?.regionsOfExpertise?.join(", ") || "Not specified"}</p>
-                    <p><strong>Services:</strong> {selectedGuide.guideProfile?.serviceTypes?.join(", ") || "Not specified"}</p>
-                    <p><strong>Price/Day:</strong> NPR {selectedGuide.guideProfile?.pricing?.perDay || COST_RANGES.guide.perDay}</p>
-                            <p><strong>Total Cost:</strong> NPR {values.guideCost || "0.00"} ({values.duration})</p>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
 
                   {/* Price section */}
           <div className="price-section20">
@@ -1137,7 +1168,7 @@ export default function EditPackagePage() {
                             }
                           }}
                         />
-                        <ErrorMessage name="price" component="span" className="error-message" />
+                        <ErrorMessage name="price" component="span" className="error-message20" />
                       </div>
             </div>
             

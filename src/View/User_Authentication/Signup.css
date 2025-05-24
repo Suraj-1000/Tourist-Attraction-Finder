@@ -177,7 +177,7 @@ body {
   text-decoration: underline;
 }
 
-.error-message1,
+.error-message011,
 .success-message1 {
   text-align: center;
   color: red; /* Red for error messages */
@@ -839,12 +839,12 @@ body {
 }
 
 /* Error and validation messages */
-.error-message {
+.error-message01 {
   color: #e63946;
   font-size: 12px;
   margin-top: 5px;
   margin-bottom: 5px;
-  min-height: 15px;
+  min-height: auto;
   text-align: left;
 }
 

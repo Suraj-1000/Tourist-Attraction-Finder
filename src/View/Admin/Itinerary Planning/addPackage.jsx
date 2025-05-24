@@ -102,6 +102,7 @@ export default function AddPackagePage() {
   const [loading, setLoading] = useState(false);
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
+  const [filteredGuides, setFilteredGuides] = useState([]);
   const navigate = useNavigate();
   const formRef = useRef(null);
 
@@ -146,27 +147,34 @@ export default function AddPackagePage() {
     try {
       const token = localStorage.getItem("token");
       if (!token) {
-        console.log("No token found, user may need to login");
+        console.error("No token found");
         return;
       }
 
-      const response = await axios.get("http://localhost:4000/api/guides/approved", {
+      const response = await axios.get("http://localhost:4000/guides/approved", {
         headers: {
           Authorization: `Bearer ${token}`
         }
       });
 
       if (response.status === 200) {
-        setApprovedGuides(response.data);
+        console.log("Raw guide data:", response.data);
+        // Filter guides to only show approved and available ones
+        const availableGuides = response.data.filter(guide => {
+          console.log("Checking guide:", guide);
+          const isAvailable = guide.guideProfile && 
+            guide.guideProfile.verificationStatus === 'approved' &&
+            guide.guideProfile.isVerified &&
+            guide.guideProfile.isAvailable;
+          console.log("Guide availability status:", isAvailable);
+          return isAvailable;
+        });
+        console.log("Filtered available guides:", availableGuides);
+        setApprovedGuides(availableGuides);
+        setFilteredGuides(availableGuides);
       }
     } catch (error) {
       console.error("Error fetching guides:", error);
-      // Don't show an error toast as this is not critical for form operation
-      // Fallback to empty guides array which is already the default
-      if (error.response && error.response.status === 401) {
-        console.log("Authentication issue with guides API - user may need to re-login");
-        // You could redirect to login or handle silently
-      }
     }
   };
 
@@ -543,6 +551,31 @@ export default function AddPackagePage() {
     */
   };
 
+  // Add this function after fetchApprovedGuides
+  const filterGuidesByCategory = (category) => {
+    if (!category) {
+      setFilteredGuides(approvedGuides);
+      return;
+    }
+
+    // Split category by commas and trim whitespace
+    const categories = category.split(',').map(cat => cat.trim().toLowerCase());
+    
+    // Filter guides who have at least one matching service type
+    const matchingGuides = approvedGuides.filter(guide => {
+      const guideServices = guide.guideProfile?.serviceTypes?.map(service => 
+        service.toLowerCase()
+      ) || [];
+      
+      // Check if any category matches any service type
+      return categories.some(cat => 
+        guideServices.some(service => service.includes(cat) || cat.includes(service))
+      );
+    });
+
+    setFilteredGuides(matchingGuides);
+  };
+
   return (
     <>
       <ToastContainer
@@ -663,7 +696,7 @@ export default function AddPackagePage() {
               type="text" 
               name="title" 
                   />
-                  <ErrorMessage name="title" component="span" className="error-message" />
+                  <ErrorMessage name="title" component="span" className="error-message19" />
                 </div>
 
                 {/* Image field */}
@@ -674,7 +707,7 @@ export default function AddPackagePage() {
                     onChange={(e) => handleImageChange(e, setFieldValue)}
                     className={errors.image && touched.image ? 'error-input' : ''}
                   />
-                  <ErrorMessage name="image" component="span" className="error-message" />
+                  <ErrorMessage name="image" component="span" className="error-message19" />
                   {imagePreview && (
                     <img src={imagePreview} alt="Preview" className="image-preview" style={{ maxWidth: '200px', marginTop: '10px' }} />
                   )}
@@ -688,7 +721,7 @@ export default function AddPackagePage() {
               type="text" 
               name="highlight" 
                   />
-                  <ErrorMessage name="highlight" component="span" className="error-message" />
+                  <ErrorMessage name="highlight" component="span" className="error-message19" />
                 </div>
 
                 {/* Overview field */}
@@ -699,7 +732,7 @@ export default function AddPackagePage() {
                     className={`textarea19 ${errors.overview && touched.overview ? 'error-input' : touched.overview ? 'valid-input' : ''}`}
               name="overview" 
                   />
-                  <ErrorMessage name="overview" component="span" className="error-message" />
+                  <ErrorMessage name="overview" component="span" className="error-message19" />
                 </div>
 
           <h3 className="h3-19">Quick Info:</h3>
@@ -712,7 +745,7 @@ export default function AddPackagePage() {
               type="text" 
               name="address" 
                   />
-                  <ErrorMessage name="address" component="span" className="error-message" />
+                  <ErrorMessage name="address" component="span" className="error-message19" />
                 </div>
 
                 {/* Map picker */}
@@ -735,7 +768,7 @@ export default function AddPackagePage() {
               name="tripType" 
               readOnly 
                   />
-                  <ErrorMessage name="tripType" component="span" className="error-message" />
+                  <ErrorMessage name="tripType" component="span" className="error-message19" />
                 </div>
 
                 {/* Date fields */}
@@ -748,7 +781,7 @@ export default function AddPackagePage() {
                     onChange={handleDateChange}
                     min={new Date().toISOString().split('T')[0]}
                   />
-                  <ErrorMessage name="startDate" component="span" className="error-message" />
+                  <ErrorMessage name="startDate" component="span" className="error-message19" />
                 </div>
                 
                 <div className="label19">
@@ -760,7 +793,7 @@ export default function AddPackagePage() {
                     onChange={handleDateChange}
                     min={values.startDate || new Date().toISOString().split('T')[0]}
                   />
-                  <ErrorMessage name="endDate" component="span" className="error-message" />
+                  <ErrorMessage name="endDate" component="span" className="error-message19" />
                 </div>
                 
                 <div className="label19">
@@ -771,7 +804,7 @@ export default function AddPackagePage() {
               name="duration" 
               readOnly 
                   />
-                  <ErrorMessage name="duration" component="span" className="error-message" />
+                  <ErrorMessage name="duration" component="span" className="error-message19" />
                 </div>
 
                 {/* Category field */}
@@ -779,11 +812,72 @@ export default function AddPackagePage() {
                   <RequiredLabel text="Category:" />
                   <Field
                     className={`input19 ${errors.category && touched.category ? 'error-input' : touched.category ? 'valid-input' : ''}`}
-              type="text" 
-              name="category" 
+                    type="text" 
+                    name="category" 
+                    onChange={(e) => {
+                      handleChange(e);
+                      filterGuidesByCategory(e.target.value);
+                    }}
                   />
-                  <ErrorMessage name="category" component="span" className="error-message" />
+                  <ErrorMessage name="category" component="span" className="error-message19" />
                 </div>
+
+                {/* Guide selection */}
+                <div className="guide-checkbox-container">
+                  <label className="guide-checkbox-label">
+                    <Field
+                      type="checkbox"
+                      name="guideIncluded"
+                      onChange={handleGuideChange}
+                      className="guide-checkbox-input"
+                    />
+                    <span className="guide-checkbox-text">Include a professional guide for your trip</span>
+                  </label>
+                </div>
+
+                {values.guideIncluded && (
+                  <div className="guide-selection19">
+                    <h3 className="h3-19">Select a guide:</h3>
+                    {filteredGuides.length > 0 ? (
+                      <div className="select-wrapper19">
+                        <Field
+                          as="select"
+                          name="guideId"
+                          onChange={handleGuideChange}
+                          className={`input19 ${errors.guideId && touched.guideId ? 'error-input' : touched.guideId ? 'valid-input' : ''}`}
+                        >
+                          <option value="">Select a guide</option>
+                          {filteredGuides.map((guide) => (
+                            <option key={guide._id} value={guide._id}>
+                              {guide.firstName} {guide.lastName} - NPR {guide.guideProfile?.pricing?.perDay || COST_RANGES.guide.perDay}/day
+                            </option>
+                          ))}
+                        </Field>
+                        <ErrorMessage name="guideId" component="span" className="error-message19" />
+                      </div>
+                    ) : (
+                      <p className="no-guides-message19">
+                        {values.category 
+                          ? "No guides available with matching service types. Please try a different category."
+                          : "Please enter a category to see matching guides."}
+                      </p>
+                    )}
+
+                    {selectedGuide && (
+                      <div className="guide-details19">
+                        <h4 className="guide-details-heading">Guide Details:</h4>
+                        <div className="guide-details-grid">
+                          <p><strong>Name:</strong> {selectedGuide.firstName} {selectedGuide.lastName}</p>
+                          <p><strong>Languages:</strong> {selectedGuide.guideProfile?.languages?.join(", ") || "Not specified"}</p>
+                          <p><strong>Regions:</strong> {selectedGuide.guideProfile?.regionsOfExpertise?.join(", ") || "Not specified"}</p>
+                          <p><strong>Services:</strong> {selectedGuide.guideProfile?.serviceTypes?.join(", ") || "Not specified"}</p>
+                          <p><strong>Price/Day:</strong> NPR {selectedGuide.guideProfile?.pricing?.perDay || COST_RANGES.guide.perDay}</p>
+                          <p><strong>Total Cost:</strong> NPR {values.guideCost || "0.00"} ({values.duration})</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {/* Group size field */}
                 <div className="label19">
@@ -793,7 +887,7 @@ export default function AddPackagePage() {
               type="text" 
               name="groupSize" 
                   />
-                  <ErrorMessage name="groupSize" component="span" className="error-message" />
+                  <ErrorMessage name="groupSize" component="span" className="error-message19" />
                 </div>
                 
                 {/* Difficulty field */}
@@ -804,7 +898,7 @@ export default function AddPackagePage() {
               type="text" 
               name="difficulty" 
                   />
-                  <ErrorMessage name="difficulty" component="span" className="error-message" />
+                  <ErrorMessage name="difficulty" component="span" className="error-message19" />
                 </div>
 
                 {/* Age restriction field */}
@@ -815,7 +909,7 @@ export default function AddPackagePage() {
               type="text" 
               name="ageRestriction" 
                   />
-                  <ErrorMessage name="ageRestriction" component="span" className="error-message" />
+                  <ErrorMessage name="ageRestriction" component="span" className="error-message19" />
                 </div>
 
                 {/* Pickup details field */}
@@ -826,7 +920,7 @@ export default function AddPackagePage() {
                     className={`textarea19 ${errors.pickupDetails && touched.pickupDetails ? 'error-input' : touched.pickupDetails ? 'valid-input' : ''}`}
               name="pickupDetails" 
                   />
-                  <ErrorMessage name="pickupDetails" component="span" className="error-message" />
+                  <ErrorMessage name="pickupDetails" component="span" className="error-message19" />
                 </div>
 
                 {/* Accessibility field */}
@@ -837,7 +931,7 @@ export default function AddPackagePage() {
                     className={`textarea19 ${errors.accessibility && touched.accessibility ? 'error-input' : touched.accessibility ? 'valid-input' : ''}`}
               name="accessibility" 
                   />
-                  <ErrorMessage name="accessibility" component="span" className="error-message" />
+                  <ErrorMessage name="accessibility" component="span" className="error-message19" />
                 </div>
 
                 {/* Cancellation policy field */}
@@ -848,7 +942,7 @@ export default function AddPackagePage() {
                     className={`textarea19 ${errors.cancellationPolicy && touched.cancellationPolicy ? 'error-input' : touched.cancellationPolicy ? 'valid-input' : ''}`}
               name="cancellationPolicy" 
                   />
-                  <ErrorMessage name="cancellationPolicy" component="span" className="error-message" />
+                  <ErrorMessage name="cancellationPolicy" component="span" className="error-message19" />
                 </div>
 
                 {/* Operator field */}
@@ -859,143 +953,141 @@ export default function AddPackagePage() {
               type="text" 
               name="operator" 
                   />
-                  <ErrorMessage name="operator" component="span" className="error-message" />
+                  <ErrorMessage name="operator" component="span" className="error-message19" />
                 </div>
 
           <h3 className="h3-19">Day by Day Itinerary:</h3>
                 
                 {/* Itinerary fields */}
                 <FieldArray name="itinerary">
-                  {() => (
-                    values.itinerary.map((day, index) => (
-            <div key={index}>
-                        <div className="label19">
-                          <RequiredLabel text={`Day: ${index + 1}`} />
-                          <Field
-                            className="input19"
-                  type="text" 
-                            name={`itinerary[${index}].day`}
-                  readOnly 
-                          />
-                        </div>
-                        
-                        <div className="label19">
-                          <RequiredLabel text={`Mode: ${index + 1}`} />
-                          <Field
-                            className={`input19 ${
-                              errors.itinerary && 
-                              errors.itinerary[index] && 
-                              errors.itinerary[index].mode && 
-                              touched.itinerary && 
-                              touched.itinerary[index] && 
-                              touched.itinerary[index].mode 
-                                ? 'error-input' 
-                                : touched.itinerary && 
-                                  touched.itinerary[index] && 
-                                  touched.itinerary[index].mode 
-                                    ? 'valid-input' 
-                                    : ''
-                            }`}
-                  type="text" 
-                            name={`itinerary[${index}].mode`}
-                          />
-                          <ErrorMessage name={`itinerary[${index}].mode`} component="span" className="error-message" />
-                        </div>
-                        
-                        <div className="label19">
-                          <RequiredLabel text={`Highlights: ${index + 1}`} />
-                          <Field
-                            className={`input19 ${
-                              errors.itinerary && 
-                              errors.itinerary[index] && 
-                              errors.itinerary[index].highlights && 
-                              touched.itinerary && 
-                              touched.itinerary[index] && 
-                              touched.itinerary[index].highlights 
-                                ? 'error-input' 
-                                : touched.itinerary && 
-                                  touched.itinerary[index] && 
-                                  touched.itinerary[index].highlights 
-                                    ? 'valid-input' 
-                                    : ''
-                            }`}
-                  type="text" 
-                            name={`itinerary[${index}].highlights`}
-                          />
-                          <ErrorMessage name={`itinerary[${index}].highlights`} component="span" className="error-message" />
-                        </div>
-                        
-                        <div className="label19">
-                          <RequiredLabel text={`Stay: ${index + 1}`} />
-                          <Field
-                            className={`input19 ${
-                              errors.itinerary && 
-                              errors.itinerary[index] && 
-                              errors.itinerary[index].stay && 
-                              touched.itinerary && 
-                              touched.itinerary[index] && 
-                              touched.itinerary[index].stay 
-                                ? 'error-input' 
-                                : touched.itinerary && 
-                                  touched.itinerary[index] && 
-                                  touched.itinerary[index].stay 
-                                    ? 'valid-input' 
-                                    : ''
-                            }`}
-                  type="text" 
-                            name={`itinerary[${index}].stay`}
-                          />
-                          <ErrorMessage name={`itinerary[${index}].stay`} component="span" className="error-message" />
-                        </div>
-                        
-                        <div className="label19">
-                          <RequiredLabel text={`Meals: ${index + 1}`} />
-                          <Field
-                            className={`input19 ${
-                              errors.itinerary && 
-                              errors.itinerary[index] && 
-                              errors.itinerary[index].meals && 
-                              touched.itinerary && 
-                              touched.itinerary[index] && 
-                              touched.itinerary[index].meals 
-                                ? 'error-input' 
-                                : touched.itinerary && 
-                                  touched.itinerary[index] && 
-                                  touched.itinerary[index].meals 
-                                    ? 'valid-input' 
-                                    : ''
-                            }`}
-                  type="text" 
-                            name={`itinerary[${index}].meals`}
-                          />
-                          <ErrorMessage name={`itinerary[${index}].meals`} component="span" className="error-message" />
-                        </div>
-                        
-                        <div className="label19">
-                          <RequiredLabel text={`Cost Breakdown: ${index + 1}`} />
-                          <Field
-                            as="textarea"
-                            className={`textarea19 ${
-                              errors.itinerary && 
-                              errors.itinerary[index] && 
-                              errors.itinerary[index].costBreakdown && 
-                              touched.itinerary && 
-                              touched.itinerary[index] && 
-                              touched.itinerary[index].costBreakdown 
-                                ? 'error-input' 
-                                : touched.itinerary && 
-                                  touched.itinerary[index] && 
-                                  touched.itinerary[index].costBreakdown 
-                                    ? 'valid-input' 
-                                    : ''
-                            }`}
-                            name={`itinerary[${index}].costBreakdown`}
-                          />
-                          <ErrorMessage name={`itinerary[${index}].costBreakdown`} component="span" className="error-message" />
-            </div>
+                  {() => values.itinerary.map((day, index) => (
+                    <div key={index}>
+                      <div className="label19">
+                        <RequiredLabel text={`Day: ${index + 1}`} />
+                        <Field
+                          className="input19"
+                type="text" 
+                          name={`itinerary[${index}].day`}
+                readOnly 
+                        />
                       </div>
-                    ))
-                  )}
+                      
+                      <div className="label19">
+                        <RequiredLabel text={`Mode: ${index + 1}`} />
+                        <Field
+                          className={`input19 ${
+                            errors.itinerary && 
+                            errors.itinerary[index] && 
+                            errors.itinerary[index].mode && 
+                            touched.itinerary && 
+                            touched.itinerary[index] && 
+                            touched.itinerary[index].mode 
+                              ? 'error-input' 
+                              : touched.itinerary && 
+                                touched.itinerary[index] && 
+                                touched.itinerary[index].mode 
+                                  ? 'valid-input' 
+                                  : ''
+                          }`}
+                type="text" 
+                          name={`itinerary[${index}].mode`}
+                        />
+                        <ErrorMessage name={`itinerary[${index}].mode`} component="span" className="error-message19" />
+                      </div>
+                      
+                      <div className="label19">
+                        <RequiredLabel text={`Highlights: ${index + 1}`} />
+                        <Field
+                          className={`input19 ${
+                            errors.itinerary && 
+                            errors.itinerary[index] && 
+                            errors.itinerary[index].highlights && 
+                            touched.itinerary && 
+                            touched.itinerary[index] && 
+                            touched.itinerary[index].highlights 
+                              ? 'error-input' 
+                              : touched.itinerary && 
+                                touched.itinerary[index] && 
+                                touched.itinerary[index].highlights 
+                                  ? 'valid-input' 
+                                  : ''
+                          }`}
+                type="text" 
+                          name={`itinerary[${index}].highlights`}
+                        />
+                        <ErrorMessage name={`itinerary[${index}].highlights`} component="span" className="error-message19" />
+                      </div>
+                      
+                      <div className="label19">
+                        <RequiredLabel text={`Stay: ${index + 1}`} />
+                        <Field
+                          className={`input19 ${
+                            errors.itinerary && 
+                            errors.itinerary[index] && 
+                            errors.itinerary[index].stay && 
+                            touched.itinerary && 
+                            touched.itinerary[index] && 
+                            touched.itinerary[index].stay 
+                              ? 'error-input' 
+                              : touched.itinerary && 
+                                touched.itinerary[index] && 
+                                touched.itinerary[index].stay 
+                                  ? 'valid-input' 
+                                  : ''
+                          }`}
+                type="text" 
+                          name={`itinerary[${index}].stay`}
+                        />
+                        <ErrorMessage name={`itinerary[${index}].stay`} component="span" className="error-message19" />
+                      </div>
+                      
+                      <div className="label19">
+                        <RequiredLabel text={`Meals: ${index + 1}`} />
+                        <Field
+                          className={`input19 ${
+                            errors.itinerary && 
+                            errors.itinerary[index] && 
+                            errors.itinerary[index].meals && 
+                            touched.itinerary && 
+                            touched.itinerary[index] && 
+                            touched.itinerary[index].meals 
+                              ? 'error-input' 
+                              : touched.itinerary && 
+                                touched.itinerary[index] && 
+                                touched.itinerary[index].meals 
+                                  ? 'valid-input' 
+                                  : ''
+                          }`}
+                type="text" 
+                          name={`itinerary[${index}].meals`}
+                        />
+                        <ErrorMessage name={`itinerary[${index}].meals`} component="span" className="error-message19" />
+                      </div>
+                      
+                      <div className="label19">
+                        <RequiredLabel text={`Cost Breakdown: ${index + 1}`} />
+                        <Field
+                          as="textarea"
+                          className={`textarea19 ${
+                            errors.itinerary && 
+                            errors.itinerary[index] && 
+                            errors.itinerary[index].costBreakdown && 
+                            touched.itinerary && 
+                            touched.itinerary[index] && 
+                            touched.itinerary[index].costBreakdown 
+                              ? 'error-input' 
+                              : touched.itinerary && 
+                                touched.itinerary[index] && 
+                                touched.itinerary[index].costBreakdown 
+                                  ? 'valid-input' 
+                                  : ''
+                          }`}
+                          name={`itinerary[${index}].costBreakdown`}
+                        />
+                        <ErrorMessage name={`itinerary[${index}].costBreakdown`} component="span" className="error-message19" />
+                      </div>
+                    </div>
+                  ))}
                 </FieldArray>
 
                 {/* What's included field */}
@@ -1004,9 +1096,9 @@ export default function AddPackagePage() {
                   <Field
                     as="textarea"
                     className={`textarea19 ${errors.included && touched.included ? 'error-input' : touched.included ? 'valid-input' : ''}`}
-              name="included" 
+                name="included" 
                   />
-                  <ErrorMessage name="included" component="span" className="error-message" />
+                  <ErrorMessage name="included" component="span" className="error-message19" />
                 </div>
 
                 {/* Additional info field */}
@@ -1015,63 +1107,10 @@ export default function AddPackagePage() {
                   <Field
                     as="textarea"
                     className={`textarea19 ${errors.additionalInfo && touched.additionalInfo ? 'error-input' : touched.additionalInfo ? 'valid-input' : ''}`}
-              name="additionalInfo" 
+                name="additionalInfo" 
                   />
-                  <ErrorMessage name="additionalInfo" component="span" className="error-message" />
+                  <ErrorMessage name="additionalInfo" component="span" className="error-message19" />
                 </div>
-
-                {/* Guide selection */}
-          <div className="guide-checkbox-container">
-            <label className="guide-checkbox-label">
-                    <Field
-                type="checkbox"
-                name="guideIncluded"
-                      onChange={handleGuideChange}
-                className="guide-checkbox-input"
-              />
-              <span className="guide-checkbox-text">Include a professional guide for your trip</span>
-            </label>
-          </div>
-
-                {values.guideIncluded && (
-            <div className="guide-selection19">
-              <h3 className="h3-19">Select a guide:</h3>
-              {approvedGuides.length > 0 ? (
-                <div className="select-wrapper19">
-                        <Field
-                          as="select"
-                    name="guideId"
-                          onChange={handleGuideChange}
-                          className={`input19 ${errors.guideId && touched.guideId ? 'error-input' : touched.guideId ? 'valid-input' : ''}`}
-                  >
-                    <option value="">Select a guide</option>
-                    {approvedGuides.map((guide) => (
-                      <option key={guide._id} value={guide._id}>
-                        {guide.firstName} {guide.lastName} - NPR {guide.guideProfile?.pricing?.perDay || COST_RANGES.guide.perDay}/day
-                      </option>
-                    ))}
-                        </Field>
-                        <ErrorMessage name="guideId" component="span" className="error-message" />
-                </div>
-              ) : (
-                <p className="no-guides-message19">No guides available. Please try again later.</p>
-              )}
-
-              {selectedGuide && (
-                <div className="guide-details19">
-                  <h4 className="guide-details-heading">Guide Details:</h4>
-                  <div className="guide-details-grid">
-                    <p><strong>Name:</strong> {selectedGuide.firstName} {selectedGuide.lastName}</p>
-                    <p><strong>Languages:</strong> {selectedGuide.guideProfile?.languages?.join(", ") || "Not specified"}</p>
-                    <p><strong>Regions:</strong> {selectedGuide.guideProfile?.regionsOfExpertise?.join(", ") || "Not specified"}</p>
-                    <p><strong>Services:</strong> {selectedGuide.guideProfile?.serviceTypes?.join(", ") || "Not specified"}</p>
-                    <p><strong>Price/Day:</strong> NPR {selectedGuide.guideProfile?.pricing?.perDay || COST_RANGES.guide.perDay}</p>
-                          <p><strong>Total Cost:</strong> NPR {values.guideCost || "0.00"} ({values.duration})</p>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
 
                 {/* Price section */}
           <div className="price-section19">
@@ -1095,7 +1134,7 @@ export default function AddPackagePage() {
                           }
                         }}
                       />
-                      <ErrorMessage name="price" component="span" className="error-message" />
+                      <ErrorMessage name="price" component="span" className="error-message19" />
                     </div>
             </div>
             
