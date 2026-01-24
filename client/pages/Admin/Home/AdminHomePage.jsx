@@ -1,0 +1,1558 @@
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import { 
+  FaSearch, FaUsers, FaUserShield, FaMale, FaFemale, FaEye, FaEdit, 
+  FaTrash, FaTachometerAlt, FaHistory, FaUserPlus, FaTimes, FaUserCog,
+  FaEnvelope 
+} from "react-icons/fa";
+import Header from "../../../components/Admin Header/Admin-Header";
+import Footer from "../../../components/Footer/AuthFooter";
+import "./AdminHomePage.css";
+import { FiEye, FiEyeOff } from "react-icons/fi";
+
+
+export default function AdminHomepage() {
+  const navigate = useNavigate();
+  const [users, setUsers] = useState([]);
+  const [activePage, setActivePage] = useState("dashboard");
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editUser, setEditUser] = useState(null);
+  const [dashboardSort, setDashboardSort] = useState("a-z");
+  const [loginSort, setLoginSort] = useState("a-z");
+  const [registerSort, setRegisterSort] = useState("a-z");
+  const [dashboardSearch, setDashboardSearch] = useState("");
+  const [loginSearch, setLoginSearch] = useState("");
+  const [registerSearch, setRegisterSearch] = useState("");
+  const [dashboardRole, setDashboardRole] = useState("all");
+  const [loginRole, setLoginRole] = useState("all");
+  const [registerRole, setRegisterRole] = useState("all");
+  const [activeSort, setActiveSort] = useState("newer");
+  const [activeSearch, setActiveSearch] = useState("");
+  const [activeRole, setActiveRole] = useState("all");
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [userToDelete, setUserToDelete] = useState(null);
+  const [showCreateAdminModal, setShowCreateAdminModal] = useState(false);
+  const [newAdminData, setNewAdminData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    password: '',
+    confirmPassword: ''
+  });
+  const [createAdminError, setCreateAdminError] = useState('');
+  const [passwordVisible, setPasswordVisible] = useState(false);
+  const [confirmPasswordVisible, setConfirmPasswordVisible] = useState(false);
+
+  useEffect(() => {
+    // Initial fetch
+    fetchUsers();
+
+    // Set up auto-refresh every 30 seconds
+    const interval = setInterval(() => {
+      fetchUsers();
+    }, 30000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    if (activePage === "contact-management") {
+      navigate('/AdminContactManagement');
+    }
+  }, [activePage, navigate]);
+
+  const fetchUsers = async () => {
+    try {
+      const response = await axios.get("http://localhost:4000/adminDashboard/users");
+      setUsers(response.data);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+    }
+  };
+
+  const totalUsers = users.filter(user => user.role === "user").length;
+  const totalAdmins = users.filter(user => user.role === "admin").length;
+  const totalGuides = users.filter(user => 
+    user.role === "guide" && 
+    user.guideProfile && 
+    user.guideProfile.verificationStatus === "approved"
+  ).length;
+  const totalMales = users.filter(user => user.gender === "Male").length;
+  const totalFemales = users.filter(user => user.gender === "Female").length;
+
+  // Filter users based on search and role filter
+  const filteredUsers = users.filter(user =>
+    (dashboardRole === "all" || user.role === dashboardRole) &&
+    (`${user.firstName} ${user.lastName}`.toLowerCase().includes(dashboardSearch.toLowerCase()) || user.email.includes(dashboardSearch))
+  );
+
+  // Filter further based on gender if 'male' or 'female' is selected
+  const genderFilteredUsers = dashboardSort === "male"
+    ? filteredUsers.filter(user => user.gender === "Male")
+    : dashboardSort === "female"
+    ? filteredUsers.filter(user => user.gender === "Female")
+    : filteredUsers;
+
+  // Sort the filtered users based on the selected sort option (A-Z, Z-A)
+  const sortedUsers = genderFilteredUsers.sort((a, b) => {
+    if (dashboardSort === "a-z") {
+      return `${a.firstName} ${a.lastName}`.localeCompare(`${b.firstName} ${b.lastName}`);
+    }
+    if (dashboardSort === "z-a") {
+      return `${b.firstName} ${b.lastName}`.localeCompare(`${a.firstName} ${a.lastName}`);
+    }
+    return 0;
+  });
+
+  // Message based on sort option and filter
+  const message = () => {
+    if (dashboardSort === "a-z") {
+      return `Users Sorted from A to Z: ${genderFilteredUsers.length}`;
+    }
+    if (dashboardSort === "z-a") {
+      return `Users Sorted from Z to A: ${genderFilteredUsers.length}`;
+    }
+    if (dashboardSort === "male") {
+      return `Displaying Male Users: ${genderFilteredUsers.length}`;
+    }
+    if (dashboardSort === "female") {
+      return `Displaying Female Users: ${genderFilteredUsers.length}`;
+    }
+    return `Displaying Total Users: ${genderFilteredUsers.length}`;
+  };
+
+  // Sort and Message component for reuse
+  const SortAndMessage = () => (
+    <div className="message-sort-container35">
+      <p className="message35">{message()}</p>
+      <div className="sort-container35">
+        <select
+          className="filter-box35"
+          value={dashboardSort}
+          onChange={(e) => setDashboardSort(e.target.value)}
+        >
+          <option value="a-z">Sort A-Z</option>
+          <option value="z-a">Sort Z-A</option>
+          <option value="male">Sort by Male</option>
+          <option value="female">Sort by Female</option>
+        </select>
+      </div>
+    </div>
+  );
+
+  const handleViewDetails = (user) => {
+    setSelectedUser(user);
+    setShowModal(true);
+  };
+
+  const handleEdit = (user) => {
+    setEditUser(user);
+    setShowEditModal(true);
+  };
+
+  const handleDelete = (user) => {
+    setUserToDelete(user);
+    setShowDeleteModal(true);
+  };
+
+  const UserDetailsModal = ({ user, onClose }) => {
+    if (!user) return null;
+
+    const formatDate = (dateString) => {
+      if (!dateString) return 'Not provided';
+      const date = new Date(dateString);
+      const month = date.toLocaleString('en-US', { month: 'long' });
+      const day = date.getDate();
+      const year = date.getFullYear();
+      return `${month} ${day} ${year}`;
+    };
+
+    const handleOverlayClick = (e) => {
+      if (e.target.className === 'modal-overlay35') {
+        onClose();
+      }
+    };
+
+    return (
+      <div className="modal-overlay35" onClick={handleOverlayClick}>
+        <div className="modal-content35">
+          <button 
+            className="modal-close35" 
+            onClick={(e) => {
+              e.stopPropagation();
+              onClose();
+            }}
+          >
+            <FaTimes />
+          </button>
+          <div className="modal-header35">
+            <div className="modal-image-container35">
+              {user.image ? (
+                <img 
+                  src={user.image} 
+                  alt={`${user.firstName} ${user.lastName}`}
+                  className="modal-user-image35"
+                />
+              ) : (
+                <div className="modal-initials-avatar35">
+                  {getInitials(user.firstName, user.lastName)}
+                </div>
+              )}
+            </div>
+            <h2>{user.firstName} {user.lastName}</h2>
+          </div>
+          <div className="user-details35">
+            <div className="detail-item35">
+              <span className="detail-label35">Email:</span>
+              <span className="detail-value35">{user.email}</span>
+            </div>
+            <div className="detail-item35">
+              <span className="detail-label35">Role:</span>
+              <span className="detail-value35">{user.role}</span>
+            </div>
+            <div className="detail-item35">
+              <span className="detail-label35">Gender:</span>
+              <span className="detail-value35">{user.gender}</span>
+            </div>
+            <div className="detail-item35">
+              <span className="detail-label35">Phone:</span>
+              <span className="detail-value35">{user.phone || 'Not provided'}</span>
+            </div>
+            <div className="detail-item35">
+              <span className="detail-label35">Date of Birth:</span>
+              <span className="detail-value35">{formatDate(user.dateOfBirth)}</span>
+            </div>
+            <div className="detail-item35">
+              <span className="detail-label35">Address:</span>
+              <span className="detail-value35">{user.address || 'Not provided'}</span>
+            </div>
+            <div className="detail-item35">
+              <span className="detail-label35">Joined Date:</span>
+              <span className="detail-value35">
+                {new Date(user.createdAt).toLocaleDateString()}
+              </span>
+            </div>
+
+            {/* Guide-specific information */}
+            {user.role === 'guide' && user.guideProfile && (
+              <>
+                <div className="guide-section35">
+                  <h3>Guide Information</h3>
+                  
+                  <div className="detail-item35">
+                    <span className="detail-label35">License Number:</span>
+                    <span className="detail-value35">{user.guideProfile.licenseNumber || 'Not provided'}</span>
+                  </div>
+
+                  <div className="detail-item35">
+                    <span className="detail-label35">Verification Status:</span>
+                    <span className={`detail-value35 status-${user.guideProfile.verificationStatus}`}>
+                      {user.guideProfile.verificationStatus}
+                    </span>
+                  </div>
+
+                  {user.guideProfile.verificationDate && (
+                    <div className="detail-item35">
+                      <span className="detail-label35">Verified On:</span>
+                      <span className="detail-value35">
+                        {new Date(user.guideProfile.verificationDate).toLocaleDateString()}
+                      </span>
+                    </div>
+                  )}
+
+                  {user.guideProfile.rejectionReason && (
+                    <div className="detail-item35">
+                      <span className="detail-label35">Rejection Reason:</span>
+                      <span className="detail-value35">{user.guideProfile.rejectionReason}</span>
+                    </div>
+                  )}
+
+                  <div className="detail-item35">
+                    <span className="detail-label35">Languages:</span>
+                    <div className="tags-container35">
+                      {user.guideProfile.languages.map((lang, index) => (
+                        <span key={index} className="tag35">{lang}</span>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="detail-item35">
+                    <span className="detail-label35">Regions of Expertise:</span>
+                    <div className="tags-container35">
+                      {user.guideProfile.regionsOfExpertise.map((region, index) => (
+                        <span key={index} className="tag35">{region}</span>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="detail-item35">
+                    <span className="detail-label35">Service Types:</span>
+                    <div className="tags-container35">
+                      {user.guideProfile.serviceTypes.map((service, index) => (
+                        <span key={index} className="tag35">{service}</span>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="detail-item35">
+                    <span className="detail-label35">Rate per Day:</span>
+                    <span className="detail-value35">NPR {user.guideProfile.pricing?.perDay || 0}</span>
+                  </div>
+
+                  <div className="detail-item35">
+                    <span className="detail-label35">Average Rating:</span>
+                    <span className="detail-value35">
+                      {user.guideProfile.ratings?.average?.toFixed(1) || 0} / 5
+                      ({user.guideProfile.ratings?.total || 0} reviews)
+                    </span>
+                  </div>
+
+                  {user.guideProfile.licenseDocument && (
+                    <div className="detail-item35">
+                      <span className="detail-label35">License Document:</span>
+                      <div className="document-preview35">
+                        <img src={user.guideProfile.licenseDocument.url} alt="License" />
+                      </div>
+                    </div>
+                  )}
+
+                  {user.guideProfile.educationCertificates?.length > 0 && (
+                    <div className="detail-item35">
+                      <span className="detail-label35">Education Certificates:</span>
+                      <div className="certificates-grid35">
+                        {user.guideProfile.educationCertificates.map((cert, index) => (
+                          <div key={index} className="certificate-item35">
+                            <img src={cert.url} alt="Certificate" />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const handleUserUpdate = (updatedUser) => {
+    setUsers(users.map(user => 
+      user._id === updatedUser._id ? updatedUser : user
+    ));
+  };
+
+  const EditModal = ({ user, onClose, onUpdate }) => {
+    const [formData, setFormData] = useState({
+      firstName: user.firstName || '',
+      lastName: user.lastName || '',
+      email: user.email || '',
+      phone: user.phone || '',
+      gender: user.gender || '',
+      address: user.address || '',
+      dateOfBirth: user.dateOfBirth ? new Date(user.dateOfBirth).toISOString().split('T')[0] : ''
+    });
+
+    const [errors, setErrors] = useState({});
+
+    const validateForm = () => {
+      const newErrors = {};
+      
+      // First Name validation
+      if (!formData.firstName.match(/^[a-zA-Z\s]{2,50}$/)) {
+        newErrors.firstName = "First name should contain only letters and spaces (2-50 characters)";
+      }
+
+      // Last Name validation
+      if (!formData.lastName.match(/^[a-zA-Z\s]{2,50}$/)) {
+        newErrors.lastName = "Last name should contain only letters and spaces (2-50 characters)";
+      }
+
+      // Email validation
+      if (!formData.email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
+        newErrors.email = "Please enter a valid email address";
+      }
+
+      // Phone validation
+      if (formData.phone && !formData.phone.match(/^(98|97)\d{8}$/)) {
+        newErrors.phone = "Phone number must start with 98 or 97 and contain 10 digits";
+      }
+
+      // Date of Birth validation (16 years old)
+      if (formData.dateOfBirth) {
+        const birthDate = new Date(formData.dateOfBirth);
+        const today = new Date();
+        let age = today.getFullYear() - birthDate.getFullYear();
+        const monthDiff = today.getMonth() - birthDate.getMonth();
+        
+        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+          age--;
+        }
+        
+        if (age < 16) {
+          newErrors.dateOfBirth = "You must be at least 16 years old to register";
+        }
+      }
+
+      setErrors(newErrors);
+      return Object.keys(newErrors).length === 0;
+    };
+
+    const handleChange = (e) => {
+      setFormData({
+        ...formData,
+        [e.target.name]: e.target.value
+      });
+      // Clear error when user starts typing
+      if (errors[e.target.name]) {
+        setErrors({
+          ...errors,
+          [e.target.name]: ''
+        });
+      }
+    };
+
+    const handleSubmit = async (e) => {
+      e.preventDefault();
+      
+      if (!validateForm()) {
+        return;
+      }
+
+      try {
+        const response = await axios.put(
+          `http://localhost:4000/adminDashboard/users/${user._id}`,
+          formData,
+          { headers: { 'Content-Type': 'application/json' } }
+        );
+        onUpdate(response.data);
+        onClose();
+        toast.success(`${formData.firstName} ${formData.lastName}'s profile updated successfully!`);
+      } catch (error) {
+        console.error("Error updating user:", error);
+        toast.error("Failed to update user. Please try again.");
+      }
+    };
+
+    return (
+      <div className="modal-overlay35">
+        <div className="modal-content35 edit-modal35">
+          <button className="modal-close35" onClick={onClose}>
+            <FaTimes />
+          </button>
+          <h2>Edit User Profile</h2>
+          <form onSubmit={handleSubmit} className="edit-form35">
+            <div className="form-row35">
+              <div className="form-group35">
+                <label>First Name</label>
+                <input
+                  type="text"
+                  name="firstName"
+                  value={formData.firstName}
+                  onChange={handleChange}
+                  placeholder="Enter first name"
+                  required
+                  pattern="[a-zA-Z\s]{2,50}"
+                  title="First name should contain only letters and spaces (2-50 characters)"
+                />
+                {errors.firstName && <div className="error-message35">{errors.firstName}</div>}
+              </div>
+              <div className="form-group35">
+                <label>Last Name</label>
+                <input
+                  type="text"
+                  name="lastName"
+                  value={formData.lastName}
+                  onChange={handleChange}
+                  placeholder="Enter last name"
+                  required
+                  pattern="[a-zA-Z\s]{2,50}"
+                  title="Last name should contain only letters and spaces (2-50 characters)"
+                />
+                {errors.lastName && <div className="error-message35">{errors.lastName}</div>}
+              </div>
+            </div>
+
+            <div className="form-row35">
+              <div className="form-group35">
+                <label>Email</label>
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  placeholder="Enter email address"
+                  required
+                  pattern="[^\s@]+@[^\s@]+\.[^\s@]+"
+                  title="Please enter a valid email address"
+                />
+                {errors.email && <div className="error-message35">{errors.email}</div>}
+              </div>
+              <div className="form-group35">
+                <label>Phone</label>
+                <input
+                  type="tel"
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleChange}
+                  placeholder="Enter phone number"
+                  pattern="(98|97)\d{8}"
+                  title="Phone number must start with 98 or 97 and contain 10 digits"
+                />
+                {errors.phone && <div className="error-message35">{errors.phone}</div>}
+              </div>
+            </div>
+
+            <div className="form-row35">
+              <div className="form-group35">
+                <label>Gender</label>
+                <select 
+                  name="gender" 
+                  value={formData.gender} 
+                  onChange={handleChange}
+                >
+                  <option value="">Select Gender</option>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Others">Others</option>
+                </select>
+              </div>
+              <div className="form-group35">
+                <label>Date of Birth</label>
+                <input
+                  type="date"
+                  name="dateOfBirth"
+                  value={formData.dateOfBirth}
+                  onChange={handleChange}
+                  max={(() => {
+                    const date = new Date();
+                    date.setFullYear(date.getFullYear() - 16);
+                    return date.toISOString().split('T')[0];
+                  })()}
+                />
+                {errors.dateOfBirth && <div className="error-message35">{errors.dateOfBirth}</div>}
+              </div>
+            </div>
+
+            <div className="form-group35">
+              <label>Address</label>
+              <textarea
+                name="address"
+                value={formData.address}
+                onChange={handleChange}
+                placeholder="Enter your address (e.g., Kathmandu, Nepal)"
+                rows={4}
+                className="textarea-field35"
+              />
+            </div>
+
+            <button type="submit" className="submit-btn35">Update Profile</button>
+          </form>
+        </div>
+      </div>
+    );
+  };
+
+  // First, modify the sortByDate function to properly handle date sorting
+  const sortByDate = (users, dateField, sortOption) => {
+    let sortedUsers = [...users];
+    
+    switch(sortOption) {
+      case "newer":
+        return sortedUsers.sort((a, b) => {
+          const dateA = new Date(a[dateField]);
+          const dateB = new Date(b[dateField]);
+          return dateB - dateA; // Newest first
+        });
+      case "older":
+        return sortedUsers.sort((a, b) => {
+          const dateA = new Date(a[dateField]);
+          const dateB = new Date(b[dateField]);
+          return dateA - dateB; // Oldest first
+        });
+      case "male":
+        return sortedUsers.filter(user => user.gender === "Male").sort((a, b) => {
+          return new Date(b[dateField]) - new Date(a[dateField]); // Sort by date within gender
+        });
+      case "female":
+        return sortedUsers.filter(user => user.gender === "Female").sort((a, b) => {
+          return new Date(b[dateField]) - new Date(a[dateField]); // Sort by date within gender
+        });
+      default:
+        return sortedUsers.sort((a, b) => {
+          return new Date(b[dateField]) - new Date(a[dateField]); // Default to newest first
+        });
+    }
+  };
+
+  // Update the getFilteredUsers function to include role filtering
+  const getFilteredUsers = (users, search, sortOption, roleFilter) => {
+    let filtered = users.filter(user =>
+      (roleFilter === "all" || user.role === roleFilter) &&
+      (`${user.firstName} ${user.lastName}`.toLowerCase().includes(search.toLowerCase()) || 
+      user.email.toLowerCase().includes(search.toLowerCase()))
+    );
+
+    if (sortOption === "male") {
+      filtered = filtered.filter(user => user.gender === "Male");
+    } else if (sortOption === "female") {
+      filtered = filtered.filter(user => user.gender === "Female");
+    }
+
+    return filtered.sort((a, b) => {
+      if (sortOption === "a-z") {
+        return `${a.firstName} ${a.lastName}`.localeCompare(`${b.firstName} ${b.lastName}`);
+      }
+      if (sortOption === "z-a") {
+        return `${b.firstName} ${b.lastName}`.localeCompare(`${a.firstName} ${a.lastName}`);
+      }
+      return 0;
+    });
+  };
+
+  // Add these message functions
+  const getLoginMessage = (users, sortOption) => {
+    const count = users.length;
+    switch(sortOption) {
+      case "newer":
+        return `Displaying Users by Newest Login: ${count}`;
+      case "older":
+        return `Displaying Users by Oldest Login: ${count}`;
+      case "male":
+        return `Displaying Male Users: ${count}`;
+      case "female":
+        return `Displaying Female Users: ${count}`;
+      default:
+        return `Displaying Total Users: ${count}`;
+    }
+  };
+
+  const getRegistrationMessage = (users, sortOption) => {
+    const count = users.length;
+    switch(sortOption) {
+      case "newer":
+        return `Displaying Users by Newest Registration: ${count}`;
+      case "older":
+        return `Displaying Users by Oldest Registration: ${count}`;
+      case "male":
+        return `Displaying Male Users: ${count}`;
+      case "female":
+        return `Displaying Female Users: ${count}`;
+      default:
+        return `Displaying Total Users: ${count}`;
+    }
+  };
+
+  // Add message function for Active Logins
+  const getActiveMessage = (users, sortOption) => {
+    const activeUsers = users.filter(user => isUserActive(user));
+    const totalUsers = users.length;
+    
+    switch(sortOption) {
+      case "newer":
+        return `Online Users (Newest First): ${activeUsers.length} of ${totalUsers}`;
+      case "older":
+        return `Online Users (Oldest First): ${activeUsers.length} of ${totalUsers}`;
+      case "male":
+        const activeMales = activeUsers.filter(user => user.gender === "Male").length;
+        return `Online Male Users: ${activeMales}`;
+      case "female":
+        const activeFemales = activeUsers.filter(user => user.gender === "Female").length;
+        return `Online Female Users: ${activeFemales}`;
+      default:
+        return `Currently Online Users: ${activeUsers.length} of ${totalUsers}`;
+    }
+  };
+
+  // Update the isUserActive function
+  const isUserActive = (user) => {
+    if (!user.lastLogin) return false;
+    
+    const lastLoginTime = new Date(user.lastLogin).getTime();
+    const currentTime = new Date().getTime();
+    const thirtyMinutes = 30 * 60 * 1000;
+    
+    // Check if there's a more recent logout
+    if (user.logoutTime) {
+      const logoutTime = new Date(user.logoutTime).getTime();
+      if (logoutTime > lastLoginTime) {
+        return false;
+      }
+    }
+    
+    return (currentTime - lastLoginTime) <= thirtyMinutes;
+  };
+
+  // Update the formatDateTime function
+  const formatDateTime = (date) => {
+    if (!date) return 'Not available';
+    const dateObj = new Date(date);
+    const formattedDate = dateObj.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'numeric',
+      day: 'numeric'
+    });
+    const formattedTime = dateObj.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true
+    });
+    return `${formattedDate} at ${formattedTime}`;
+  };
+
+  const DeleteConfirmationModal = ({ user, onClose, onConfirm }) => {
+    if (!user) return null;
+
+    return (
+      <div className="modal-overlay35">
+        <div className="modal-content35 delete-modal35">
+          <button className="modal-close35" onClick={onClose}>
+            <FaTimes />
+          </button>
+          <div className="delete-modal-content35">
+            <FaTrash className="delete-icon35" />
+            <h2>Delete Confirmation</h2>
+            <p>
+              Are you sure you want to delete <strong>{user.firstName} {user.lastName}</strong>?
+              This action cannot be undone.
+            </p>
+            <div className="delete-modal-buttons35">
+              <button className="cancel-butn35" onClick={onClose}>
+                Cancel
+              </button>
+              <button className="confirm-delete-btn35" onClick={onConfirm}>
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const confirmDelete = () => {
+    if (!userToDelete) return;
+    
+    axios.delete(`http://localhost:4000/adminDashboard/users/${userToDelete._id}`)
+      .then(() => {
+        setUsers(users.filter(u => u._id !== userToDelete._id));
+        toast.success(`${userToDelete.firstName} ${userToDelete.lastName} has been deleted successfully!`);
+        setShowDeleteModal(false);
+        setUserToDelete(null);
+      })
+      .catch((error) => {
+        console.error("Error deleting user:", error);
+        toast.error("Failed to delete user. Please try again.");
+      });
+  };
+
+  const handleCreateAdmin = async (e) => {
+    e.preventDefault();
+    setCreateAdminError('');
+
+    if (newAdminData.password !== newAdminData.confirmPassword) {
+      setCreateAdminError('Passwords do not match');
+      return;
+    }
+
+    try {
+      const response = await axios.post('http://localhost:4000/signups/create-admin', {
+        ...newAdminData,
+        createdBy: users.find(user => user.role === 'admin')?._id // Get the current admin's ID
+      });
+
+      if (response.data) {
+        toast.success('New admin created successfully!');
+        setShowCreateAdminModal(false);
+        setNewAdminData({
+          firstName: '',
+          lastName: '',
+          email: '',
+          phone: '',
+          password: '',
+          confirmPassword: ''
+        });
+        fetchUsers(); // Refresh the user list
+      }
+    } catch (error) {
+      setCreateAdminError(error.response?.data?.message || 'Failed to create admin');
+      toast.error('Failed to create admin');
+    }
+  };
+
+  // Add this function near the top of the component
+  const getInitials = (firstName, lastName) => {
+    const firstInitial = firstName ? firstName.charAt(0).toUpperCase() : '';
+    const lastInitial = lastName ? lastName.charAt(0).toUpperCase() : '';
+    return `${firstInitial}${lastInitial}`;
+  };
+
+  return (
+    <>
+      <Header />
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+      />
+      <div className="main-container35">
+        {/* Enhanced Sidebar Navigation */}
+        <div className="side-nav35">
+          <h2>Admin Dashboard</h2>
+          <ul className="nav-links35">
+            <li>
+              <a
+                href="#"
+                className={activePage === "dashboard" ? "active" : ""}
+                onClick={() => setActivePage("dashboard")}
+              >
+                <FaTachometerAlt className="nav-icon" />
+                Dashboard
+              </a>
+            </li>
+            <li>
+              <a
+                href="#"
+                className={activePage === "recent-logins" ? "active" : ""}
+                onClick={() => setActivePage("recent-logins")}
+              >
+                <FaHistory className="nav-icon" />
+                Recently Logged In
+              </a>
+            </li>
+            <li>
+              <a
+                href="#"
+                className={activePage === "recent-registrations" ? "active" : ""}
+                onClick={() => setActivePage("recent-registrations")}
+              >
+                <FaUserPlus className="nav-icon" />
+                Recently Registered
+              </a>
+            </li>
+            <li>
+              <a
+                href="#"
+                className={activePage === "active-logins" ? "active" : ""}
+                onClick={() => setActivePage("active-logins")}
+              >
+                <FaUsers className="nav-icon" />
+                Active Logins
+              </a>
+            </li>
+            <li>
+              <a
+                href="#"
+                className={activePage === "create-admin" ? "active" : ""}
+                onClick={() => {
+                  setActivePage("create-admin");
+                  setShowCreateAdminModal(true);
+                }}
+              >
+                <FaUserCog className="nav-icon" />
+                Create Admin
+              </a>
+            </li>
+          </ul>
+        </div>
+
+        {/* Content Area */}
+        <div className="area-35">
+          {/* Conditional Heading for Active Page */}
+          <div className="heading35">
+            <h1 className="title-heading35">
+              {activePage === "dashboard"
+                ? "Admin Dashboard"
+                : activePage === "recent-registrations"
+                ? "Recently Registered Users"
+                : activePage === "recent-logins"
+                ? "Recently Logged In Users"
+                : activePage === "contact-management"
+                ? "Contact Management"
+                : "Active Users"}
+            </h1>
+          </div>
+
+          {/* Dashboard Section */}
+          {activePage === "dashboard" && (
+            <>
+              {/* Stats Section */}
+              <div className="stats-container35">
+                <div className="card35 users-card">
+                  <FaUsers className="icon35" />
+                  <h3>Total Users</h3>
+                  <p>{totalUsers}</p>
+                </div>
+                <div className="card35 admins-card">
+                  <FaUserShield className="icon35" />
+                  <h3>Total Admins</h3>
+                  <p>{totalAdmins}</p>
+                </div>
+                <div className="card35 guides-card">
+                  <FaUserCog className="icon35" />
+                  <h3>Total Guides</h3>
+                  <p>{totalGuides}</p>
+                </div>
+                <div className="card35 males-card">
+                  <FaMale className="icon35" />
+                  <h3>Total Males</h3>
+                  <p>{totalMales}</p>
+                </div>
+                <div className="card35 females-card">
+                  <FaFemale className="icon35" />
+                  <h3>Total Females</h3>
+                  <p>{totalFemales}</p>
+                </div>
+              </div>
+
+              <div className="search-container35">
+                <div className="search-box35">
+                  <input
+                    type="text"
+                    placeholder="Search by name or email..."
+                    value={dashboardSearch}
+                    onChange={(e) => setDashboardSearch(e.target.value)}
+                  />
+                  <FaSearch className="search-icon35" style={{ color: '#3498db' }} />
+                </div>
+                <div className="filters-container35">
+                  <select
+                    className="filter-box35"
+                    value={dashboardRole}
+                    onChange={(e) => setDashboardRole(e.target.value)}
+                  >
+                    <option value="all">All Roles</option>
+                    <option value="admin">Admin</option>
+                    <option value="guide">Guide</option>
+                    <option value="user">User</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Message and Sort Dropdown */}
+              <SortAndMessage />
+
+              {/* User Table */}
+              <div className="table-container35">
+                <table className="table35">
+                  <thead>
+                    <tr>
+                      <th>User</th>
+                      <th>Email</th>
+                      <th>Role</th>
+                      <th>Gender</th>
+                      <th>Status</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                {getFilteredUsers(users, dashboardSearch, dashboardSort, dashboardRole).map((user) => (
+                      <tr key={user._id}>
+                        <td>
+                          <div className="user-info">
+                            {user.image ? (
+                              <img src={user.image} alt="User" className="user-image35" />
+                            ) : (
+                              <div className="initials-avatar">
+                                {getInitials(user.firstName, user.lastName)}
+                    </div>
+                            )}
+                            <span className="user-name">{user.firstName} {user.lastName}</span>
+                      </div>
+                        </td>
+                        <td>{user.email}</td>
+                        <td>{user.role}</td>
+                        <td>{user.gender}</td>
+                        <td>
+                          <span className={`status-badge ${isUserActive(user) ? 'status-online' : 'status-offline'}`}>
+                            {isUserActive(user) ? 'Online' : 'Offline'}
+                          </span>
+                        </td>
+                        <td>
+                          <div className="action-buttons">
+                    <button 
+                              className="action-btn view-btn"
+                      onClick={() => handleViewDetails(user)}
+                              title="View Details"
+                            >
+                              <FaEye />
+                            </button>
+                            <button 
+                              className="action-btn edit-btn"
+                              onClick={() => handleEdit(user)}
+                              title="Edit User"
+                            >
+                              <FaEdit />
+                            </button>
+                            <button 
+                              className="action-btn delete-btn"
+                              onClick={() => handleDelete(user)}
+                              title="Delete User"
+                            >
+                              <FaTrash />
+                    </button>
+                  </div>
+                        </td>
+                      </tr>
+                ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
+
+          {/* Contact Management Section */}
+          {activePage === "contact-management" && (
+            <div className="contact-management-redirect">
+              <p>Redirecting to Contact Management page...</p>
+            </div>
+          )}
+
+          {/* Recent Registrations Section */}
+          {activePage === "recent-registrations" && (
+            <>
+              <div className="search-container35">
+                <div className="search-box35">
+                  <input
+                    type="text"
+                    placeholder="Search by name or email..."
+                    value={registerSearch}
+                    onChange={(e) => setRegisterSearch(e.target.value)}
+                  />
+                  <FaSearch className="search-icon35" style={{ color: '#3498db' }} />
+                </div>
+                <div className="filters-container35">
+                  <select
+                    className="filter-box35"
+                    value={registerRole}
+                    onChange={(e) => setRegisterRole(e.target.value)}
+                  >
+                    <option value="all">All Roles</option>
+                    <option value="admin">Admin</option>
+                    <option value="guide">Guide</option>
+                    <option value="user">User</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="message-sort-container35">
+                <p className="message35">
+                  {getRegistrationMessage(
+                    sortByDate(
+                      users.filter(user => 
+                        (registerRole === "all" || user.role === registerRole) &&
+                        (`${user.firstName} ${user.lastName}`.toLowerCase().includes(registerSearch.toLowerCase()) || 
+                        user.email.toLowerCase().includes(registerSearch.toLowerCase()))
+                      ),
+                      'createdAt',
+                      registerSort
+                    ),
+                    registerSort
+                  )}
+                </p>
+                <div className="sort-container35">
+                  <select
+                    className="filter-box35"
+                    value={registerSort}
+                    onChange={(e) => setRegisterSort(e.target.value)}
+                  >
+                    <option value="newer">Newer Date</option>
+                    <option value="older">Older Date</option>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="table-container35">
+                <table className="table35">
+                  <thead>
+                    <tr>
+                      <th>User</th>
+                      <th>Email</th>
+                      <th>Role</th>
+                      <th>Gender</th>
+                      <th>Registration Date</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                {sortByDate(
+                  users.filter(user => 
+                    (registerRole === "all" || user.role === registerRole) &&
+                    (`${user.firstName} ${user.lastName}`.toLowerCase().includes(registerSearch.toLowerCase()) || 
+                    user.email.toLowerCase().includes(registerSearch.toLowerCase()))
+                  ),
+                  'createdAt',
+                  registerSort
+                ).map((user) => (
+                      <tr key={user._id}>
+                        <td>
+                          <div className="user-info">
+                            {user.image ? (
+                              <img src={user.image} alt="User" className="user-image35" />
+                            ) : (
+                              <div className="initials-avatar">
+                                {getInitials(user.firstName, user.lastName)}
+                              </div>
+                            )}
+                            <span className="user-name">{user.firstName} {user.lastName}</span>
+                          </div>
+                        </td>
+                        <td>{user.email}</td>
+                        <td>{user.role}</td>
+                        <td>{user.gender}</td>
+                        <td>
+                          {new Date(user.createdAt).toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'numeric',
+                            day: 'numeric'
+                          })} at {new Date(user.createdAt).toLocaleTimeString('en-US', {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            hour12: true
+                          })}
+                        </td>
+                        <td>
+                          <div className="action-buttons">
+                    <button 
+                              className="action-btn view-btn"
+                      onClick={() => handleViewDetails(user)}
+                              title="View Details"
+                    >
+                              <FaEye />
+                    </button>
+                  </div>
+                        </td>
+                      </tr>
+                ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
+
+          {/* Recent Logins Section */}
+          {activePage === "recent-logins" && (
+            <>
+              <div className="search-container35">
+                <div className="search-box35">
+                  <input
+                    type="text"
+                    placeholder="Search by name or email..."
+                    value={loginSearch}
+                    onChange={(e) => setLoginSearch(e.target.value)}
+                  />
+                  <FaSearch className="search-icon35" style={{ color: '#3498db' }} />
+                </div>
+                <div className="filters-container35">
+                  <select
+                    className="filter-box35"
+                    value={loginRole}
+                    onChange={(e) => setLoginRole(e.target.value)}
+                  >
+                    <option value="all">All Roles</option>
+                    <option value="admin">Admin</option>
+                    <option value="guide">Guide</option>
+                    <option value="user">User</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="message-sort-container35">
+                <p className="message35">
+                  {getLoginMessage(
+                    sortByDate(
+                      users.filter(user => 
+                        user.lastLogin && 
+                        (loginRole === "all" || user.role === loginRole) &&
+                        (`${user.firstName} ${user.lastName}`.toLowerCase().includes(loginSearch.toLowerCase()) || 
+                        user.email.toLowerCase().includes(loginSearch.toLowerCase()))
+                      ),
+                      'lastLogin',
+                      loginSort
+                    ),
+                    loginSort
+                  )}
+                </p>
+                <div className="sort-container35">
+                  <select
+                    className="filter-box35"
+                    value={loginSort}
+                    onChange={(e) => setLoginSort(e.target.value)}
+                  >
+                    <option value="newer">Newer Date</option>
+                    <option value="older">Older Date</option>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="table-container35">
+                <table className="table35">
+                  <thead>
+                    <tr>
+                      <th>User</th>
+                      <th>Email</th>
+                      <th>Role</th>
+                      <th>Gender</th>
+                      <th>Last Login</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                {sortByDate(
+                  users.filter(user => 
+                    user.lastLogin && 
+                    (loginRole === "all" || user.role === loginRole) &&
+                    (`${user.firstName} ${user.lastName}`.toLowerCase().includes(loginSearch.toLowerCase()) || 
+                    user.email.toLowerCase().includes(loginSearch.toLowerCase()))
+                  ),
+                  'lastLogin',
+                  loginSort
+                ).map((user) => (
+                      <tr key={user._id}>
+                        <td>
+                          <div className="user-info">
+                            {user.image ? (
+                              <img src={user.image} alt="User" className="user-image35" />
+                            ) : (
+                              <div className="initials-avatar">
+                                {getInitials(user.firstName, user.lastName)}
+                      </div>
+                            )}
+                            <span className="user-name">{user.firstName} {user.lastName}</span>
+                    </div>
+                        </td>
+                        <td>{user.email}</td>
+                        <td>{user.role}</td>
+                        <td>{user.gender}</td>
+                        <td>{formatDateTime(user.lastLogin)}</td>
+                        <td>
+                          <div className="action-buttons">
+                    <button 
+                              className="action-btn view-btn"
+                      onClick={() => handleViewDetails(user)}
+                              title="View Details"
+                    >
+                              <FaEye />
+                    </button>
+                  </div>
+                        </td>
+                      </tr>
+                ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
+
+          {/* Active Logins Section */}
+          {activePage === "active-logins" && (
+            <>
+              <div className="search-container35">
+                <div className="search-box35">
+                  <input
+                    type="text"
+                    placeholder="Search by name or email..."
+                    value={activeSearch}
+                    onChange={(e) => setActiveSearch(e.target.value)}
+                  />
+                  <FaSearch className="search-icon35" style={{ color: '#3498db' }} />
+                </div>
+                <div className="filters-container35">
+                  <select
+                    className="filter-box35"
+                    value={activeRole}
+                    onChange={(e) => setActiveRole(e.target.value)}
+                  >
+                    <option value="all">All Roles</option>
+                    <option value="admin">Admin</option>
+                    <option value="guide">Guide</option>
+                    <option value="user">User</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="message-sort-container35">
+                <p className="message35">
+                  {getActiveMessage(
+                    sortByDate(
+                      users.filter(user => 
+                        (activeRole === "all" || user.role === activeRole) &&
+                        (`${user.firstName} ${user.lastName}`.toLowerCase().includes(activeSearch.toLowerCase()) || 
+                        user.email.toLowerCase().includes(activeSearch.toLowerCase()))
+                      ),
+                      'lastLogin',
+                      activeSort
+                    ),
+                    activeSort
+                  )}
+                </p>
+                <div className="sort-container35">
+                  <select
+                    className="filter-box35"
+                    value={activeSort}
+                    onChange={(e) => setActiveSort(e.target.value)}
+                  >
+                    <option value="newer">Newer Date</option>
+                    <option value="older">Older Date</option>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="table-container35">
+                <table className="table35">
+                  <thead>
+                    <tr>
+                      <th>User</th>
+                      <th>Email</th>
+                      <th>Role</th>
+                      <th>Gender</th>
+                      <th>Login Date</th>
+                      <th>Logout Date</th>
+                      <th>Session Duration</th>
+                      <th>Status</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                {sortByDate(
+                  users.filter(user => 
+                    (activeRole === "all" || user.role === activeRole) &&
+                    (`${user.firstName} ${user.lastName}`.toLowerCase().includes(activeSearch.toLowerCase()) || 
+                    user.email.toLowerCase().includes(activeSearch.toLowerCase()))
+                  ),
+                  'lastLogin',
+                  activeSort
+                ).map((user) => (
+                      <tr key={user._id}>
+                        <td>
+                          <div className="user-info">
+                            {user.image ? (
+                              <img src={user.image} alt="User" className="user-image35" />
+                            ) : (
+                              <div className="initials-avatar">
+                                {getInitials(user.firstName, user.lastName)}
+                              </div>
+                            )}
+                            <span className="user-name">{user.firstName} {user.lastName}</span>
+                          </div>
+                        </td>
+                        <td>{user.email}</td>
+                        <td>{user.role}</td>
+                        <td>{user.gender}</td>
+                        <td>{formatDateTime(user.lastLogin)}</td>
+                        <td>
+                          {user.logoutTime ? formatDateTime(user.logoutTime) : 'Still Active'}
+                        </td>
+                        <td>
+                          {user.lastLogin && user.logoutTime && new Date(user.logoutTime) > new Date(user.lastLogin) ? (
+                            (() => {
+                                const loginTime = new Date(user.lastLogin);
+                                const logoutTime = new Date(user.logoutTime);
+                                const durationMinutes = Math.floor((logoutTime - loginTime) / 1000 / 60);
+                                const hours = Math.floor(durationMinutes / 60);
+                                const minutes = durationMinutes % 60;
+                                return hours > 0 
+                                  ? `${hours} hour${hours > 1 ? 's' : ''} ${minutes} minute${minutes !== 1 ? 's' : ''}`
+                                  : `${minutes} minute${minutes !== 1 ? 's' : ''}`;
+                            })()
+                          ) : 'Active Session'}
+                        </td>
+                        <td>
+                          <span className={`status-badge ${isUserActive(user) ? 'status-online' : 'status-offline'}`}>
+                            {isUserActive(user) ? 'Online' : 'Offline'}
+                          </span>
+                        </td>
+                        <td>
+                          <div className="action-buttons">
+                      <button 
+                              className="action-btn view-btn"
+                        onClick={() => handleViewDetails(user)}
+                              title="View Details"
+                      >
+                              <FaEye />
+                      </button>
+                    </div>
+                        </td>
+                      </tr>
+                ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* Render Modal */}
+      {showModal && (
+        <UserDetailsModal 
+          user={selectedUser} 
+          onClose={() => {
+            setShowModal(false);
+            setSelectedUser(null);
+          }} 
+        />
+      )}
+      
+      {showEditModal && (
+        <EditModal 
+          user={editUser} 
+          onClose={() => {
+            setShowEditModal(false);
+            setEditUser(null);
+          }}
+          onUpdate={handleUserUpdate}
+        />
+      )}
+      
+      {showDeleteModal && (
+        <DeleteConfirmationModal 
+          user={userToDelete}
+          onClose={() => {
+            setShowDeleteModal(false);
+            setUserToDelete(null);
+          }}
+          onConfirm={confirmDelete}
+        />
+      )}
+      
+      {/* Update the Create Admin Modal */}
+      {showCreateAdminModal && (
+        <div className="modal-overlay35">
+          <div className="modal-content35 create-admin-modal35">
+            <button className="modal-close35" onClick={() => setShowCreateAdminModal(false)}>
+              <FaTimes />
+            </button>
+            <h2>Create New Admin</h2>
+            <form onSubmit={handleCreateAdmin} className="create-admin-form35">
+              <div className="form-row35">
+                <div className="form-group35">
+                  <label>First Name</label>
+                  <input
+                    type="text"
+                    value={newAdminData.firstName}
+                    onChange={(e) => setNewAdminData({...newAdminData, firstName: e.target.value})}
+                    placeholder="Enter first name"
+                    required
+                    pattern="[a-zA-Z\s]{2,50}"
+                    title="First name should contain only letters and spaces (2-50 characters)"
+                  />
+                </div>
+                <div className="form-group35">
+                  <label>Last Name</label>
+                  <input
+                    type="text"
+                    value={newAdminData.lastName}
+                    onChange={(e) => setNewAdminData({...newAdminData, lastName: e.target.value})}
+                    placeholder="Enter last name"
+                    required
+                    pattern="[a-zA-Z\s]{2,50}"
+                    title="Last name should contain only letters and spaces (2-50 characters)"
+                  />
+                </div>
+              </div>
+
+              <div className="form-row35">
+                <div className="form-group35">
+                  <label>Email</label>
+                  <input
+                    type="email"
+                    value={newAdminData.email}
+                    onChange={(e) => setNewAdminData({...newAdminData, email: e.target.value})}
+                    placeholder="Enter email address"
+                    required
+                    pattern="[^\s@]+@[^\s@]+\.[^\s@]+"
+                    title="Please enter a valid email address"
+                  />
+                </div>
+                <div className="form-group35">
+                  <label>Phone</label>
+                  <input
+                    type="tel"
+                    value={newAdminData.phone}
+                    onChange={(e) => setNewAdminData({...newAdminData, phone: e.target.value})}
+                    placeholder="Enter phone number"
+                    required
+                    pattern="(98|97)\d{8}"
+                    title="Phone number must start with 98 or 97 and contain 10 digits"
+                  />
+                </div>
+              </div>
+
+              <div className="form-row35">
+                <div className="form-group35">
+                  <label>Password</label>
+                  <div className="password-field">
+                    <input
+                      type={passwordVisible ? "text" : "password"}
+                      value={newAdminData.password}
+                      onChange={(e) => setNewAdminData({...newAdminData, password: e.target.value})}
+                      placeholder="Enter password"
+                      required
+                      pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$"
+                      title="Password must contain at least 8 characters, one uppercase letter, one lowercase letter, one number, and one special character"
+                    />
+                    <button
+                      type="button"
+                      className="eye-icon"
+                      onClick={() => setPasswordVisible(!passwordVisible)}
+                    >
+                      {passwordVisible ? <FiEyeOff /> : <FiEye />}
+                    </button>
+                  </div>
+                </div>
+                <div className="form-group35">
+                  <label>Confirm Password</label>
+                  <div className="password-field">
+                    <input
+                      type={confirmPasswordVisible ? "text" : "password"}
+                      value={newAdminData.confirmPassword}
+                      onChange={(e) => setNewAdminData({...newAdminData, confirmPassword: e.target.value})}
+                      placeholder="Confirm password"
+                      required
+                    />
+                    <button
+                      type="button"
+                      className="eye-icon"
+                      onClick={() => setConfirmPasswordVisible(!confirmPasswordVisible)}
+                    >
+                      {confirmPasswordVisible ? <FiEyeOff /> : <FiEye />}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {createAdminError && (
+                <div className="error-message35">{createAdminError}</div>
+              )}
+
+              <button type="submit" className="submit-btn35">Create Admin</button>
+            </form>
+          </div>
+        </div>
+      )}
+      
+      <Footer />
+    </>
+  );
+}
