@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import axios from "axios";
 import "./Emergency.css";
 import Header from "../../../components/User Header/User-Header";
 import Footer from "../../../components/Footer";
+import API from "../../../services/api";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -113,7 +113,7 @@ export default function EmergencyPage() {
 
   const fetchOfficialContacts = async () => {
     try {
-      const response = await axios.get("http://localhost:4000/adminEmergency/View");
+      const response = await API.get("/adminEmergency/View");
       if (response.data.success) {
         setOfficialContacts(response.data.data);
       }
@@ -129,11 +129,7 @@ export default function EmergencyPage() {
     if (!user) return;
 
     try {
-      const response = await axios.get('http://localhost:4000/user-emergency-contacts', {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`
-        }
-      });
+      const response = await API.get('/user-emergency-contacts');
 
       if (response.data.success) {
         setUserContacts(response.data.data);
@@ -208,14 +204,9 @@ export default function EmergencyPage() {
 
         if (editingContactId) {
           // Update existing contact
-          const response = await axios.put(
-            `http://localhost:4000/user-emergency-contacts/${editingContactId}`,
-            contactData,
-            {
-              headers: {
-                Authorization: `Bearer ${localStorage.getItem('token')}`
-              }
-            }
+          const response = await API.put(
+            `/user-emergency-contacts/${editingContactId}`,
+            contactData
           );
 
           if (response.data.success) {
@@ -230,14 +221,9 @@ export default function EmergencyPage() {
           }
         } else {
           // Add new contact
-          const response = await axios.post(
-            'http://localhost:4000/user-emergency-contacts',
-            contactData,
-            {
-              headers: {
-                Authorization: `Bearer ${localStorage.getItem('token')}`
-              }
-            }
+          const response = await API.post(
+            '/user-emergency-contacts',
+            contactData
           );
 
           if (response.data.success) {
@@ -303,14 +289,7 @@ export default function EmergencyPage() {
     if (!user) return;
 
     try {
-      const response = await axios.delete(
-        `http://localhost:4000/user-emergency-contacts/${contactToDelete._id}`,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`
-          }
-        }
-      );
+      const response = await API.delete(`/user-emergency-contacts/${contactToDelete._id}`);
 
       if (response.data.success) {
         setUserContacts(prevContacts => 

@@ -7,7 +7,7 @@ import "./Favorites.css";
 import Header from "../../../components/User Header/User-Header";
 import Footer from "../../../components/Footer";
 import { CurrencyContext } from "../../../context/CurrencyContext";
-import axios from "axios";
+import API from "../../../services/api";
 
 export default function FavoritesPage() {
   const [favorites, setFavorites] = useState([]);
@@ -23,11 +23,7 @@ export default function FavoritesPage() {
 
     try {
       setLoading(true);
-      const response = await axios.get('http://localhost:4000/user-favorites', {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`
-        }
-      });
+      const response = await API.get('/user-favorites');
       
       if (response.data.success) {
         const dbFavorites = response.data.data;
@@ -58,7 +54,7 @@ export default function FavoritesPage() {
   const fetchPackageRatings = async (packages) => {
     try {
       const promises = packages.map(async (pkg) => {
-        const response = await axios.get(`http://localhost:4000/reviews/item/${pkg.itemDetails._id}?itemType=package`);
+        const response = await API.get(`/reviews/item/${pkg.itemDetails._id}?itemType=package`);
         if (response.data.success) {
           return {
             id: pkg.itemDetails._id,
@@ -85,7 +81,7 @@ export default function FavoritesPage() {
   const fetchEventRatings = async (events) => {
     try {
       const promises = events.map(async (event) => {
-        const response = await axios.get(`http://localhost:4000/reviews/item/${event.itemDetails._id}?itemType=event`);
+        const response = await API.get(`/reviews/item/${event.itemDetails._id}?itemType=event`);
         if (response.data.success) {
           return {
             id: event.itemDetails._id,
@@ -133,11 +129,7 @@ export default function FavoritesPage() {
         return;
       }
 
-      await axios.delete(`http://localhost:4000/user-favorites/${favoriteDoc._id}`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`
-        }
-      });
+      await API.delete(`/user-favorites/${favoriteDoc._id}`);
       
       setFavorites(prev => prev.filter((fav) => fav._id !== favoriteDoc._id));
       toast.success(`${item.name || item.title} removed from favorites!`, {
