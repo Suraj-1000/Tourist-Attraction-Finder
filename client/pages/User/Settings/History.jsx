@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import "./History.css";
 import Header from "../../../components/User Header/User-Header";
 import Footer from "../../../components/Footer";
+import API from "../../../services/api";
 
 export default function HistoryPage() {
   const [history, setHistory] = useState([]);
@@ -19,11 +19,7 @@ export default function HistoryPage() {
       if (!user) return;
 
       try {
-        const response = await axios.get('http://localhost:4000/user-history', {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`
-          }
-        });
+        const response = await API.get('/user-history');
 
         if (response.data.success) {
           setHistory(response.data.data);
@@ -41,11 +37,7 @@ export default function HistoryPage() {
 
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`http://localhost:4000/user-history/${id}`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`
-        }
-      });
+      await API.delete(`/user-history/${id}`);
       setHistory(prev => prev.filter(item => item._id !== id));
       setShowDropdown(null);
       toast.success('Item deleted');
@@ -58,11 +50,7 @@ export default function HistoryPage() {
     try {
       const itemsToDelete = Array.from(selectedItems);
       for (const id of itemsToDelete) {
-        await axios.delete(`http://localhost:4000/user-history/${id}`, {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`
-          }
-        });
+        await API.delete(`/user-history/${id}`);
       }
       setHistory(prev => prev.filter(item => !selectedItems.has(item._id)));
       setSelectedItems(new Set());
@@ -106,11 +94,7 @@ export default function HistoryPage() {
 
     try {
       // Delete all history from database
-      await axios.delete('http://localhost:4000/user-history', {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`
-        }
-      });
+      await API.delete('/user-history');
 
       // Clear local state
       setHistory([]);

@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
 import { FaEdit } from "react-icons/fa";
 import "./Profile.css";
 import Header from "../../../components/User Header/User-Header";
 import Footer from "../../../components/Footer";
 import { toast } from "react-hot-toast";
+import API from "../../../services/api";
 import EventPreferencesModal from "../Recommendation/EventPreferencesModal";
 
 export default function ProfilePage() {
@@ -215,10 +215,7 @@ export default function ProfilePage() {
         return;
       }
 
-      const response = await axios.get(
-        "http://localhost:4000/adminUpdateProfile/getProfile",
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const response = await API.get('/adminUpdateProfile/getProfile');
 
       if (response.status === 200) {
         const userData = response.data;
@@ -330,17 +327,11 @@ export default function ProfilePage() {
         console.log(pair[0] + ': ' + pair[1]);
       }
 
-      const token = localStorage.getItem('token');
-      const response = await axios.put(
-        'http://localhost:4000/adminUpdateProfile/updateProfile',
-        formData,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'multipart/form-data'
-          }
-        }
-      );
+      const response = await API.put('/adminUpdateProfile/updateProfile', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
 
       if (response.data) {
         console.log('Server response:', response.data); // Add this log
