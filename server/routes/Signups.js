@@ -81,7 +81,7 @@ router.post('/', async (req, res) => {
     }
 
     // Determine role based on email or provided role
-    const adminEmail = 'suraj.explore.nepal@gmail.com';
+    const adminEmail = process.env.ADMIN_EMAIL || 'suraj.explore.nepal@gmail.com';
     const finalRole = email === adminEmail ? "admin" : role || "user";
     
     // Check for additional required fields for guides
