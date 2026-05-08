@@ -175,12 +175,12 @@ router.post('/verify-otp', async (req, res) => {
         verificationDate: null,
         verifiedBy: null,
         rejectionReason: null,
-        languages: guideProfile.languages || [],
-        licenseNumber: guideProfile.licenseNumber || '',
-        licenseDocument: guideProfile.licenseDocument || null,
-        educationCertificates: guideProfile.educationCertificates || [],
-        regionsOfExpertise: guideProfile.regionsOfExpertise || [],
-        serviceTypes: guideProfile.serviceTypes || []
+        languages: guideProfile?.languages || [],
+        licenseNumber: guideProfile?.licenseNumber || '',
+        licenseDocument: guideProfile?.licenseDocument || null,
+        educationCertificates: guideProfile?.educationCertificates || [],
+        regionsOfExpertise: guideProfile?.regionsOfExpertise || [],
+        serviceTypes: guideProfile?.serviceTypes || []
       } : null,
       termsAccepted: true
     });
