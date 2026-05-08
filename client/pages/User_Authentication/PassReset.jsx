@@ -1,9 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "./PassReset.css";
-import { useNavigate } from "react-router-dom"; 
+import { useNavigate, useLocation } from "react-router-dom"; 
 import { Link } from "react-router-dom";
 import { FiEye, FiEyeOff } from "react-icons/fi";
-import axios from "axios";
+import API from "../../services/api";
 import { toast } from "react-hot-toast";
 import AuthFooter from "../../components/Footer/AuthFooter";
 
@@ -21,12 +21,21 @@ const ResetButton = ({ handlePasswordReset }) => {
 
 export default function PassReset() {
   const navigate = useNavigate();
+  const location = useLocation();
   
   const [resetCode, setResetCode] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [newPasswordVisible, setNewPasswordVisible] = useState(false);
   const [confirmPasswordVisible, setConfirmPasswordVisible] = useState(false);
+
+  useEffect(() => {
+    const queryParams = new URLSearchParams(location.search);
+    const token = queryParams.get('token');
+    if (token) {
+      setResetCode(token);
+    }
+  }, [location]);
 
   const handlePasswordReset = async (e) => {
     e.preventDefault();
@@ -51,7 +60,7 @@ export default function PassReset() {
     }
 
     try {
-      const response = await axios.post("http://localhost:4000/pass_reset", {
+      const response = await API.post("/pass_reset", {
         resetCode,
         newPassword,
         confirmPassword

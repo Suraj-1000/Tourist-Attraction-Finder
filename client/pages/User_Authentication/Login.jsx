@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { FiEye, FiEyeOff } from "react-icons/fi";
-import axios from "axios";
+import API from "../../services/api";
 import "./Login.css";
 import { toast } from "react-hot-toast";
 import AuthFooter from "../../components/Footer/AuthFooter";
@@ -28,7 +28,7 @@ export default function Login() {
     }
 
     try {
-      const response = await axios.post('http://localhost:4000/login', { email, password });
+      const response = await API.post('/login', { email, password });
       localStorage.setItem("token", response.data.token);
       localStorage.setItem("user", JSON.stringify(response.data.user));
       

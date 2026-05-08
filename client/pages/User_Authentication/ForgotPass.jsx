@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import API from '../../services/api';
 import './ForgotPass.css';
-import axios from 'axios';
 import { toast } from "react-hot-toast";
 import AuthFooter from "../../components/Footer/AuthFooter";
 
@@ -11,7 +11,7 @@ const SendLinkButton = ({ email }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post('http://localhost:4000/forgot', { email }); 
+      const response = await API.post('/forgot', { email }); 
       toast.success(response.data.message);
       navigate('/passReset'); 
     } catch (error) {
