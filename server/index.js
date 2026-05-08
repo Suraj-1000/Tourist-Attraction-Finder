@@ -60,7 +60,6 @@ app.use(cors());
 app.use(express.urlencoded({ extended: true }));
 
 // Database connection
-console.log('MongoDB URI:', process.env.MONGO_URI);
 mongoose.connect(process.env.MONGO_URI)
   .then(async () => {
     console.log('Connected to MongoDB');
@@ -81,11 +80,9 @@ app.use('/login', loginRouters);
 app.use('/forgot', ForgotPassRouters);
 app.use('/pass_reset', PassResetRouter)
 app.use('/adminMedia', adminMediaRouter)
-app.use('/adminImg', adminSearchRoutes);
 app.use('/adminSearch', adminSearchAttractionRouter);
 app.use('/adminPackage', adminPackageRouter);
-app.use('/adminAddTrip', adminAddTripRouter);
-app.use('/adminTrip', adminTripRouter);
+app.use('/adminTrip', adminAddTripRouter);
 app.use('/adminBookingApprove', adminBookingApproveRouter)
 app.use('/adminUpdateProfile', adminUpdateProfileRouter)
 app.use('/adminEmergency', adminEmergencyRouter)
@@ -115,8 +112,6 @@ app.use('/api/guides', guidesRouter);
 
 // Add review routes
 app.use('/reviews', reviewRoutes);
-
-// Routes
 
 // Error handling middleware
 app.use((err, req, res, next) => {
