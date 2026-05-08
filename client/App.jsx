@@ -151,85 +151,85 @@ function App() {
 
     //Admin Side
     {
-      path: '/AdminHome', element: <AdminHomepage />
+      path: '/AdminHome', element: <ProtectedRoute><AdminHomepage /></ProtectedRoute>
     },
     {
-      path: '/AdminSearch', element: <AdminSearchPage />
+      path: '/AdminSearch', element: <ProtectedRoute><AdminSearchPage /></ProtectedRoute>
     },
     {
-      path: '/AdminAddIV', element: <AdminAddIVPage />
+      path: '/AdminAddIV', element: <ProtectedRoute><AdminAddIVPage /></ProtectedRoute>
     },
     {
-      path: '/AdminAddIV/:id', element: <AdminAddIVPage />
+      path: '/AdminAddIV/:id', element: <ProtectedRoute><AdminAddIVPage /></ProtectedRoute>
     },
     {
-      path: '/AdminSearchAttraction', element: <AdminSearchAttractionPage />
+      path: '/AdminSearchAttraction', element: <ProtectedRoute><AdminSearchAttractionPage /></ProtectedRoute>
     },
     {
-      path: '/AdminEditAttractionDetails/:attractionName', element: <AdminEditAttractionDetailsPage />
+      path: '/AdminEditAttractionDetails/:attractionName', element: <ProtectedRoute><AdminEditAttractionDetailsPage /></ProtectedRoute>
     },
     {
       path: '/AdminAttractionView/:attractionName', element: <ProtectedRoute><AdminAttractionViewPage /></ProtectedRoute>
     },
     {
-      path: '/ItineraryPackage', element: <ItineraryPackagePage />
+      path: '/ItineraryPackage', element: <ProtectedRoute><ItineraryPackagePage /></ProtectedRoute>
     },
     {
       path: '/ItineraryPackageView/:packageName', element: <ProtectedRoute><ItineraryPackageViewPage /></ProtectedRoute>
     },
     {
-      path: '/AddItineraryPackage', element: <AddItineraryPackagePage />
+      path: '/AddItineraryPackage', element: <ProtectedRoute><AddItineraryPackagePage /></ProtectedRoute>
     },
     {
-      path: '/EditItineraryPackage/:packageName', element: <EditItineraryPackagePage />
+      path: '/EditItineraryPackage/:packageName', element: <ProtectedRoute><EditItineraryPackagePage /></ProtectedRoute>
     },
     {
-      path: '/AdminProfileManage', element: <AdminProfileManagePage />
+      path: '/AdminProfileManage', element: <ProtectedRoute><AdminProfileManagePage /></ProtectedRoute>
     },
     {
-      path: '/AdminChangePass', element: <AdminChangePassPage />
+      path: '/AdminChangePass', element: <ProtectedRoute><AdminChangePassPage /></ProtectedRoute>
     },
     {
-      path: '/AdminHistory', element: <AdminHistoryPage />
+      path: '/AdminHistory', element: <ProtectedRoute><AdminHistoryPage /></ProtectedRoute>
     },
     {
-      path: '/AdminFavorites', element: <AdminFavoritesPage />
+      path: '/AdminFavorites', element: <ProtectedRoute><AdminFavoritesPage /></ProtectedRoute>
     },
     {
-      path: '/AdminBookingHistory', element: <AdminBookingHistory />
+      path: '/AdminBookingHistory', element: <ProtectedRoute><AdminBookingHistory /></ProtectedRoute>
     },
     {
-      path: '/AdminNotification', element: <AdminNotificationPage />
+      path: '/AdminNotification', element: <ProtectedRoute><AdminNotificationPage /></ProtectedRoute>
     },
     {
-      path: '/AdminEmergency', element: <AdminEmergencyPage />
+      path: '/AdminEmergency', element: <ProtectedRoute><AdminEmergencyPage /></ProtectedRoute>
     },
     {
-      path: '/AdminCurrencies', element: <AdminCurrenciesPage />
+      path: '/AdminCurrencies', element: <ProtectedRoute><AdminCurrenciesPage /></ProtectedRoute>
     },
     {
-      path: '/AdminLanguage', element: <AdminLanguagePage />
+      path: '/AdminLanguage', element: <ProtectedRoute><AdminLanguagePage /></ProtectedRoute>
     },
     {
-      path: '/AdminMap', element: <AdminMapPage />
+      path: '/AdminMap', element: <ProtectedRoute><AdminMapPage /></ProtectedRoute>
     },
     {
-      path: '/AdminEvent', element: <AdminEventPage />
+      path: '/AdminEvent', element: <ProtectedRoute><AdminEventPage /></ProtectedRoute>
     },
     {
-      path: '/AdminLocation', element: <AdminLocationPage />
+      path: '/AdminLocation', element: <ProtectedRoute><AdminLocationPage /></ProtectedRoute>
     },
     {
       path: '/AdminEventView/:id', element: <ProtectedRoute><EventView /></ProtectedRoute>
     },
     {
-      path: '/AdminContactManagement', element: <ContactManagement />
+      path: '/AdminContactManagement', element: <ProtectedRoute><ContactManagement /></ProtectedRoute>
     },
     {
       path: '/AdminReview', element: <ProtectedRoute><ReviewPage /></ProtectedRoute>
     },
     {
-      path: '/AdminGuideApproval', element: <GuideApproval />
+      path: '/AdminGuideApproval', element: <ProtectedRoute><GuideApproval /></ProtectedRoute>
     },
 
     //Payment
