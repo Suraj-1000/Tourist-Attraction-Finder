@@ -3,18 +3,15 @@ import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import { createServer } from 'http';
-import bodyParser from 'body-parser';
 
 import signupRouter from './routes/Signups.js';
 import loginRouters from './routes/Login.js';
 import ForgotPassRouters from './routes/ForgotPass.js';
 import PassResetRouter from './routes/ResetPass.js';
 import adminMediaRouter from './routes/Image&Video.js';
-import adminSearchRoutes from './routes/Image&Video.js';
 import adminSearchAttractionRouter from './routes/SearchAttractions.js';
 import adminPackageRouter from './routes/Packages.js';
 import adminAddTripRouter from './routes/PlanTrips.js';
-import adminTripRouter from './routes/PlanTrips.js';
 import adminBookingApproveRouter from './routes/TripApproval.js'
 import adminUpdateProfileRouter from './routes/ProfileManages.js'
 import adminEmergencyRouter from './routes/Emergencys.js'
@@ -60,8 +57,7 @@ const server = createServer(app);
 // Middleware
 app.use(express.json());
 app.use(cors());
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(express.urlencoded({ extended: true }));
 
 // Database connection
 console.log('MongoDB URI:', process.env.MONGO_URI);
