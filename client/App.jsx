@@ -2,11 +2,8 @@ import React from 'react';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import { CurrencyProvider } from './context/CurrencyContext';
 import { Toaster } from 'react-hot-toast';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import ProtectedRoute from './components/ProtectedRoute';
 import LinkPreview from './components/LinkPreview';
-import { ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
 
 import DashboardLayout from './pages/Guide/components/DashboardLayout';
 
@@ -399,7 +396,6 @@ function App() {
     <CurrencyProvider>
       <RouterProvider router={router} />
       <Toaster position="top-center" />
-      <ToastContainer />
     </CurrencyProvider>
   );
 }
