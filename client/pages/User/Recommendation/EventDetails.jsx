@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useContext } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import axios from "axios";
 import { toast } from 'react-toastify';
 import { CurrencyContext } from "../../../context/CurrencyContext";
 import { 
@@ -11,6 +10,7 @@ import {
 } from 'react-icons/fa';
 import Header from "../../../components/User Header/User-Header";
 import Footer from "../../../components/Footer";
+import API from "../../../services/api";
 import EventBookingForm from '../../Payment/EventBookingForm';
 import MapDisplay from "../../../components/MapDisplay";
 import "./EventDetails.css";
@@ -32,7 +32,7 @@ export default function EventDetails() {
   const fetchEventDetails = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`http://localhost:4000/adminEvents/${id}`, {
+      const response = await API.get(`/adminEvents/${id}`, {
         params: { 
           populate: 'reviews.userId'
         }
@@ -109,7 +109,7 @@ export default function EventDetails() {
       };
 
       // Update event in database
-      await axios.put(`http://localhost:4000/adminEvents/${event._id}`, updatedEvent);
+      await API.put(`/adminEvents/${event._id}`, updatedEvent);
       
       // Update local state
       setEvent(updatedEvent);

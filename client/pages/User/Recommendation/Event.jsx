@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useContext } from "react";
 import { Link, useLocation } from "react-router-dom";
-import axios from "axios";
 import "./Event.css";
 import Header from "../../../components/User Header/User-Header";
 import Footer from "../../../components/Footer";
+import API from "../../../services/api";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { FaMapMarkerAlt, FaCalendarAlt, FaUserTie, FaTicketAlt, FaSearch, FaClock, FaStar, FaPhone, FaEnvelope } from 'react-icons/fa';
@@ -39,13 +39,8 @@ export default function EventPage() {
   // Fetch user preferences first
   const fetchUserPreferences = async () => {
     try {
-      const token = localStorage.getItem('token');
-      if (token && user) {
-        const response = await axios.get('http://localhost:4000/preferences/get-preferences', {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
+      if (user) {
+        const response = await API.get('/preferences/get-preferences');
         if (response.data.success) {
           setUserPreferences(response.data.preferences || []);
           return response.data.preferences;
@@ -84,7 +79,7 @@ export default function EventPage() {
   const fetchEventRatings = async (events) => {
     try {
       const promises = events.map(async (event) => {
-        const response = await axios.get(`http://localhost:4000/reviews/item/${event._id}?itemType=event`);
+        const response = await API.get(`/reviews/item/${event._id}?itemType=event`);
         if (response.data.success) {
           return {
             id: event._id,
@@ -114,7 +109,7 @@ export default function EventPage() {
       setLoading(true);
       const preferences = await fetchUserPreferences();
       
-      const response = await axios.get("http://localhost:4000/adminEvents");
+      const response = await API.get("/adminEvents");
       const eventData = response.data;
       setAllEvents(eventData);
       
@@ -137,11 +132,7 @@ export default function EventPage() {
     if (!user) return;
 
     try {
-      const response = await axios.get('http://localhost:4000/user-favorites', {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`
-        }
-      });
+      const response = await API.get('/user-favorites');
       
       if (response.data.success) {
         const dbFavorites = response.data.data;
