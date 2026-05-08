@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import "./SearchPage.css";
 import Header from "../../../components/User Header/User-Header";
 import Footer from "../../../components/Footer";
+import API from "../../../services/api";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -13,9 +14,8 @@ export default function SearchPage() {
   useEffect(() => {
     const fetchFiles = async () => {
       try {
-        const response = await fetch('http://localhost:4000/adminImg/files');
-        const data = await response.json();
-        setFiles(data); // Set the files state
+        const response = await API.get('/adminImg/files');
+        setFiles(response.data); // Set the files state
       } catch (error) {
         console.error('Error fetching files:', error);
       }
@@ -41,16 +41,6 @@ export default function SearchPage() {
   return (
     <>
       <Header />
-      <ToastContainer
-        position="top-right"
-        autoClose={3000}
-        hideProgressBar={false}
-        closeOnClick
-        pauseOnHover
-        draggable
-      />
-
-
       <div className="main-container51">
         <div className="heading51">
           <h1 className="title-heading51">Upload Moments, Share Stories!</h1>

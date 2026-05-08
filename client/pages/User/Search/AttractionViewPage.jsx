@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
-import axios from "axios";
-import "./AttractionViewPage.css";
 import Header from "../../../components/User Header/User-Header";
 import Footer from "../../../components/Footer";
+import API from "../../../services/api";
+import "./AttractionViewPage.css";
 
 export default function AttractionViewPage() {
   const { attractionName } = useParams(); // Get the attraction name from the URL
@@ -23,7 +23,7 @@ export default function AttractionViewPage() {
       const encodedAttractionName = encodeURIComponent(name);
       console.log(`Fetching details for attraction: ${encodedAttractionName}`);
 
-     const response = await axios.get(`http://localhost:4000/adminSearch/attraction`, {
+      const response = await API.get('/adminSearch/attraction', {
         params: { name: attractionName } 
       });
 
