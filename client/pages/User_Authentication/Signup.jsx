@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import "./Signup.css";
 import axios from "axios";
+import API from "../../services/api";
 import { FiEye, FiEyeOff, FiPlus, FiX, FiUpload } from "react-icons/fi";
 import { toast } from "react-hot-toast";
 import AuthFooter from "../../components/Footer/AuthFooter";
@@ -609,7 +610,7 @@ export default function Signup() {
       formData.append('document', file);
 
       try {
-        const response = await axios.post('http://localhost:4000/signups/upload-document', formData, {
+        const response = await API.post('/signups/upload-document', formData, {
           headers: {
             'Content-Type': 'multipart/form-data'
           }
@@ -672,7 +673,7 @@ export default function Signup() {
       const formData = new FormData();
       formData.append('document', file);
 
-      return axios.post('http://localhost:4000/signups/upload-document', formData, {
+      return API.post('/signups/upload-document', formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         }
@@ -776,7 +777,7 @@ export default function Signup() {
       formData.append('document', file);
 
       try {
-        const response = await axios.post('http://localhost:4000/signups/upload-document', formData, {
+        const response = await API.post('/signups/upload-document', formData, {
           headers: {
             'Content-Type': 'multipart/form-data'
           }
