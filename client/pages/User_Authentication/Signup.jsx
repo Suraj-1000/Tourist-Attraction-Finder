@@ -1272,7 +1272,29 @@ export default function Signup() {
           <h1 className="title1">Create an Account</h1>
           <p className="subtitle1">Sign up to explore amazing destinations.</p>
 
-          {!isOtpSent ? (
+          {isOtpSent ? (
+            <form onSubmit={handleOtpSubmit}>
+              <div className="input-group01">
+                <label htmlFor="otp">
+                  Enter OTP <span className="required-field">*</span>
+                </label>
+                <input
+                  type="text"
+                  id="otp"
+                  className="input-field01"
+                  name="otp"
+                  value={otp}
+                  onChange={(e) => setOtp(e.target.value)}
+                  placeholder="######"
+                  required
+                />
+              </div>
+
+              <button className="submit-button1" type="submit" disabled={isOtpLoading}>
+                {isOtpLoading ? "Verifying OTP..." : "Verify OTP"}
+              </button>
+            </form>
+          ) : (
             <form onSubmit={handleSubmit}>
               <div className="input-row0">
                 <div className="input-group0" ref={fieldRefs.current.firstName}>
@@ -1884,28 +1906,6 @@ export default function Signup() {
 
               <button className="submit-button1" type="submit" disabled={isLoading}>
                 {isLoading ? "Signing Up..." : "Sign up"}
-              </button>
-            </form>
-          ) : (
-            <form onSubmit={handleOtpSubmit}>
-              <div className="input-group01">
-                <label htmlFor="otp">
-                  Enter OTP <span className="required-field">*</span>
-                </label>
-                <input
-                  type="text"
-                  id="otp"
-                  className="input-field01"
-                  name="otp"
-                  value={otp}
-                  onChange={(e) => setOtp(e.target.value)}
-                  placeholder="######"
-                  required
-                />
-              </div>
-
-              <button className="submit-button1" type="submit" disabled={isOtpLoading}>
-                {isOtpLoading ? "Verifying OTP..." : "Verify OTP"}
               </button>
             </form>
           )}

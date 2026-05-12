@@ -400,79 +400,7 @@ export default function ProfilePage() {
           <h1 className="title-heading64">Profile Management</h1>
         </div>
 
-        {!isEditing ? (
-          // View Mode
-          <div className="profile-view64">
-            <div className="profile-header64">
-              <button className="edit-profile-btn64" onClick={startEditing}>
-                <FaEdit size={20} />
-              </button>
-              <div className="profile-image-container64">
-                {userImage ? (
-                  <img
-                    src={userImage}
-                    alt="Profile"
-                    className="profile-image64"
-                  />
-                ) : (
-                  <div className="initials-avatar64">
-                    {getInitials(user.firstName, user.lastName)}
-                  </div>
-                )}
-              </div>
-              <h2 className="profile-name64">{`${user.firstName} ${user.lastName}`}</h2>
-              <div className="profile-role64">
-                {getRoleDisplay(user.role)}
-              </div>
-            </div>
-
-            <div className="profile-details64">
-              <div className="details-grid64">
-                <div className="detail-item64">
-                  <div className="detail-label64">Email</div>
-                  <div className="detail-value64">{user.email}</div>
-                </div>
-                <div className="detail-item64">
-                  <div className="detail-label64">Phone</div>
-                  <div className="detail-value64">{user.phone || "Not provided"}</div>
-                </div>
-                <div className="detail-item64">
-                  <div className="detail-label64">Gender</div>
-                  <div className="detail-value64">{user.gender || "Not provided"}</div>
-                </div>
-                <div className="detail-item64">
-                  <div className="detail-label64">Date of Birth</div>
-                  <div className="detail-value64">
-                    {user.dateOfBirth || "Not provided"}
-                  </div>
-                </div>
-                <div className="detail-item64" style={{ gridColumn: "1 / -1" }}>
-                  <div className="detail-label64">Address</div>
-                  <div className="detail-value64">{user.address || "Not provided"}</div>
-                </div>
-              </div>
-            </div>
-
-            <div className="preferences-section64">
-              <h3>Event Preferences</h3>
-              <div className="preferences-list64">
-                {userPreferences.length > 0 ? (
-                  userPreferences.map((pref, index) => (
-                    <span key={index} className="preference-tag64">{pref}</span>
-                  ))
-                ) : (
-                  <p>No preferences set yet</p>
-                )}
-              </div>
-              <button 
-                className="edit-preferences-btn64"
-                onClick={() => setShowPreferencesModal(true)}
-              >
-                Edit Preferences
-              </button>
-            </div>
-          </div>
-        ) : (
+        {isEditing ? (
 
           
           // Edit Mode
@@ -647,6 +575,78 @@ export default function ProfilePage() {
                 disabled={isUpdating || Object.values(errors).some(error => error)}
               >
                 {isUpdating ? 'Updating...' : 'Update Profile'}
+              </button>
+            </div>
+          </div>
+        ) : (
+          // View Mode
+          <div className="profile-view64">
+            <div className="profile-header64">
+              <button className="edit-profile-btn64" onClick={startEditing}>
+                <FaEdit size={20} />
+              </button>
+              <div className="profile-image-container64">
+                {userImage ? (
+                  <img
+                    src={userImage}
+                    alt="Profile"
+                    className="profile-image64"
+                  />
+                ) : (
+                  <div className="initials-avatar64">
+                    {getInitials(user.firstName, user.lastName)}
+                  </div>
+                )}
+              </div>
+              <h2 className="profile-name64">{`${user.firstName} ${user.lastName}`}</h2>
+              <div className="profile-role64">
+                {getRoleDisplay(user.role)}
+              </div>
+            </div>
+
+            <div className="profile-details64">
+              <div className="details-grid64">
+                <div className="detail-item64">
+                  <div className="detail-label64">Email</div>
+                  <div className="detail-value64">{user.email}</div>
+                </div>
+                <div className="detail-item64">
+                  <div className="detail-label64">Phone</div>
+                  <div className="detail-value64">{user.phone || "Not provided"}</div>
+                </div>
+                <div className="detail-item64">
+                  <div className="detail-label64">Gender</div>
+                  <div className="detail-value64">{user.gender || "Not provided"}</div>
+                </div>
+                <div className="detail-item64">
+                  <div className="detail-label64">Date of Birth</div>
+                  <div className="detail-value64">
+                    {user.dateOfBirth || "Not provided"}
+                  </div>
+                </div>
+                <div className="detail-item64" style={{ gridColumn: "1 / -1" }}>
+                  <div className="detail-label64">Address</div>
+                  <div className="detail-value64">{user.address || "Not provided"}</div>
+                </div>
+              </div>
+            </div>
+
+            <div className="preferences-section64">
+              <h3>Event Preferences</h3>
+              <div className="preferences-list64">
+                {userPreferences.length > 0 ? (
+                  userPreferences.map((pref, index) => (
+                    <span key={index} className="preference-tag64">{pref}</span>
+                  ))
+                ) : (
+                  <p>No preferences set yet</p>
+                )}
+              </div>
+              <button 
+                className="edit-preferences-btn64"
+                onClick={() => setShowPreferencesModal(true)}
+              >
+                Edit Preferences
               </button>
             </div>
           </div>
