@@ -186,7 +186,7 @@ export default function ProfilePage() {
 
   // Filter non-numeric characters from phone input
   const handlePhoneChange = (e) => {
-    const value = e.target.value;
+    const { value } = e.target;
     // Only allow numeric input
     if (!/^\d*$/.test(value)) {
       return;

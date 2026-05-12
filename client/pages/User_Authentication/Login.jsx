@@ -43,15 +43,13 @@ export default function Login() {
         toast.success('Guide login successful! Redirecting to Guide Dashboard.');
         navigate('/guide/dashboard');        
         
-      } else {
+      } else if (location.state?.from && location.state.from !== '/Home') {
         // For regular users
-        if (location.state?.from && location.state.from !== '/Home') {
-          toast.success('Login successful! Redirecting to shared content.');
-          navigate(location.state.from, { replace: true });
-        } else {
-          toast.success('Login successful! Redirecting to Home.');
-          navigate('/Home');
-        }
+        toast.success('Login successful! Redirecting to shared content.');
+        navigate(location.state.from, { replace: true });
+      } else {
+        toast.success('Login successful! Redirecting to Home.');
+        navigate('/Home');
       }
     } catch (err) {
       const errorMessage = err.response?.data?.message || 'Something went wrong. Please try again.';

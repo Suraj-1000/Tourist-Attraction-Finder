@@ -62,13 +62,13 @@ export default function EmergencyPage() {
   };
 
   const handleNameChange = (e) => {
-    const value = e.target.value;
+    const { value } = e.target;
     setName(value);
     setErrors(prev => ({ ...prev, name: validateName(value) }));
   };
 
   const handlePhoneChange = (e) => {
-    const value = e.target.value;
+    const { value } = e.target;
     // Only allow numeric input
     if (!/^\d*$/.test(value)) {
       return;
@@ -100,13 +100,13 @@ export default function EmergencyPage() {
   };
 
   const handleTypeChange = (e) => {
-    const value = e.target.value;
+    const { value } = e.target;
     setType(value);
     setErrors(prev => ({ ...prev, type: validateType(value) }));
   };
 
   const handleRelationshipChange = (e) => {
-    const value = e.target.value;
+    const { value } = e.target;
     setRelationship(value);
     setErrors(prev => ({ ...prev, relationship: validateRelationship(value) }));
   };

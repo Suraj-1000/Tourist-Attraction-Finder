@@ -274,12 +274,10 @@ export default function Signup() {
         setTouched(newTouched);
         validateField(field, index);
       }
-    } else {
+    } else if (!touched[field]) {
       // For regular fields
-      if (!touched[field]) {
-        setTouched({ ...touched, [field]: true });
-        validateField(field);
-      }
+      setTouched({ ...touched, [field]: true });
+      validateField(field);
     }
   };
 
@@ -1131,7 +1129,7 @@ export default function Signup() {
   };
 
   const handlePhoneChange = (e) => {
-    const value = e.target.value;
+    const { value } = e.target;
     
     // Only allow numeric input
     if (!/^\d*$/.test(value)) {
@@ -1164,7 +1162,7 @@ export default function Signup() {
 
   // Add handlers for immediate validation on field changes
   const handleFirstNameChange = (e) => {
-    const value = e.target.value;
+    const { value } = e.target;
     setFirstName(value);
     setTouched(prev => ({ ...prev, firstName: true }));
     const error = validateName(value);
@@ -1173,7 +1171,7 @@ export default function Signup() {
   };
 
   const handleLastNameChange = (e) => {
-    const value = e.target.value;
+    const { value } = e.target;
     setLastName(value);
     setTouched(prev => ({ ...prev, lastName: true }));
     const error = validateName(value);
@@ -1182,7 +1180,7 @@ export default function Signup() {
   };
 
   const handleEmailChange = (e) => {
-    const value = e.target.value;
+    const { value } = e.target;
     setEmail(value);
     setTouched(prev => ({ ...prev, email: true }));
     const error = validateEmail(value);
@@ -1192,7 +1190,7 @@ export default function Signup() {
 
   // Add handlers for password fields
   const handlePasswordChange = (e) => {
-    const value = e.target.value;
+    const { value } = e.target;
     setPassword(value);
     setTouched(prev => ({ ...prev, password: true }));
     
@@ -1210,7 +1208,7 @@ export default function Signup() {
   };
 
   const handleConfirmPasswordChange = (e) => {
-    const value = e.target.value;
+    const { value } = e.target;
     setConfirmPassword(value);
     setTouched(prev => ({ ...prev, confirmPassword: true }));
     
@@ -1222,7 +1220,7 @@ export default function Signup() {
 
   // Add handler for date of birth
   const handleDateOfBirthChange = (e) => {
-    const value = e.target.value;
+    const { value } = e.target;
     setDateOfBirth(value);
     setTouched(prev => ({ ...prev, dateOfBirth: true }));
     
@@ -1234,7 +1232,7 @@ export default function Signup() {
 
   // Add handler for address
   const handleAddressChange = (e) => {
-    const value = e.target.value;
+    const { value } = e.target;
     setAddress(value);
     setTouched(prev => ({ ...prev, address: true }));
     
@@ -1246,7 +1244,7 @@ export default function Signup() {
 
   // Add handler for terms acceptance
   const handleTermsChange = (e) => {
-    const checked = e.target.checked;
+    const { checked } = e.target;
     setTermsAccepted(checked);
     setTouched(prev => ({ ...prev, termsAccepted: true }));
     

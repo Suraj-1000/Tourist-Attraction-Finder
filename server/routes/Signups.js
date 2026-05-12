@@ -85,10 +85,8 @@ router.post('/', async (req, res) => {
     const finalRole = email === adminEmail ? "admin" : role || "user";
     
     // Check for additional required fields for guides
-    if (finalRole === 'guide') {
-      if (!gender || !dateOfBirth || !address || !image) {
-        return res.status(400).json({ message: 'Gender, date of birth, address, and profile image are required for guides' });
-      }
+    if (finalRole === 'guide' && (!gender || !dateOfBirth || !address || !image)) {
+      return res.status(400).json({ message: 'Gender, date of birth, address, and profile image are required for guides' });
     }
 
     // OTP generation and email sending
@@ -312,7 +310,7 @@ const verifyToken = async (req, res, next) => {
 router.put('/update-preferences', verifyToken, async (req, res) => {
   try {
     const { preferences } = req.body;
-    const userId = req.userId;
+    const { userId } = req;
 
     if (!Array.isArray(preferences)) {
       return res.status(400).json({ message: 'Preferences must be an array' });
@@ -351,7 +349,7 @@ router.put('/update-preferences', verifyToken, async (req, res) => {
 // Get user preferences
 router.get('/get-preferences', verifyToken, async (req, res) => {
   try {
-    const userId = req.userId;
+    const { userId } = req;
     const user = await Signup.findById(userId);
 
     if (!user) {
@@ -435,7 +433,7 @@ router.get('/guide-profile/:guideId', async (req, res) => {
 router.put('/guide-profile/:guideId', verifyToken, async (req, res) => {
   try {
     const { guideId } = req.params;
-    const userId = req.userId;
+    const { userId } = req;
     const updates = req.body;
 
     // Check if the user is updating their own profile
